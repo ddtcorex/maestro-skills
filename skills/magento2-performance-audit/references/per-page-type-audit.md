@@ -99,6 +99,10 @@ for name in "${!urls[@]}"; do
 done
 ```
 
+> **Keep storefront HTTP requests on the host; use `govard sh` only for container-local log work.** The store domain normally resolves through the host proxy/TLS setup, while the application container has different DNS and network routes. A curl moved into `govard sh` can therefore fail with `exit status 7`, return HTTP `000`, or reach an unrelated `localhost` service even when the host request works. Do not work around that by calling PHP-FPM on port 9000: FastCGI is not HTTP, so `docker exec <web> curl http://<php>:9000/` is not a page capture.
+>
+> The capture boundary is deliberate: host-side `curl` warms and requests each storefront URL; `govard sh -c` clears, snapshots, and reads `var/debug/db.log` inside the application container. Treat a curl transport error, HTTP `000`, or empty response as an invalid page capture, not a zero-query result. Record the URL and error, fix the host DNS/hosts or proxy path, then repeat that page in isolation before including it in a comparison. Do not move curl into the container merely to avoid the host problem. If the host cannot reach the declared URL during this session, mark that page `Skipped: host cannot reach <url> (<error>)`; the profiler and query-log artifacts for that failed request are not evidence. Keep the second pass on the same host URLs and in the same order once reachability is restored.
+
 After this loop completes, re-run it a second time in full (same URLs, same order) without an additional flush and diff the counts against the first pass — per-URL-warmed numbers should match exactly. If any page still doesn't reproduce, treat it per item 4 in `references/database-query-profiling.md` (re-run that one page in isolation before trusting the number).
 
 Analyze each page's `*.html` for its profiler table (see `references/html-profiler-audit.md` for what each column means and how to trace custom-code cost) and each `*.db.log` for total query count, repeated/duplicate query shapes (candidate N+1s), and — using the call stack in each entry — the exact file:line responsible for the worst offenders.

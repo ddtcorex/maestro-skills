@@ -31,6 +31,10 @@ The repeated-shape and cross-page-type signals elsewhere in this skill remain th
 
 ## DB Query Log Setup
 
+> **Use the supported CLI diagnostics; do not create a configuration-based substitute.** Query logging and the HTML profiler are enabled only through the Magento commands below. There is no `dev:profiler:enable --db-profiler` flag, no `system/profiler/enabled` `core_config_data` path, and no `dev:query-log:enable --db-profiler` flag. If a command appears unavailable, re-read its spelling here and run `bin/magento list` or `bin/magento help <command>`; do not invent a flag-shaped variation.
+>
+> Never edit `app/etc/env.php` to enable these diagnostics. It is deployment configuration, commonly gitignored, and a malformed edit can fatal every `bin/magento` command without a Git rollback. Do not replace the commands with a bootstrap script either: old examples using `Zend_*` classes are incompatible with modern Laminas-based Magento and can fail before producing usable evidence. The safe recovery is to stop that diagnostic step, retain the exact CLI error, and report it as `Skipped: profiler/query-log command unavailable (<error>)`; do not claim a query capture happened. If the query log command succeeds, use the documented disable command during teardown even when a later page capture fails. Preserve the literal URL, cache state, and parameters for every valid capture so a rerun compares like for like rather than explaining a changed result with guessed tooling differences.
+
 ```bash
 # Enable full query logging with call stacks (see caveat below on log size)
 govard sh -c "bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0"
@@ -214,6 +218,8 @@ govard sh -c "mysqldumpslow -s t -t 10 <slow_query_log_file>"   # top 10 by tota
 # else in this skill; a slow log left on writes disk forever and nobody remembers why
 govard db query "SET GLOBAL slow_query_log = 'OFF';"
 ```
+
+> **The DB user may lack the `SUPER`/`SYSTEM_VARIABLES_ADMIN` privilege — test before relying on this level.** On one real audit, `SET GLOBAL general_log = 'ON'` failed with `ERROR 1227 (42000): Access denied; you need (at least one of) the SUPER privilege(s)`, and the containerized MySQL user had no path to grant it. If `SET GLOBAL` is denied, this level is a dead end on that box — say so in the report under Slow Query Analysis (`Skipped: DB user lacks SUPER privilege`) and fall back to level 1 (the app-level `TIME:` sort), which needs no DB privileges at all. Don't burn attempts re-trying variants of the grant or editing DB config files to force it.
 
 **3. For each slow query found, `EXPLAIN` it before guessing at a fix:**
 

@@ -70,7 +70,7 @@ for (const file of files) {
   if ((source.match(/^\s*(?:>\s*)?```/gm) || []).length % 2) throw new Error(`${file}: unbalanced Markdown fence`);
 }
 NODE
-npm ci
+npm install --package-lock=false
 npm test
 npm run build
 claude plugin validate . --strict
