@@ -298,3 +298,29 @@ manual release step in the GitHub UI.
    step also runs `jq empty` on `.codex-plugin/plugin.json` and
    `.agents/plugins/marketplace.json` now — a JSON syntax error in either
    fails the release the same way a bad `.claude-plugin/*.json` always did.
+
+## Lessons from past incidents
+
+- **Hand-rolled frontmatter parsing must be tested against real skill files.**
+  The original parser silently returned an empty description for every
+  `description: |` block scalar, which crippled skill selection in plugin
+  mode for all domain skills. `src/frontmatter.ts` folds block scalars and
+  `tests/skills-catalog.spec.ts` guards the whole catalog against the
+  filesystem — extend that spec (not ad-hoc greps) when adding catalog rules.
+- **Command samples must match how Govard actually dispatches.** `govard tool`
+  is a host-side Cobra command; no Govard binary ships inside project
+  containers, so `govard sh -c "govard tool …"` nests a missing binary and
+  always fails. The catalog spec rejects that nesting pattern — keep it that
+  way when writing new command examples.
+- **Do not claim Govard-native coverage the audit subsystem lacks.**
+  `govard audit` implements only the `lint` check (PHPCS + PHPStan); any
+  other `--checks` value is rejected. QA-trio skills must state that boundary
+  instead of implying native security/performance gates exist.
+- **Forked superpowers skills stay verbatim.** Never edit their prose or
+  frontmatter locally (not even to add `compatibility`); local additions live
+  in separate files listed in `PRESERVE` in `scripts/sync-superpowers.sh`,
+  and the catalog spec asserts forked frontmatter shape stays upstream-clean.
+- **Skill counts are duplicated across README, AGENTS.md, and manifests.**
+  When adding or removing a skill, update every count and the compatibility
+  matrix in the same change — the catalog spec catches frontmatter drift but
+  not prose counts.
