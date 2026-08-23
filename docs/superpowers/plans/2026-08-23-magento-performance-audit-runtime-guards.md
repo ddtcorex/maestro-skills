@@ -67,7 +67,7 @@ const files = [
 ];
 for (const file of files) {
   const source = readFileSync(file, 'utf8');
-  if ((source.match(/^```/gm) || []).length % 2) throw new Error(`${file}: unbalanced Markdown fence`);
+  if ((source.match(/^\s*(?:>\s*)?```/gm) || []).length % 2) throw new Error(`${file}: unbalanced Markdown fence`);
 }
 NODE
 npm ci
