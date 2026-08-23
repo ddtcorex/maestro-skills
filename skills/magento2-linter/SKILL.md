@@ -7,7 +7,7 @@ description: |
   custom code", or "verify code quality before commit". Runs automated code quality checks for
   Magento 2 projects — PHPCS (Magento2 standard), PHPStan, and PHPMD.
   DEPENDENT on magento2-dev-core for understanding the coding standards it validates.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: developers
@@ -28,7 +28,8 @@ Part of the QA trio with `magento2-security-scan` (deeper vulnerability scanning
 
 `govard audit run --checks lint` is Govard's persistent, native lint gate for Magento 2 projects
 and modules, and running it for real is a **required step before telling a user a branch is
-"verified" or "ready to push" — not an optional nice-to-have**. A bare local `vendor/bin/phpcs`/
+"verified" or "ready to push" — not an optional nice-to-have**. `lint` is the only audit check
+Govard implements today; any other `--checks` value is rejected. A bare local `vendor/bin/phpcs`/
 `phpstan` invocation (see "Scoping" below) is a fast pre-check to catch obvious problems early —
 it is not proof the branch is clean, because it can diverge from the native toolchain run in
 either direction (see "Local Bare-Tool Runs Can Diverge from the Native Toolchain" below). Never

@@ -5,7 +5,7 @@ description: |
   "clear Laravel cache", "config:cache", "run queue operations", "schedule:run", "tinker into
   app", "artisan tinker", "run Laravel Pint", or "npm dev/prod". Provides Laravel-specific
   Govard shortcuts and commands. DEPENDENT on govard-toolbox for base commands.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox]
 metadata:
   audience: developers
@@ -24,36 +24,36 @@ Laravel-specific shortcuts and commands for Govard environments.
 
 ```bash
 # Cache management
-govard sh -c "govard tool artisan config:cache"
-govard sh -c "govard tool artisan config:clear"
-govard sh -c "govard tool artisan cache:clear"
+govard tool artisan config:cache
+govard tool artisan config:clear
+govard tool artisan cache:clear
 
 # Route cache
-govard sh -c "govard tool artisan route:cache"
-govard sh -c "govard tool artisan route:clear"
+govard tool artisan route:cache
+govard tool artisan route:clear
 
 # View cache
-govard sh -c "govard tool artisan view:cache"
-govard sh -c "govard tool artisan view:clear"
+govard tool artisan view:cache
+govard tool artisan view:clear
 ```
 
 ## Database
 
 ```bash
 # Migrations
-govard sh -c "govard tool artisan migrate"
-govard sh -c "govard tool artisan migrate:fresh"
-govard sh -c "govard tool artisan migrate:refresh"
-govard sh -c "govard tool artisan migrate:rollback"
-govard sh -c "govard tool artisan migrate:status"
+govard tool artisan migrate
+govard tool artisan migrate:fresh
+govard tool artisan migrate:refresh
+govard tool artisan migrate:rollback
+govard tool artisan migrate:status
 
 # Seeders
-govard sh -c "govard tool artisan db:seed"
-govard sh -c "govard tool artisan db:seed --class=UserSeeder"
+govard tool artisan db:seed
+govard tool artisan db:seed --class=UserSeeder
 
 # Factory
-govard sh -c "govard tool artisan make:factory PostFactory"
-govard sh -c "govard tool artisan tinker"
+govard tool artisan make:factory PostFactory
+govard tool artisan tinker
 
 # Direct SQL
 govard db connect
@@ -63,58 +63,58 @@ govard db connect
 
 ```bash
 # Start queue worker
-govard sh -c "govard tool artisan queue:work"
+govard tool artisan queue:work
 
 # Queue withSupervisor
 govard svc up
 
 # Retry failed jobs
-govard sh -c "govard tool artisan queue:retry all"
-govard sh -c "govard tool artisan queue:failed"
+govard tool artisan queue:retry all
+govard tool artisan queue:failed
 
 # Clear queue
-govard sh -c "govard tool artisan queue:flush"
+govard tool artisan queue:flush
 ```
 
 ## Scheduler
 
 ```bash
 # Run scheduler (keep in cron)
-govard sh -c "govard tool artisan schedule:run"
+govard tool artisan schedule:run
 
 # List scheduled
-govard sh -c "govard tool artisan schedule:list"
+govard tool artisan schedule:list
 ```
 
 ## Development
 
 ```bash
 # Create commands
-govard sh -c "govard tool artisan make:command MyCommand"
-govard sh -c "govard tool artisan make:controller MyController"
-govard sh -c "govard tool artisan make:model Post"
-govard sh -c "govard tool artisan make:migration create_posts_table"
+govard tool artisan make:command MyCommand
+govard tool artisan make:controller MyController
+govard tool artisan make:model Post
+govard tool artisan make:migration create_posts_table
 
 # Tinker (interactive REPL)
-govard sh -c "govard tool artisan tinker"
+govard tool artisan tinker
 
 # Show routes
-govard sh -c "govard tool artisan route:list"
-govard sh -c "govard tool artisan route:list --path=api"
+govard tool artisan route:list
+govard tool artisan route:list --path=api
 ```
 
 ## Testing
 
 ```bash
 # Run tests
-govard sh -c "govard tool artisan test"
+govard tool artisan test
 
 # With PHPUnit
-govard sh -c "govard tool php artisan test"
-govard sh -c "vendor/bin/phpunit"
+govard tool php artisan test
+govard tool php vendor/bin/phpunit
 
 # Specific test
-govard sh -c "vendor/bin/phpunit --filter=UserTest"
+govard tool php vendor/bin/phpunit --filter=UserTest
 ```
 
 ## Frontend Assets
@@ -127,24 +127,25 @@ govard tool npm run prod
 govard tool npm run watch
 
 # Laravel Mix (if using)
-govard sh -c "npm run dev"
-govard sh -c "npm run production"
+govard tool npm run dev
+govard tool npm run production
 
 # Clear Vite cache
-govard sh -c "rm -rf node_modules/.vite"
+# node_modules is bind-mounted into the container; clearing from the host is safe
+rm -rf node_modules/.vite
 ```
 
 ## Logging
 
 ```bash
 # View logs
-govard sh -c "tail -f storage/logs/laravel.log"
+tail -f storage/logs/laravel.log
 
 # Clear logs
-govard sh -c "govard tool artisan log:clear"
+govard tool artisan log:clear
 
 # Laravel Debugbar (if installed)
-govard sh -c "curl -s http://local.test/_debugbar/open"
+curl -s https://local.test/_debugbar/open
 ```
 
 ## Common Workflows
@@ -153,24 +154,24 @@ govard sh -c "curl -s http://local.test/_debugbar/open"
 
 ```bash
 govard tool composer install
-govard sh -c "govard tool artisan migrate"
-govard sh -c "govard tool artisan cache:clear"
-govard sh -c "npm install && npm run dev"
+govard tool artisan migrate
+govard tool artisan cache:clear
+govard tool npm install && govard tool npm run dev
 ```
 
 ### Creating Features
 
 ```bash
-govard sh -c "govard tool artisan make:model Post -mcr"  # Model + Migration + Controller
-govard sh -c "govard tool artisan migrate"
-govard sh -c "govard tool artisan route:list"
+govard tool artisan make:model Post -mcr  # Model + Migration + Controller
+govard tool artisan migrate
+govard tool artisan route:list
 ```
 
 ### Deployment Prep
 
 ```bash
-govard sh -c "govard tool artisan config:cache"
-govard sh -c "govard tool artisan route:cache"
-govard sh -c "govard tool artisan view:cache"
-govard sh -c "npm run prod"
+govard tool artisan config:cache
+govard tool artisan route:cache
+govard tool artisan view:cache
+govard tool npm run prod
 ```

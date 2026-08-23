@@ -1,6 +1,6 @@
 {
   "name": "maestro-skills",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Maestro Skills Hub & Cordis Plugin -- Magento 2 (architecture, linting, performance, security), Govard dev-environment orchestration, and the superpowers process-skills library (forked from obra/superpowers)",
   "author": {
     "name": "DDTCoreX",

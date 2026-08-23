@@ -6,7 +6,7 @@ description: |
   Repositories, or Plugins, writing secure Magento code, or building backend logic, CLI
   commands, or cron jobs. Foundation skill for professional Magento 2 development. This is the
   CORE skill that other Magento 2 skills depend on. Always load this first.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 metadata:
   audience: developers
   workflow: magento

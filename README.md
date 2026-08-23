@@ -33,7 +33,7 @@ maestro-skills/
 ├── .codex-plugin/                   # Codex CLI plugin manifest
 ├── .agents/plugins/                 # Codex marketplace manifest
 │
-└── skills/                          # 25 skills total
+└── skills/                          # 26 skills total
     ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v6.3.0)
     │   ├── brainstorming/              # Socratic design refinement with approval gates
     │   ├── test-driven-development/    # RED-GREEN-REFACTOR iron law
@@ -60,14 +60,15 @@ maestro-skills/
     └── 🔧 DEV ENVIRONMENT & CLI TOOLS (Govard Stack)
         ├── govard-toolbox/              # Base container orchestrator toolbox
         ├── govard-magento/              # Magento-specific dev env commands
-        └── govard-laravel/              # Laravel-specific dev env commands
+        ├── govard-laravel/              # Laravel-specific dev env commands
+        └── review-in-worktree/          # Govard commands in detached review worktrees
 ```
 
 ---
 
 ## 🤖 Skill Compatibility Matrix
 
-All 25 skills work identically on every listed tool.
+All 26 skills work identically on every listed tool.
 
 | Group | Skills | Claude Code | Codex CLI | OpenCode | GitHub Copilot | DeepSeek Harness |
 |---|---|---|---|---|---|---|
@@ -75,7 +76,7 @@ All 25 skills work identically on every listed tool.
 | Core & Standards | [magento2-dev-core](skills/magento2-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Linting & Auditing | [magento2-linter](skills/magento2-linter/SKILL.md), [magento2-performance-audit](skills/magento2-performance-audit/SKILL.md), [magento2-security-scan](skills/magento2-security-scan/SKILL.md), [magento2-code-review](skills/magento2-code-review/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Frameworks | [magento2-hyva-dev](skills/magento2-hyva-dev/SKILL.md), [magento2-frontend-dev](skills/magento2-frontend-dev/SKILL.md), [magento2-backend-dev](skills/magento2-backend-dev/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Toolchains (Govard) | [govard-toolbox](skills/govard-toolbox/SKILL.md), [govard-magento](skills/govard-magento/SKILL.md), [govard-laravel](skills/govard-laravel/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Toolchains (Govard) | [govard-toolbox](skills/govard-toolbox/SKILL.md), [govard-magento](skills/govard-magento/SKILL.md), [govard-laravel](skills/govard-laravel/SKILL.md), [review-in-worktree](skills/review-in-worktree/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -83,7 +84,7 @@ All 25 skills work identically on every listed tool.
 
 ### 1. DeepSeek Harness (DSH) — as a plugin (recommended)
 
-One command is a complete install — the plugin serves all 25 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
+One command is a complete install — the plugin serves all 26 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
 
 ```bash
 dsh plugin --profile web add github:ddtcorex/maestro-skills
@@ -193,6 +194,12 @@ Step-by-step commands to verify output works properly.
 ---
 
 *One bundle, one workflow: Govard domain expertise plus superpowers process discipline.* 🚀
+
+## Contributing
+
+Changes follow the Superpowers workflow mandated in [AGENTS.md](AGENTS.md):
+brainstorming → writing-plans → executing-plans with strict TDD. Feature
+branches only; never commit to `master` directly.
 
 ## Credits & Attribution
 

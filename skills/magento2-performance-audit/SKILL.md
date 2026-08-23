@@ -9,7 +9,7 @@ description: |
   reload storm", or a "crawler overloading server". Performs a comprehensive performance and
   health audit for Magento 2 projects against Adobe Commerce Best Practices. DEPENDENT on
   magento2-dev-core for code-level performance patterns.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: developers
@@ -19,6 +19,16 @@ metadata:
 # Magento 2 Performance Audit
 
 This skill performs a comprehensive audit of Magento 2 performance, infrastructure, and code-level patterns.
+
+## Govard-Native Audit Coverage
+
+`govard audit run` executes PHPCS and PHPStan through Govard's pinned lint
+toolchain image — it covers coding-standard and static-analysis findings only.
+As of Govard v1.63.0 no `performance` audit check exists:
+`govard audit run --checks performance` fails with "audit check ... is not
+implemented". Run this skill's manual checklist yourself and treat
+`govard audit run --checks lint` as the shared lint gate. Never present a
+lint-only pass as a performance verdict.
 
 > **This is a checklist, not a menu.** All 9 steps under **Workflow** (bottom of this file) run on every invocation — infra, indexer/cron, per-page-type capture, Slow Query Analysis, Cache Invalidation Efficiency, Client-Side AJAX Load, Core Web Vitals, code-level grep, report. Picking the steps that feel highest-signal for the effort and quietly dropping the rest (no admin creds, no Chrome DevTools MCP, "I already found a good bug") is the single most common failure mode of this skill — it produces a confident, well-formatted report that silently covers less than half the checklist. If a step genuinely can't run, say so *in the report, under that step's own heading* — `Skipped: <reason>` — never by omission. See the self-verification gate at the end of Workflow: the report is not done until it's been checked against the Audit Report Template line by line.
 

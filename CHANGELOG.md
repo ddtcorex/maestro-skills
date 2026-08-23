@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.1.0] - 2026-08-23
+
+### Fixed
+- Plugin-mode skill descriptions: YAML block scalars now parse, so all domain
+  skills expose their real trigger text through the DSH skill catalog.
+- `govard-laravel` / `govard-magento` command samples route host-side through
+  `govard tool` instead of nesting Govard inside the container shell.
+
+### Added
+- `review-in-worktree` skill for running Govard workflows against detached
+  review worktrees.
+- `dsh` declared in every domain skill's compatibility list, enforced by a
+  catalog drift-guard test suite.
+
 ## [2.0.0] - 2026-08-22
 
 ### Added
