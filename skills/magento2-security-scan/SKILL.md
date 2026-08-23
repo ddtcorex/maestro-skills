@@ -21,11 +21,13 @@ This skill performs security scanning for vulnerabilities, misconfigurations, an
 
 `govard audit run` executes PHPCS and PHPStan through Govard's pinned lint
 toolchain image — it covers coding-standard and static-analysis findings only.
-As of Govard v1.63.0 no `security` audit check exists:
+As of Govard v1.64.0 no `security` audit check exists:
 `govard audit run --checks security` fails with "audit check ... is not
-implemented". Run this skill's manual checklist yourself and treat
-`govard audit run --checks lint` as the shared lint gate. Never present a
-lint-only pass as a security verdict.
+implemented". The lint run does include a pub/media PHP guard since v1.64.0 — every PHP file
+under `pub/media` is flagged (`M2-LINT-MEDIA`) — so a lint pass also covers that specific
+file-drop attack surface, but it is still not a vulnerability scan. Run this skill's manual
+checklist yourself and treat `govard audit run --checks lint` as the shared lint gate. Never
+present a lint-only pass as a security verdict.
 
 ## Related Skills
 
