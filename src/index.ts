@@ -9,6 +9,7 @@ import type {
   SkillLookupOptions,
   SkillProviderControl,
 } from '@deepseek-ai/dsh-skill'
+import { parseFrontmatter } from './frontmatter.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DEFAULT_SKILLS_DIR = resolve(__dirname, '../skills')
@@ -28,42 +29,6 @@ export interface Config {
    * the installed plugin version. Default: true.
    */
   installPreset?: boolean
-}
-
-interface Frontmatter {
-  name?: string
-  description?: string
-  [key: string]: unknown
-}
-
-function parseFrontmatter(rawContent: string): { metadata: Frontmatter; body: string } {
-  if (!rawContent.startsWith('---')) {
-    return { metadata: {}, body: rawContent }
-  }
-  const endIdx = rawContent.indexOf('\n---', 3)
-  if (endIdx === -1) {
-    return { metadata: {}, body: rawContent }
-  }
-  const yamlText = rawContent.slice(3, endIdx).trim()
-  const body = rawContent.slice(endIdx + 4).trim()
-  const metadata: Frontmatter = {}
-
-  for (const line of yamlText.split('\n')) {
-    const colonIdx = line.indexOf(':')
-    if (colonIdx > 0) {
-      const key = line.slice(0, colonIdx).trim()
-      let val = line.slice(colonIdx + 1).trim()
-      if (val.startsWith('|') || val.startsWith('>')) {
-        val = ''
-      }
-      if (val.startsWith('"') && val.endsWith('"')) {
-        val = val.slice(1, -1)
-      }
-      metadata[key] = val
-    }
-  }
-
-  return { metadata, body }
 }
 
 /** Preset id and destination directory name under `<dshHome>/.agent-presets/`. */

@@ -25,7 +25,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepare": "tsc"
+    "prepare": "tsc",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.0"
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.0",
     "@types/node": "^22.0.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.11"
   }
 }
