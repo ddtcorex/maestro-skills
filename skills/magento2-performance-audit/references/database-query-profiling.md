@@ -36,8 +36,12 @@ The repeated-shape and cross-page-type signals elsewhere in this skill remain th
 > Never edit `app/etc/env.php` to enable these diagnostics. It is deployment configuration, commonly gitignored, and a malformed edit can fatal every `bin/magento` command without a Git rollback. Do not replace the commands with a bootstrap script either: old examples using `Zend_*` classes are incompatible with modern Laminas-based Magento and can fail before producing usable evidence. The safe recovery is to stop that diagnostic step, retain the exact CLI error, and report it as `Skipped: profiler/query-log command unavailable (<error>)`; do not claim a query capture happened. If the query log command succeeds, use the documented disable command during teardown even when a later page capture fails. Preserve the literal URL, cache state, and parameters for every valid capture so a rerun compares like for like rather than explaining a changed result with guessed tooling differences.
 
 ```bash
-# Enable full query logging with call stacks (see caveat below on log size)
-govard sh -c "bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0"
+# Claim this global diagnostic resource before enabling anything; keep the token for teardown.
+audit_token="$(date +%s)-$$"
+govard sh -c "lock=var/debug/.performance-audit.lock; mkdir \"\$lock\" || { echo 'SKIPPED: query-log capture already owned'; exit 1; }; printf '%s\\n' '$audit_token' > \"\$lock/owner\""
+
+# Enable full query logging with call stacks only while this session still owns the lock.
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0"
 
 # Visit the page(s) to capture queries — output goes to var/debug/db.log (plain text, NOT *.sql)
 # Format per entry: a "## <connectionId> ## QUERY" header (the connection id varies, so don't
@@ -45,15 +49,14 @@ govard sh -c "bin/magento dev:query-log:enable --include-all-queries=true --incl
 # "TIME: <seconds>", then (if --include-call-stack=true) a full PHP call stack — use the stack
 # to trace a repeated/slow query back to the exact file:line that issued it.
 
-# Count queries for one page load: clear the log, hit the page once, count entries
-govard sh -c "> var/debug/db.log"
+# Count queries for one page load: verify ownership, clear the log, hit once, count entries
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; : > var/debug/db.log"
 code=$(curl -sk -H "Accept: $ACCEPT" -A "$UA" -o /dev/null -w "%{http_code}" https://store.test/)
 [ "$code" = "200" ] || { echo "ABORT: got HTTP $code, not 200 — this capture is not valid data"; }
 govard sh -c "grep -c '## QUERY' var/debug/db.log"
 
-# ALWAYS disable when done — this is expensive and grows fast (a single page load with
-# --include-call-stack=true can produce several MB of log; on a bigger page ~10+ MB is normal)
-govard sh -c "bin/magento dev:query-log:disable"
+# ALWAYS disable only when this session owns the lock — call stacks are expensive and grow fast.
+govard sh -c "lock=var/debug/.performance-audit.lock; test \"\$(cat \"\$lock/owner\" 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:query-log:disable && : > var/debug/db.log && rm \"\$lock/owner\" && rmdir \"\$lock\""
 ```
 
 ### Capture integrity and query attribution
@@ -65,6 +68,13 @@ disable and clear logging. With call stacks enabled, split at the timestamp head
 `## ... ## QUERY` records whose *complete multi-line record* contains
 `Magento\\Framework\\App\\Http`; a line-oriented `TRACE:.*App\\Http` regex misses valid frontend
 records.
+
+> **Acquire a session-owned lock before any query-log setup, then retain the same token through teardown.** `db.log`, `dev:query-log:enable`, and `dev:query-log:disable` are global diagnostic state: two audit sessions cannot safely share them. On the host, create an opaque `audit_token`; use atomic `mkdir` inside the application container to claim `var/debug/.performance-audit.lock`, then write the token to its sole `owner` file. If `mkdir` fails, report `Skipped: query-log capture already owned` and stop that capture — do not wait, truncate `db.log`, disable logging, or remove the foreign lock. Before every clear, copy, and teardown, compare `owner` with the token; a mismatch invalidates the capture and must leave the other session untouched. Teardown removes only its own `owner` file then uses `rmdir`, never recursive deletion. A crash between `mkdir` and the owner write leaves **owner missing**: report that incomplete lock, inspect for a running owner, and require explicit human cleanup rather than guessing a token. This protects audit runners as well as cron noise: independent sessions otherwise silently mix records or disable each other mid-capture.
+
+```bash
+# Run before each clear/copy/teardown; a foreign owner is never this session's cleanup target.
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || { echo 'ABORT: query-log lock is not owned by this audit'; exit 1; }"
+```
 
 Compare before/after query counts only for the same effective URL (path, query string,
 pagination, store/currency/customer context), request headers, cache state, and product
@@ -188,25 +198,22 @@ The query-count/N+1 audit above catches queries that run *too often*; it says no
 # Either grep an existing db.log capture for anything at/above a threshold...
 govard sh -c "grep -B1 -A2 'TIME: [1-9]' var/debug/db.log"   # >= 1.000s; adjust the pattern for your threshold
 
-# ...or capture ONLY slow queries directly, with call stacks, across real traffic:
-govard tool magento dev:query-log:enable --include-all-queries=false --query-time-threshold=1 --include-call-stack=true
+# ...or, while this same session owns the lock, capture ONLY slow queries with call stacks:
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:query-log:enable --include-all-queries=false --query-time-threshold=1 --include-call-stack=true"
 # ... reproduce traffic / browse pages ...
-govard tool magento dev:query-log:disable
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:query-log:disable"
 ```
 
 This only sees queries triggered through Magento's own app requests. It won't catch slow queries from cron jobs, CLI imports, or anything else hitting the same database — for that, go to the DB itself.
 
-**2. DB-level: MySQL/MariaDB's own slow query log** catches everything regardless of source:
+**2. DB-level: MySQL/MariaDB's own slow query log** catches everything regardless of source, but `govard db query` cannot combine its `SET GLOBAL` mutation with the application-container owner check atomically. On a shared target, do **not** enable or disable it through these ad-hoc commands: report `Skipped: DB slow log needs a Govard-owned DB lifecycle lock` and use app-level timing instead. A dedicated Govard audit provider may implement that DB-side lock; until then, this reference supports only read-only state inspection and analysis of a log already enabled by that provider.
 
 ```bash
 # Check current state first — don't assume it's off or on
 govard db query "SHOW VARIABLES LIKE 'slow_query_log%'"
 govard db query "SHOW VARIABLES LIKE 'long_query_time'"
 
-# Enable for the duration of this audit (session-safe; SET GLOBAL persists until restart or explicit disable)
-govard db query "SET GLOBAL slow_query_log = 'ON'; SET GLOBAL long_query_time = 1;"
-
-# Find where it's writing, then let the box run its normal/representative traffic for a while
+# If a dedicated provider already enabled it, find where it writes and analyze that evidence.
 govard db query "SHOW VARIABLES LIKE 'slow_query_log_file'"
 
 # Analyze with mysqldumpslow (ships with every MySQL/MariaDB install — no extra tooling needed):
@@ -214,9 +221,6 @@ govard sh -c "mysqldumpslow -s t -t 10 <slow_query_log_file>"   # top 10 by tota
 # pt-query-digest (Percona Toolkit), if installed, gives richer per-query-shape stats:
 # govard sh -c "pt-query-digest <slow_query_log_file>"
 
-# ALWAYS disable when done — same "diagnostic state, not a running state" rule as everywhere
-# else in this skill; a slow log left on writes disk forever and nobody remembers why
-govard db query "SET GLOBAL slow_query_log = 'OFF';"
 ```
 
 > **The DB user may lack the `SUPER`/`SYSTEM_VARIABLES_ADMIN` privilege — test before relying on this level.** On one real audit, `SET GLOBAL general_log = 'ON'` failed with `ERROR 1227 (42000): Access denied; you need (at least one of) the SUPER privilege(s)`, and the containerized MySQL user had no path to grant it. If `SET GLOBAL` is denied, this level is a dead end on that box — say so in the report under Slow Query Analysis (`Skipped: DB user lacks SUPER privilege`) and fall back to level 1 (the app-level `TIME:` sort), which needs no DB privileges at all. Don't burn attempts re-trying variants of the grant or editing DB config files to force it.

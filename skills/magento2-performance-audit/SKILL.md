@@ -36,6 +36,8 @@ lint-only pass as a performance verdict.
 
 > **Read the step's reference file before the first attempt at that step — not after improvising fails.** Each "Full detail:" link owns its supported commands and environment traps: BusyBox grep inside `govard sh`, host/container DNS, Laminas renames, and DB privilege walls. If two attempts at a step fail, read that reference end to end before attempt 3. Never hand-edit `app/etc/env.php` to enable a diagnostic: it is deployment configuration, not an audit control surface; a syntax error takes every Magento CLI command down and cannot be reverted with `git checkout` when the file is gitignored.
 
+> **Shared query-log captures require ownership.** Before step 3, acquire the `.performance-audit.lock` session token described in `references/database-query-profiling.md`. A busy or foreign lock must fail-fast; do not remove a lock you do not own or treat its log as evidence.
+
 ### Common ways this gets shortcut (don't)
 
 | Rationalization | Reality |
