@@ -195,6 +195,12 @@ Step-by-step commands to verify output works properly.
 
 *One bundle, one workflow: Govard domain expertise plus superpowers process discipline.* 🚀
 
+## Contributing
+
+Changes follow the Superpowers workflow mandated in [AGENTS.md](AGENTS.md):
+brainstorming → writing-plans → executing-plans with strict TDD. Feature
+branches only; never commit to `master` directly.
+
 ## Credits & Attribution
 
 - **Domain skills**: © DDTCoreX, MIT License (see `LICENSE`).
