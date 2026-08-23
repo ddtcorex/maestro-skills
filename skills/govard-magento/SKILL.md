@@ -36,6 +36,16 @@ fix) instead of starting a fresh, non-comparable run:
 govard audit rerun --session SESSION_ID
 ```
 
+To also capture a page-profile artifact in the same run (Govard v1.64.0+):
+
+```bash
+govard audit run --checks lint,profiler --url 'https://<domain>/'
+```
+
+The profiler CSV lands under the run's `artifacts/profiler/` with its SHA-256 recorded in the
+result — open it in a spreadsheet to read per-timer costs. Policy details live in
+`magento2-linter`.
+
 ## Magento CLI
 
 ```bash
