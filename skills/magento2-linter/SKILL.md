@@ -28,8 +28,11 @@ Part of the QA trio with `magento2-security-scan` (deeper vulnerability scanning
 
 `govard audit run --checks lint` is Govard's persistent, native lint gate for Magento 2 projects
 and modules, and running it for real is a **required step before telling a user a branch is
-"verified" or "ready to push" — not an optional nice-to-have**. `lint` is the only audit check
-Govard implements today; any other `--checks` value is rejected. A bare local `vendor/bin/phpcs`/
+"verified" or "ready to push" — not an optional nice-to-have**. Govard v1.64.0 implements
+two audit checks: `lint` (PHPCS + PHPStan + the pub/media PHP guard) and `profiler` (captures
+the Magento stock profiler CSV through the project's own web server — see "The lint run's
+pub/media PHP guard" below for the guard, and step 2 for the profiler command); any other
+`--checks` value is rejected. A bare local `vendor/bin/phpcs`/
 `phpstan` invocation (see "Scoping" below) is a fast pre-check to catch obvious problems early —
 it is not proof the branch is clean, because it can diverge from the native toolchain run in
 either direction (see "Local Bare-Tool Runs Can Diverge from the Native Toolchain" below). Never
@@ -52,7 +55,10 @@ Work through the audit in this order:
    classification and fail outright when the directory doesn't support it — useful to catch a
    misresolved `auto` guess rather than silently linting the wrong scope.
 2. **Run it:** `govard audit run --checks lint` (`lint` is already the default `--checks` value,
-   so plain `govard audit run` is equivalent).
+   so plain `govard audit run` is equivalent). Add `,profiler` plus a `--url` to also capture a
+   page-profile artifact — `govard audit run --checks lint,profiler --url https://<domain>/` —
+   and note that a bare `govard audit rerun --session <id>` repeats the latest run's check
+   selection, profiler URL included.
 3. **For standalone iteration only**, optionally narrow the PHP matrix with `--php 8.1,8.4`.
    `--php` on `project`/`module_in_project` targets is only accepted when it repeats the
    project's own active `stack.php_version` — it can't widen or narrow those targets'
@@ -95,6 +101,25 @@ reports `effective_scope: project` regardless of the base ref given. Don't expec
 narrow analysis to just the diff; treat every native run's findings as covering the whole
 module/project and split diff-introduced from pre-existing findings yourself afterward (see
 `magento2-code-review`'s scope-modes reference for that split).
+
+### The lint run's pub/media PHP guard (M2-LINT-MEDIA)
+
+Since Govard v1.64.0, every `govard audit run --checks lint` also flags each PHP file found
+under `pub/media` as a `M2-LINT-MEDIA / PHP file in pub/media` finding — no extra flag, no
+opt-in. Treat these findings as a security incident, never as style noise: PHP files under
+`pub/media` are a classic webshell drop zone (often disguised as images with a `GIF89a` header
+followed by PHP code) and, depending on server configuration, may be directly executable via
+their public URL.
+
+First response when they appear:
+
+1. Extract the full file list from the report (`tool: M2-LINT-MEDIA` entries).
+2. Quarantine the files (move them out of the webroot; do not just delete evidence).
+3. Check web-server access logs for requests to those paths to determine whether they were
+   ever executed.
+4. Investigate the upload vector that planted them (custom options, quote uploads, third-party
+   modules), then rerun the audit and expect zero media findings before calling the project
+   clean.
 
 ### PHP versions
 
