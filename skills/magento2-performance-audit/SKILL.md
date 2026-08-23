@@ -20,6 +20,16 @@ metadata:
 
 This skill performs a comprehensive audit of Magento 2 performance, infrastructure, and code-level patterns.
 
+## Govard-Native Audit Coverage
+
+`govard audit run` executes PHPCS and PHPStan through Govard's pinned lint
+toolchain image — it covers coding-standard and static-analysis findings only.
+As of Govard v1.63.0 no `performance` audit check exists:
+`govard audit run --checks performance` fails with "audit check ... is not
+implemented". Run this skill's manual checklist yourself and treat
+`govard audit run --checks lint` as the shared lint gate. Never present a
+lint-only pass as a performance verdict.
+
 > **This is a checklist, not a menu.** All 9 steps under **Workflow** (bottom of this file) run on every invocation — infra, indexer/cron, per-page-type capture, Slow Query Analysis, Cache Invalidation Efficiency, Client-Side AJAX Load, Core Web Vitals, code-level grep, report. Picking the steps that feel highest-signal for the effort and quietly dropping the rest (no admin creds, no Chrome DevTools MCP, "I already found a good bug") is the single most common failure mode of this skill — it produces a confident, well-formatted report that silently covers less than half the checklist. If a step genuinely can't run, say so *in the report, under that step's own heading* — `Skipped: <reason>` — never by omission. See the self-verification gate at the end of Workflow: the report is not done until it's been checked against the Audit Report Template line by line.
 
 > **Distinguish a scoped ask from an unscoped one — this rule governs dropping steps quietly, not answering a narrower question.** A general ask — "audit performance", "review this project before launch" — is unscoped: all 9 steps apply, none optional, exactly as above. When the user's own words name one specific category instead ("just check the MySQL query count", "audit N+1s only", "how many queries does the homepage run"), scope the work to that category and its reference file(s) — running the other 8 steps anyway would be answering a different question than the one asked. The obligation that carries over unchanged: state the scope explicitly (a "Scope" line/heading in the report) so the result is never mistaken for a full audit, and don't let scope creep run in either direction — no silently expanding a scoped ask back to all 9 steps, and no silently narrowing an unscoped one down to whichever step already found something.

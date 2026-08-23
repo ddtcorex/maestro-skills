@@ -17,6 +17,16 @@ metadata:
 
 This skill performs security scanning for vulnerabilities, misconfigurations, and compliance issues.
 
+## Govard-Native Audit Coverage
+
+`govard audit run` executes PHPCS and PHPStan through Govard's pinned lint
+toolchain image — it covers coding-standard and static-analysis findings only.
+As of Govard v1.63.0 no `security` audit check exists:
+`govard audit run --checks security` fails with "audit check ... is not
+implemented". Run this skill's manual checklist yourself and treat
+`govard audit run --checks lint` as the shared lint gate. Never present a
+lint-only pass as a security verdict.
+
 ## Related Skills
 
 **REQUIRED BACKGROUND:** Load `magento2-dev-core` first — this skill scans for violations of the security patterns it defines (escaping, discouraged functions, ObjectManager misuse), and its patterns are what you fix findings with.
