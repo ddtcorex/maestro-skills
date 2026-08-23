@@ -6,15 +6,20 @@ Full detail for Workflow step 8.
 
 Don't rely on reading through custom modules by eye — grep for the shapes below across custom code first (scope to `app/code`, not `vendor/`, so results are actually yours to fix; see the vendor-code note in `references/database-query-profiling.md` for anything that turns up in a third-party extension instead):
 
+> **Choose the recipe for the shell that executes it.** The audit container reached through `govard sh` uses BusyBox `grep`, which does not implement GNU `--include`; a command such as `grep -rn --include='*.php'` therefore fails before it searches anything. Inside that container, use the `find … -type f -exec grep … {} +` forms below. `find` performs the filename filtering itself, `grep -Hn` preserves the file and line evidence needed by the report, and `{} +` batches inputs so the audit does not spawn one process per file. Do not replace `+` with `\;` unless the command must run once per path.
+>
+> The same GNU-grep one-liner remains valid on a host shell that actually has GNU grep, but do not copy it into `govard sh` just because it is shorter. Scope searches to `app/code` first: vendor hits are evidence about an extension dependency, not a custom-code finding. If `app/code` is absent or the command returns no hits, record that negative result under the code-level section instead of silently treating the grep as skipped. These searches are heuristics; inspect every hit before reporting an N+1, collection-count, or uncacheable-layout finding. The command only finds candidate shapes and cannot establish request frequency, cache scope, or production impact by itself.
+
 ```bash
 # N+1: a ->load()/->create()->load() call sitting inside a foreach loop
-grep -rnE 'foreach\s*\(' --include="*.php" app/code -A3 | grep -B3 -- '->load('
+# (BusyBox-safe; on a GNU-grep host the --include one-liner form also works)
+find app/code -name '*.php' -type f -exec grep -Hn -A3 'foreach' {} + | grep -B3 -- '->load('
 
 # Full collection load just to count items (should be ->getSize() instead)
-grep -rn 'count(\$.*[Cc]ollection' --include="*.php" app/code
+find app/code -name '*.php' -type f -exec grep -Hn 'count(\$.*[Cc]ollection' {} +
 
 # Blocks marked uncacheable (prevents FPC for whatever layout handle references them)
-grep -rl 'cacheable="false"' --include="*.xml" app/code
+find app/code -name '*.xml' -type f -exec grep -Hl 'cacheable="false"' {} +
 ```
 
 The `foreach`/`->load()` grep is a heuristic, not a proof — read each hit to confirm it's actually iterating a list (a false positive: a single `->load()` inside a `foreach` that only ever runs once). For the `cacheable="false"` grep, check what page/layout handle it's declared under before flagging it — Magento's own core layout XML uses it by default on inherently personalized pages (customer account, checkout, wishlist, order history), where it's correct and expected, not a bug.

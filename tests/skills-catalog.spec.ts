@@ -56,4 +56,29 @@ describe('skills catalog', () => {
     expect(raw).toContain('govard tool magento ')
     expect(raw).not.toMatch(/govard\s+sh\s+-c\s+"bin\/magento/)
   })
+
+  it('guards shared Magento query-log captures with an owner token', async () => {
+    const { raw } = await load('magento2-performance-audit')
+    expect(raw).toContain('.performance-audit.lock')
+    expect(raw).toContain('session token')
+    expect(raw).toContain('fail-fast')
+    expect(raw).toContain('do not remove a lock')
+  })
+
+  it('acquires the query-log lock before enabling global diagnostics', async () => {
+    const reference = await readFile(join(SKILLS_DIR, 'magento2-performance-audit', 'references', 'database-query-profiling.md'), 'utf-8')
+    expect(reference.indexOf('# Claim this global diagnostic resource')).toBeLessThan(reference.indexOf('# Enable full query logging'))
+    expect(reference).toContain('owner missing')
+  })
+
+  it('does not leave owner checks outside global diagnostic mutations', async () => {
+    const base = join(SKILLS_DIR, 'magento2-performance-audit', 'references')
+    const [database, perPage] = await Promise.all([
+      readFile(join(base, 'database-query-profiling.md'), 'utf-8'),
+      readFile(join(base, 'per-page-type-audit.md'), 'utf-8'),
+    ])
+    expect(database).toMatch(/test .*performance-audit\.lock\/owner.*audit_token.*bin\/magento dev:query-log:enable/)
+    expect(database).not.toContain('govard db query "SET GLOBAL slow_query_log')
+    expect(perPage).toMatch(/test .*\$lock\/owner.*audit_token.*bin\/magento cache:enable/)
+  })
 })

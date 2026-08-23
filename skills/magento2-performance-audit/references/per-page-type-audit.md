@@ -57,16 +57,20 @@ Pick 3 categories spanning small/medium/large product counts (not the single lar
 ## 1. Set up the uncached measurement environment
 
 ```bash
-govard sh -c "bin/magento dev:profiler:enable html"
-govard sh -c "bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0"
-govard sh -c "bin/magento cache:disable full_page block_html layout"
-govard sh -c "bin/magento cache:flush"
+# Acquire the session-owned query-log lock first; keep audit_token for every capture and teardown.
+# Full lock semantics and owner checks: references/database-query-profiling.md.
+audit_token="$(date +%s)-$$"
+govard sh -c "lock=var/debug/.performance-audit.lock; mkdir \"\$lock\" || { echo 'SKIPPED: query-log capture already owned'; exit 1; }; printf '%s\\n' '$audit_token' > \"\$lock/owner\""
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:profiler:enable html"
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0"
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento cache:disable full_page block_html layout"
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento cache:flush"
 
 # One throwaway homepage request first (discard its output/log) — this lets config/eav/
 # compiled_config caches rebuild after the flush. Confirm it's actually 200 before proceeding —
 # a broken warmup means every capture after it is measuring a failure, not a page.
 curl -sk -H "Accept: $ACCEPT" -A "$UA" -o /dev/null -w "warmup: %{http_code}\n" https://store.test/
-govard sh -c "> var/debug/db.log"
+govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; : > var/debug/db.log"
 ```
 
 > **This one homepage warmup is not enough on its own — every sample URL needs its own warmup too.** It only rebuilds *global* caches (config/eav/compiled_config); it does nothing for the layered-nav attribute metadata, category-specific EAV lookups, and other page-type-specific data that only get computed and cached the first time that *specific* URL is actually requested. Visiting the homepage first does not pay that cost on a category or product page's behalf — each one pays its own first-visit tax independently, regardless of what else was hit before it. Step 2 below folds a per-URL warmup into the same loop as the real capture — don't skip it and reuse just the homepage warmup for all 7 pages.
@@ -90,14 +94,18 @@ for name in "${!urls[@]}"; do
   # Per-page warmup (discard) — this specific URL's own first-visit cold cost, not covered
   # by the single homepage warmup in step 1.
   curl -sk -H "Accept: $ACCEPT" -A "$UA" -o /dev/null -w "warmup ($name): %{http_code}\n" "https://store.test$url"
-  govard sh -c "> var/debug/db.log"
+  govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; : > var/debug/db.log"
   code=$(curl -sk -H "Accept: $ACCEPT" -A "$UA" -o "${name}.html" -w "%{http_code}" "https://store.test$url")
   echo "$name ($url): HTTP $code"
   [ "$code" = "200" ] || echo "  ^ NOT 200 — discard this capture, do not analyze ${name}.html/${name}.db.log"
-  cp var/debug/db.log "${name}.db.log"
-  govard sh -c "> var/debug/db.log"
+  govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; cat var/debug/db.log" > "${name}.db.log"
+  govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; : > var/debug/db.log"
 done
 ```
+
+> **Keep storefront HTTP requests on the host; use `govard sh` only for container-local log work.** The store domain normally resolves through the host proxy/TLS setup, while the application container has different DNS and network routes. A curl moved into `govard sh` can therefore fail with `exit status 7`, return HTTP `000`, or reach an unrelated `localhost` service even when the host request works. Do not work around that by calling PHP-FPM on port 9000: FastCGI is not HTTP, so `docker exec <web> curl http://<php>:9000/` is not a page capture.
+>
+> The capture boundary is deliberate: host-side `curl` warms and requests each storefront URL; `govard sh -c` clears, snapshots, and reads `var/debug/db.log` inside the application container. Treat a curl transport error, HTTP `000`, or empty response as an invalid page capture, not a zero-query result. Record the URL and error, fix the host DNS/hosts or proxy path, then repeat that page in isolation before including it in a comparison. Do not move curl into the container merely to avoid the host problem. If the host cannot reach the declared URL during this session, mark that page `Skipped: host cannot reach <url> (<error>)`; the profiler and query-log artifacts for that failed request are not evidence. Keep the second pass on the same host URLs and in the same order once reachability is restored.
 
 After this loop completes, re-run it a second time in full (same URLs, same order) without an additional flush and diff the counts against the first pass — per-URL-warmed numbers should match exactly. If any page still doesn't reproduce, treat it per item 4 in `references/database-query-profiling.md` (re-run that one page in isolation before trusting the number).
 
@@ -106,11 +114,7 @@ Analyze each page's `*.html` for its profiler table (see `references/html-profil
 ## 3. Always restore state afterward
 
 ```bash
-govard sh -c "bin/magento cache:enable full_page block_html layout"
-govard sh -c "bin/magento cache:flush"
-govard sh -c "bin/magento dev:profiler:disable"
-govard sh -c "bin/magento dev:query-log:disable"
-rm -f var/debug/db.log
+govard sh -c "lock=var/debug/.performance-audit.lock; test \"\$(cat \"\$lock/owner\" 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && : > var/debug/db.log && rm \"\$lock/owner\" && rmdir \"\$lock\""
 ```
 
 Don't leave a target environment with caches disabled and full query logging on — this is a diagnostic state, not a normal running state, and matters especially if the target is shared with other developers or is staging rather than a disposable local box.
