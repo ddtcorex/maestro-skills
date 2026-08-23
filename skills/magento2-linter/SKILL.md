@@ -7,7 +7,7 @@ description: |
   custom code", or "verify code quality before commit". Runs automated code quality checks for
   Magento 2 projects — PHPCS (Magento2 standard), PHPStan, and PHPMD.
   DEPENDENT on magento2-dev-core for understanding the coding standards it validates.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: developers

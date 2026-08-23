@@ -7,7 +7,7 @@ description: |
   Xdebug". Provides high-level shortcuts and references for the Govard development environment
   orchestrator. This is the BASE skill — for framework-specific shortcuts, also load
   govard-magento or govard-laravel.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 metadata:
   audience: developers
   workflow: general

@@ -6,7 +6,7 @@ description: |
   Magento UI library", "add a RequireJS module", "extend JavaScript", "customize checkout", or
   "modify the cart page". Covers Magento 2 frontend development using the Luma/Blank theme.
   DEPENDENT on magento2-dev-core for backend patterns and escaping.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: frontend developers

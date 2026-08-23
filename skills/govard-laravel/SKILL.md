@@ -5,7 +5,7 @@ description: |
   "clear Laravel cache", "config:cache", "run queue operations", "schedule:run", "tinker into
   app", "artisan tinker", "run Laravel Pint", or "npm dev/prod". Provides Laravel-specific
   Govard shortcuts and commands. DEPENDENT on govard-toolbox for base commands.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox]
 metadata:
   audience: developers

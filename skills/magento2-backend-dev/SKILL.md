@@ -6,7 +6,7 @@ description: |
   "implement a web API", "add a SOAP service", or "create a data provider". Covers Magento 2
   backend development: REST/SOAP/GraphQL APIs, CLI commands, and cron jobs. DEPENDENT on
   magento2-dev-core for security and architecture patterns.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: backend developers

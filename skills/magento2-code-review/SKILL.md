@@ -12,7 +12,7 @@ description: |
   finding codes. DEPENDENT on magento2-dev-core; invokes magento2-linter,
   magento2-security-scan, and magento2-performance-audit as needed for the
   chosen scope.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: tech leads, reviewers

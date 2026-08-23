@@ -7,7 +7,7 @@ description: |
   "Hyvä React components", or handle "Tailwind configuration" or "CSP nonce registration".
   Provides expert Hyvä theme development for Magento 2. This is a SPECIALIZED skill for
   Hyvä-specific patterns. DEPENDENT on magento2-dev-core for PHP/backend patterns.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: frontend developers

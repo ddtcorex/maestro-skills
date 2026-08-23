@@ -9,7 +9,7 @@ description: |
   reload storm", or a "crawler overloading server". Performs a comprehensive performance and
   health audit for Magento 2 projects against Adobe Commerce Best Practices. DEPENDENT on
   magento2-dev-core for code-level performance patterns.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: developers

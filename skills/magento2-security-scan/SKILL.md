@@ -6,7 +6,7 @@ description: |
   dependency audit", "check for outdated packages", "run a PCI compliance check", or "do a
   security review before deploy". Scans Magento 2 code for security vulnerabilities and
   compliance issues. DEPENDENT on magento2-dev-core for security patterns.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
   audience: developers

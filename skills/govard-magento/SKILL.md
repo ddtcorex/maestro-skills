@@ -6,7 +6,7 @@ description: |
   "reindex catalog", "run indexer commands", "enable/disable modules", "start frontend sync",
   "run browser-sync", "set up live reload for Hyva/Luma", or "govard frontend". Provides
   Magento-specific Govard shortcuts and commands. DEPENDENT on govard-toolbox for base commands.
-compatibility: claude, codex, opencode, copilot
+compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox]
 metadata:
   audience: developers
