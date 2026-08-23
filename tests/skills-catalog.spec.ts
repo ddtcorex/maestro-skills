@@ -42,4 +42,18 @@ describe('skills catalog', () => {
       expect(metadata.compatibility, skill).toBeUndefined()
     }
   })
+
+  it('no skill nests govard inside its own container shell', async () => {
+    const entries = await readdir(SKILLS_DIR)
+    for (const entry of entries) {
+      const { raw } = await load(entry)
+      expect(raw, entry).not.toMatch(/govard\s+sh\s+-c\s+"govard\s+/)
+    }
+  })
+
+  it('govard-magento routes magento CLI through govard tool', async () => {
+    const { raw } = await load('govard-magento')
+    expect(raw).toContain('govard tool magento ')
+    expect(raw).not.toMatch(/govard\s+sh\s+-c\s+"bin\/magento/)
+  })
 })
