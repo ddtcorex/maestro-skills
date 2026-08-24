@@ -6,6 +6,8 @@ A single-page spot check isn't representative — different page types have very
 
 **Sample 3 URLs per page type, not 1 — except homepage, which is usually singular** (unless the store has multiple storefront views, in which case sample those too). One category and one product tells you *a* number; it can't tell you whether that number is representative of the type or an artifact of the one page you happened to pick, and it can't catch a bug whose cost only becomes visible at scale (see "Interpreting results correctly" below — it needs at least 3 differently-sized samples of the same type to work at all). Three samples per type is enough to show a pattern without turning the audit into a full crawl.
 
+> **Expected cost on a real store like `bebe9` (3.2G/60k files in `pub/media`):** homepage 50k queries (with call-stack) → 16-26s per capture, 7 pages → ~110-140s for captures alone + 31s setup + 10s restore ≈ 2.5-3 min. The harness `tools.bash` default 60s will kill this — run with `timeout 300` or `run_in_background` with polling, and always trap restore (see “Always restore” below). Keep all 7 pages; this cost is intentional — a single-category spot check cannot reveal per-item N+1s that only become visible across small/medium/large.
+
 ## 0. Pick genuinely representative pages first
 
 Before measuring anything, verify the specific URLs you're about to test aren't degenerate cases — this is the single easiest way to get a misleading audit.
@@ -116,6 +118,8 @@ Analyze each page's `*.html` for its profiler table (see `references/html-profil
 ```bash
 govard sh -c "lock=var/debug/.performance-audit.lock; test \"\$(cat \"\$lock/owner\" 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && : > var/debug/db.log && rm \"\$lock/owner\" && rmdir \"\$lock\""
 ```
+
+If the harness kills the script mid-capture (timeout, Ctrl+C), caches and `dev:profiler`/`dev:query-log` stay enabled and the `var/debug/.performance-audit.lock` remains. Always trap restore: wrap the capture loop in `trap 'govard sh -c "bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && rm -rf var/debug/.performance-audit.lock"' EXIT` and, for Govard-native `audit --checks profiler`, clean a stale `diagnostics` lease with `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `rm .govard/apache/custom/govard-audit-profiler-*.conf` if `is already held` appears.
 
 Don't leave a target environment with caches disabled and full query logging on — this is a diagnostic state, not a normal running state, and matters especially if the target is shared with other developers or is staging rather than a disposable local box.
 

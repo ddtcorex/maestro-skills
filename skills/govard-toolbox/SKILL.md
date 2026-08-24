@@ -217,7 +217,7 @@ govard audit rerun --session SESSION_ID           # exact rerun by session, prof
 govard audit toolchain status                     # lint image health
 ```
 
-`--mode` validates early (`auto`, `project`, `module_in_project`, `standalone`) -- typo `module` fails with `unknown audit target mode (valid modes: ...)`. `govard env up/pull` now uses resilient per-image pulls (`--ignore-buildable`, reuse compatible local image or build Govard image locally).
+`--mode` validates early (`auto`, `project`, `module_in_project`, `standalone`) -- typo `module` fails with `unknown audit target mode (valid modes: ...)`. `govard env up/pull` now uses resilient per-image pulls (`--ignore-buildable`, reuse compatible local image or build Govard image locally). Stale `diagnostics` lease (`is already held`) -- `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `.govard/*/custom/govard-audit-profiler-*.conf`; 7-page manual audit costs ~2.5-3 min on bebe9 -- keep all 7 with `timeout 300` and trap restore, not fewer pages.
 
 ## Detailed References
 
