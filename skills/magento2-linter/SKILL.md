@@ -58,7 +58,7 @@ Work through the audit in this order:
    so plain `govard audit run` is equivalent). Add `,profiler` plus a `--url` to also capture a
    page-profile artifact — `govard audit run --checks lint,profiler --url https://<domain>/` —
    and note that a bare `govard audit rerun --session <id>` repeats the latest run's check
-   selection, profiler URL included.
+   selection, profiler URL included. In `--format text` (the default) Docker logs stream live (phase start/end, cache state, `magelint: php X.Y analyzed`) and findings are colorized + uncapped on a TTY (piped stays plain + capped at 10); in `--format json` stdout is a single machine-clean object, diagnostics go to stderr -- keep `json` for agents, `text` for humans. A `FAILED`/`CANCELLED` run still prints the full summary before exiting non-zero.
 3. **For standalone iteration only**, optionally narrow the PHP matrix with `--php 8.1,8.4`.
    `--php` on `project`/`module_in_project` targets is only accepted when it repeats the
    project's own active `stack.php_version` — it can't widen or narrow those targets'
