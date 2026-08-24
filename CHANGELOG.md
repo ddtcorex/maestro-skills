@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.2.0] - 2026-08-25
+
+### Added
+- Govard v1.64.0 audit sync (verified on bebe9, Apache 2.4.8-p4, 3.2G media):
+  - `govard-toolbox`: Audit gateway — `govard audit run --checks lint` streams live like `vendor/bin` (TTY colorized + uncapped, piped capped), `json` stays single object for agents; `--mode` validates early (`auto`, `project`, `module_in_project`, `standalone`); resilient per-image pulls (`--ignore-buildable`); stale `diagnostics` lease recovery; 7-page manual audit cost 2.5-3 min with `timeout 300` + trap (keep all 7, don't sample fewer).
+  - `magento2-linter`: Document `--format text` vs `json` streaming/color and non-zero exit still renders.
+  - `magento2-performance-audit`: Detail Govard-native `profiler` lease/`Accept: text/html`/`artifacts/profiler/profile.csv` SHA, and keep 7 pages with 300s trap.
+  - `per-page-type-audit`: Expected 50k queries/page (16-26s each on bebe9) and stale lock trap.
+
+### Verified
+- `bebe9` lint `BeBe9/Brand` 1.6s/1.1s warm (56 findings, `media-guard` 2ms), `profiler` 11.3s PASSED with `profile.csv`, `--mode` typo reports valid modes, `pub/media` 0 PHP, site 200 after restore.
+
 ## [2.1.0] - 2026-08-23
 
 ### Fixed
