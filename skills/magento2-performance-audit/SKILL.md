@@ -29,7 +29,7 @@ As of Govard v1.64.0 no `performance` audit check exists:
 implemented". Govard v1.64.0 does add a native `profiler` check
 (`--checks lint,profiler --url <url>`) that machine-captures the stock profiler CSV for one
 URL — a quick complement to this skill's manual per-page audit, not a replacement: it ships
-no query log, no cross-page matrix, and no threshold analysis. Keep running this checklist
+no query log, no cross-page matrix, and no threshold analysis. The profiler requires a project target (not standalone), an absolute http(s) URL (the request carries `Accept: text/html` so stock Magento enables the CSV), and is guarded by a per-project `diagnostics` lease; the CSV lands as `artifacts/profiler/profile.csv` with its SHA in `audit-result.json` — open it as spreadsheet to read per-timer costs. Keep running this checklist
 yourself and treat `govard audit run --checks lint` as the shared lint gate. Never present a
 lint-only pass as a performance verdict.
 

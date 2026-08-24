@@ -205,6 +205,20 @@ govard config get stack.php_version
 govard config set stack.php_version 8.4
 ```
 
+## Audit
+
+Govard's persistent audit gate for Magento 2/Mage-OS -- see `magento2-linter` for full policy (`target --mode`, PHP matrix, provider rules, caching/rerun identity). Text streams live like `vendor/bin/phpcs` (TTY colorized + uncapped, piped capped + plain); `json` stays a single object on stdout for AI agents. A failed/cancelled run still renders before exiting non-zero.
+
+```bash
+govard audit run --checks lint                    # project or module_in_project, default text streams live
+govard audit run --checks lint --format json      # machine-clean for agents, diagnostics on stderr
+govard audit run --checks lint,profiler --url https://shop.test/  # also capture profiler CSV (v1.64.0+)
+govard audit rerun --session SESSION_ID           # exact rerun by session, profiler URL included
+govard audit toolchain status                     # lint image health
+```
+
+`--mode` validates early (`auto`, `project`, `module_in_project`, `standalone`) -- typo `module` fails with `unknown audit target mode (valid modes: ...)`. `govard env up/pull` now uses resilient per-image pulls (`--ignore-buildable`, reuse compatible local image or build Govard image locally).
+
 ## Detailed References
 
 See bundled documents:
