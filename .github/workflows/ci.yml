@@ -14,4 +14,4 @@ permissions:
 
 jobs:
   verify:
-    uses: ddtcorex/dsh-maestro-ci/.github/workflows/node-plugin.yml@33f1677f8c634c5386348f96c77d31a0e3bbadc4
+    uses: ddtcorex/dsh-maestro-ci/.github/workflows/node-plugin.yml@f32468056f80d66f1ada4dc303e5df99ba42af0f
