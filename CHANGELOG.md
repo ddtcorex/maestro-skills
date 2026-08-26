@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.2.1] - 2026-08-26
+
+### Added
+- `dsh-safe-web-update`: a portable DSH Web restart skill with a bundled,
+  `--confirm`-guarded helper. It classifies static, client, and host changes;
+  requires preflight/dry-boot guidance; and supports a non-mutating
+  `--dry-run` process-tree inspection.
+
+### Changed
+- The DSH restart procedure is now distributed entirely through the package;
+  no workspace-local skill or machine-specific restart script is required.
+
 ## [2.2.0] - 2026-08-25
 
 ### Added
