@@ -474,6 +474,39 @@ npm run build
 </div>
 ```
 
+## Reviewing Tailwind/Hyvä Diffs — Verify Before Claiming
+
+When reviewing a diff against a Hyvä theme, never assert that a utility class "is missing", "compiles to nothing", or "will be purged" without verifying against the actual project. Work through this gate:
+
+### 1. Detect the stack first
+
+Read `<theme>/web/tailwind/package.json` for the `tailwindcss` major version. Hyvä default theme 1.4.x/1.5.x ships Tailwind v4, 1.2.x/1.3.x v3, older v2. The version decides what "exists":
+
+- **Tailwind v3**: a utility exists only if it is in the default scale OR `theme.extend.*` OR produced by a plugin/safelist entry in `tailwind.config.js`.
+- **Tailwind v4**: numeric spacing utilities are dynamic (`w-18`, `py-3.75` work out of the box); sources come from CSS `@source` directives and `hyva.config.json` (`tailwind.include/exclude`). Editing `hyva.config.json` on a v3 setup is a silent no-op.
+
+### 2. Check the real config before claiming absence
+
+Grep/read the theme's actual `tailwind.config.js` for `theme.extend.*`, `safelist`, and the `content` globs before any existence claim. Three traps:
+
+- `safelist` entries survive purge scanning even when no scanned source uses them — "no usage found in markup" is NOT evidence that a class is missing.
+- `content` globs may exclude whole trees (stock Hyvä child themes ship with the `app/code/**` glob commented out); classes outside scan scope need safelist or arbitrary-value syntax.
+- CMS-content classes can live in `Hyva_CmsTailwindJit` **database-stored** CSS injected at render time — they never appear in `web/css/styles.css`, so absence from built CSS is not proof of absence.
+
+### 3. Built CSS: only if actually present
+
+If a compiled stylesheet is available (committed, or built locally), grep it for the escaped selector as final confirmation. Review worktrees usually have NO built CSS and NO `vendor/` — do not attempt to read either; infer composer dependencies from `composer.json`/`composer.lock`. If verification is impossible from where you stand, downgrade the finding to a question ("confirm X survives the build") instead of an assertion.
+
+### 4. Dynamic class names
+
+PHP-interpolated utilities (`class="columns-<?= $n ?>"`) are invisible to the scanner. Suggest the fix ladder: CSS-variable binding via arbitrary-value syntax, or a co-located PHP comment listing every variant (Tailwind scans comments), or safelist / `@source inline()` reserved for DB-sourced values only.
+
+### 5. Alpine under strict CSP
+
+Directive values must be dot paths — no operators, literals, globals, or spaces. Violations fail silently (console.warn only), so static review is the primary gate. Treat vendor guidance like "`x-model` is unsupported" as recommended style: dot-path `x-model` works on shipped CSP builds, so warn rather than fail.
+
+> Idea credits: verification-gate patterns distilled from makotokimura96/hyva-skills (CC BY 4.0) and hyva-themes/hyva-ai-tools (OSL-3.0).
+
 ## Layout XML
 
 ### Hyvä-Specific Handles
