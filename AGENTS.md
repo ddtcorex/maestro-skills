@@ -164,6 +164,11 @@ invocation notes in `using-superpowers/SKILL.md`.
 
 ### Adding a lesson to a skill reference file
 
+**Version/threshold tables in prose are drift candidates.** Any table mapping versions,
+thresholds, or environment facts (e.g. "Hyvä 1.4.x ships Tailwind v4") must either be replaced by
+a deterministic tool call that returns the live value, or carry an explicit *verified-on date +
+source* next to it. Unstamped tables rot silently and gate wrong decisions downstream.
+
 **MUST:** load the `superpowers:writing-skills` skill before writing content, not
 just as a style check afterward — it governs testing and structure, not only length.
 

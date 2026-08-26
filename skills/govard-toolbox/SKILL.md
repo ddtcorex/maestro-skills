@@ -142,9 +142,14 @@ govard debug off
 govard debug status
 
 # Diagnostics
-govard diag
-govard diag --fix    # Auto-fix issues
+govard diag            # human-readable health report
+govard diag --json     # machine-readable verdict — one call answers "is this env healthy"
+govard diag --fix      # Auto-fix issues
 ```
+
+**Agent guidance:** before chaining `govard ps` / `govard logs` probes, run
+`govard diag --json` once and branch on its result; keep `down && up` escalation for
+diagnosed failures only.
 
 ### Connecting an IDE
 

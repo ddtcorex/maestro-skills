@@ -146,6 +146,11 @@ govard frontend stop             # removes only frontend services, keeps their v
 ```
 
 **Prerequisites (Govard never creates or edits these files):**
+
+Let `govard frontend start` be the discovery oracle — it validates all of the below and fails
+fast with the exact reason. Only read theme files to fix a specific failure ("no owner found" /
+conflicting setups); don't pre-verify by hand.
+
 - **Hyva:** exactly one `scripts.browser-sync` owner under `app/design/frontend/<Vendor>/<Theme>/web/tailwind`, with a committed `package-lock.json`. The theme's own `browser-sync.config.js` must read `GOVARD_FRONTEND_SYNC_TARGET`/`_PORT` from the environment and set `changeOrigin: false`, `cookies.stripDomain: false`, `open: false`, and `socket.path: '/browser-sync/socket.io'`.
 - **Luma:** root `Gruntfile.js`, `package.json`, `package-lock.json` (copy Magento's `.sample` files, then `npm install`). No BrowserSync config needed.
 - Hyva and Luma discovery are mutually exclusive project-wide — only one setup may be valid at a time.
@@ -253,18 +258,13 @@ govard varnish status
 
 ## Logging
 
+For agents, prefer bounded tail reads (no `-f` follow — it never returns):
+
 ```bash
-# View system log
-govard sh -c "tail -f var/log/system.log
-
-# View exception log
-govard sh -c "tail -f var/log/exception.log
-
-# View debug log
-govard sh -c "tail -f var/log/debug.log
-
-# Custom module log
-govard sh -c "tail -f var/log/my-module.log
+govard sh -c "tail -n 50 var/log/system.log"
+govard sh -c "tail -n 50 var/log/exception.log"
+govard sh -c "tail -n 50 var/log/debug.log"
+govard sh -c "tail -n 50 var/log/my-module.log"
 ```
 
 ## Common Issues & Solutions

@@ -205,13 +205,23 @@ From April 2025, payment pages require:
 
 ## Quick Security Scan
 
-Run this for a rapid security assessment:
+Run this for a rapid security assessment. **On DSH**, prefer the bounded workspace search tool
+over shell loops — one call per pattern, no silent truncation:
+
+```
+maestro_search_files { pattern: "execute|fetchAll|->select\\(|insertOnDuplicate", glob: "*.php", path: "app/code/Vendor/Module" }
+```
+
+(Exclude ORM-layer hits — Collection/Repository/ResourceModel class files — when judging results;
+the tool reports path:line:text, capped and flagged when truncated.)
+
+Elsewhere, use the equivalent grep pipelines:
 
 ```bash
 # 1. Check for SQL in code
 grep -r "execute\|fetch\|fetchAll\|select\|insert\|update\|delete" \
     app/code/Vendor/Module --include="*.php" | \
-    grep -v "Collection\|Repository\|ResourceModel" | head -20
+    grep -v "Collection\|Repository\|ResourceModel"
 
 # 2. Check for superglobals
 grep -r "\$_GET\|\$_POST\|\$_REQUEST" \
