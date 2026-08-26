@@ -79,6 +79,12 @@ Nine categories, each with full commands/thresholds/edge-cases in its own refere
 
 ## Workflow
 
+> **On DSH:** call `maestro_perf_log_stats {topN?,repeatThreshold?,timeThresholdMs?}` → {slowQueries,nPlusOneCandidates,cacheFlushStorm,crawlerOverload}. Do not hand-grep 16–50k lines or open as spreadsheet.
+> **Otherwise:** grep -c '## QUERY' / mysqldumpslow recipes in references/database-query-profiling.md.
+
+> **On DSH:** no `performance` check exists — `govard audit run --checks lint` covers lint only; use `govard audit run --checks profiler --url <absolute http(s) url>` for a single-URL profiler CSV where it helps, otherwise run the manual per-page captures and grep scans below.
+> **Otherwise:** run the same manual Workflow steps as written (profiler + query-log captures per `references/per-page-type-audit.md` and grep scans per `references/code-level-patterns.md`).
+
 **When invoked, steps 1-9 are mandatory, run in order, none optional:**
 1. Execute infrastructure checks (env.php, mode, cache status) — first confirm whether the target is local dev, staging, or production, since expectations differ. Full detail: `references/infrastructure-checks.md`
 2. Run indexer status check, and verify cron is actually running/draining `cron_schedule`. Full detail: `references/infrastructure-checks.md`
