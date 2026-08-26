@@ -10,14 +10,16 @@ directly or replace the symlink with a copy.
 Every change to this repository MUST follow the Superpowers skill workflow, in order:
 
 1. **brainstorming** — explore intent and design before writing anything; record the
-   outcome in `docs/superpowers/specs/` (`YYYY-MM-DD-<topic>-design.md`).
+   outcome in the PR description (`YYYY-MM-DD-<topic>-design.md` style).
 2. **writing-plans** — turn the approved spec into a task-by-task plan with exact
-   test and implementation sketches in `docs/superpowers/plans/`.
+   test and implementation sketches; plans are transient working files, deleted
+   once their batch ships.
 3. **executing-plans** — implement task by task with strict TDD: failing test first,
    verify RED, implement, verify GREEN, then commit that task before starting the next.
 
 Do not skip ahead to implementation or commit while a task's tests are red. Specs and
-plans are committed design records here — this repository documents itself.
+plans are working artifacts, not deliverables — describe durable outcomes in the PR
+description instead of committing dated process files.
 
 ## Git workflow
 
