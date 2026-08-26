@@ -63,7 +63,7 @@ All notable changes to this project are documented here. The format follows
   DSH preset id `maestro-skills`, GitHub repo `ddtcorex/maestro-skills` (old
   URLs redirect after the GitHub rename). Individual skill names are
   unchanged, so `depends:` chains and downstream exact-name consumers (e.g.
-  dsh-maestro-harness's review profile) keep working; bump to 2.0.0 because
+  the review pipeline's magento2 profile, now in dsh-maestro-review) keep working; bump to 2.0.0 because
   the install command and package name changed.
 - DSH agent preset renamed from **"Govard Master"** to **"Maestro Skills"**;
   its persona now names the full 25-skill library and mandates the
