@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { parseFrontmatter } from '../src/frontmatter.ts'
 
 const SKILLS_DIR = fileURLToPath(new URL('../skills', import.meta.url))
-const DOMAIN_PATTERN = /^(magento2|govard)-/
+const DOMAIN_PATTERN = /^(dsh|magento2|govard)-/
 // Forked-from-upstream skills must stay verbatim; only domain skills carry
 // fork-local frontmatter additions such as `compatibility`.
 const FORKED = [
@@ -26,7 +26,7 @@ function load(skill: string) {
 describe('skills catalog', () => {
   it('every domain skill has a folded description and declares dsh', async () => {
     const entries = (await readdir(SKILLS_DIR)).filter(e => DOMAIN_PATTERN.test(e))
-    expect(entries.length).toBeGreaterThanOrEqual(11)
+    expect(entries.length).toBeGreaterThanOrEqual(12)
     for (const entry of entries) {
       const { metadata } = await load(entry)
       expect(metadata.name, entry).toBe(entry)
@@ -34,6 +34,16 @@ describe('skills catalog', () => {
       expect(metadata.description, entry).not.toContain('\n')
       expect(metadata.compatibility?.split(',').map(s => s.trim()), entry).toContain('dsh')
     }
+  })
+
+  it('packages the guarded DSH Web update skill', async () => {
+    const { metadata, raw } = await load('dsh-safe-web-update')
+    expect(metadata.name).toBe('dsh-safe-web-update')
+    expect(metadata.compatibility?.split(',').map(s => s.trim())).toContain('dsh')
+    expect(metadata.description).not.toContain('\n')
+    expect(raw).toContain('--confirm')
+    expect(raw).toContain('--dry-run')
+    expect(raw).toMatch(/dry-boot/i)
   })
 
   it('forked skills keep upstream frontmatter shape', async () => {
