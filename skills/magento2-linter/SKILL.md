@@ -164,6 +164,11 @@ tool.
   lint run cannot modify the code it analyzes. Auto-fix, if wanted, is still the separate bare
   `phpcbf` route (see "Auto-fix Capabilities" below).
 
+## Running the Linter
+
+> **On DSH:** call `govard_audit_lint {worktreePath?}` → `{lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}`. Do not hand-parse text/exit codes.
+> **Otherwise:** `govard audit run --checks lint --format json` (machine-clean, one JSON on stdout, diagnostics on stderr; text mode capped at 10 and colorized — not for agents).
+
 ## Prerequisites
 
 Ensure the project has required tools:

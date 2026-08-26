@@ -214,6 +214,9 @@ govard config set stack.php_version 8.4
 
 Govard's persistent audit gate for Magento 2/Mage-OS -- see `magento2-linter` for full policy (`target --mode`, PHP matrix, provider rules, caching/rerun identity). Text streams live like `vendor/bin/phpcs` (TTY colorized + uncapped, piped capped + plain); `json` stays a single object on stdout for AI agents. A failed/cancelled run still renders before exiting non-zero.
 
+> **On DSH:** call `govard_audit_lint {worktreePath?}` → {lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}. Do not hand-parse text/exit codes.
+> **Otherwise:** `govard audit run --checks lint --format json` (machine-clean, one JSON on stdout, diagnostics on stderr; text mode capped at 10 and colorized — not for agents).
+
 ```bash
 govard audit run --checks lint                    # project or module_in_project, default text streams live
 govard audit run --checks lint --format json      # machine-clean for agents, diagnostics on stderr

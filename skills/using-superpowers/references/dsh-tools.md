@@ -24,6 +24,9 @@ tools.bash({ command, description })`).
 | Run shell commands, tests, git | `bash` via `run_code`; background jobs via `run_in_background: true`, collect with `job_output`, stop with `job_kill` |
 | Search the web | `web_search` |
 | Look at an image file | `read_image` |
+| Ensure isolated workspace | `git_worktree {op:'inspect'}` → {exists,branch,headSha,isClean,isWorktree} |
+| Create worktree | `git_worktree {op:'create', worktreePath, branch, base?}` → {created,headSha} |
+| Clean up | `git_worktree {op:'remove', worktreePath}` → {removed,dirtyFiles} |
 
 ## Session-shape notes
 

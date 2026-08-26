@@ -29,6 +29,9 @@ Hyvä and Luma (`magento2-frontend-dev`) are mutually exclusive theme stacks —
 
 ## Detect the project's actual setup first
 
+> **On DSH:** call `hyva_theme_inspect {classes:["<class-from-diff>"]}` — returns `{themes[],tailwind:{major,...},hyvaPackages[]}` grounded from theme.xml + package.json + tailwind.config/hyva.config + composer.lock. If any field null, check notes and downgrade to a question.
+> **Otherwise:** read theme.xml parent, <theme>/web/tailwind/package.json, tailwind.config.js or tailwind-source.css+hyva.config.json, and composer.lock — verify, don't memorize table (verified 2026-08-26).
+
 Hyvä/Tailwind conventions vary a lot by project age — check before applying a pattern:
 
 - **Tailwind version**: v4 uses CSS-based config and `hyva.config.json` design tokens; v2/v3 use `tailwind.config.js`. Check `web/tailwind/package.json`.

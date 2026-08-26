@@ -50,6 +50,9 @@ skills expected to run before a release.
 | Local git diff | "review this PR", branch already checked out | `git diff` against a base ref |
 | Remote fetch | "review MR !123 before I check it out" | On DSH: `gitlab_get_mr_diff` (+ `gitlab_list_own_review_threads`, `gitlab_post_inline_comment`) in one call. Elsewhere: GitHub MCP (`pull_request_read`, preferred for GitHub) / `glab mr diff` / `gh pr diff` — **text-pattern checks only**, see below |
 
+> **On DSH:** call `maestro_review_scope_split {diffStats:{files,addedLinesPerFile}, mode}` → {split:{quick,deep},reason,estimatedSavingsTokens}. Run quick checks only on quick files, full deep only on deep; inject reason into prompt.
+> **Otherwise:** apply same extension/path table by hand and note split in review header.
+
 Full mechanics, exact commands, and the remote-fetch limitation:
 `references/scope-modes.md`.
 
