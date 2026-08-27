@@ -71,5 +71,6 @@ Rules:
 - **H1 margin 8px + line-height 1.3** — title breathes, not stuck to subtitle.
 - **P margin 4px + line-height 1.6** — subtitle and meta have air, not `margin:0`.
 - **Meta pills 8px gap + 3×10 padding** — `flowchart TB` and `10 plugins` don't run together (`flowchart TB10` bug).
+- **Figure note 12px** — `.figure .note` and `pre.mermaid + .note` must have `margin-top:12px`, not 0 (pre `margin:0` + note stuck bug in `harness-architecture.html`).
 - Verify with `grep -n "header.*margin\|line-height" docs/diagrams/maestro-harness-deck.html` — must show 16px/1.6, not 0.
 
