@@ -2,6 +2,8 @@
 
 Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification gate).
 
+> **Scope gate:** every report starts with a `Scope: quick` or `Scope: deep` header (see Quick vs Deep in `references/per-page-type-audit.md`: quick 3 pages call-stack false threshold 1 batch govard sh + `maestro_perf_log_stats` streaming trap single; deep 7 pages call-stack true threshold 0 two-pass + Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease `artifacts/profiler/profile.csv` SHA). Workflow step 10 is not done until every checkbox below is either checked with evidence or `Skipped: <reason>` — the Skipped Matrix at the end of the template enforces this, no silent omission.
+
 > **If the environment supports publishing a rendered page (e.g. Claude Code's `Artifact` tool), publish the report that way instead of — or alongside — raw markdown.** Severity reads as a color-coded chip/pill at a glance instead of a flat checklist, and a published link is easier to share with a team than pasted text. This is optional and environment-dependent (not available in Codex CLI/OpenCode/Copilot) — the markdown template below is the portable baseline every environment can produce, and if you do publish a rendered page, still include everything the template covers (URLs audited, all findings, severities) rather than a lighter summary.
 >
 > **A PDF copy can be produced from that same rendered HTML** — either the person viewing a published artifact link uses the browser's own Print → Save as PDF, or, from the CLI, headless Chrome renders it identically since the page is self-contained (inline CSS, no external fonts/CDN calls to fail mid-render):
@@ -14,6 +16,16 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 
 ```markdown
 # Performance Audit Report
+
+Scope: quick — 3 pages (quick PR, ~3–5m), call-stack false, threshold 1, batch govard sh, `maestro_perf_log_stats` streaming, trap single
+<!-- For a release audit use: Scope: deep — 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->
+<!-- The Scope line above is mandatory — every report must start with either `Scope: quick` or `Scope: deep` so a reader can tell PR vs release coverage at a glance. Keep the rest of the template unchanged; do not silently mix quick pages with deep thresholds. -->
+
+## Scope Detail
+
+Scope: quick — use for PRs: 3 pages (1 home + 1 category + 1 product), `--include-call-stack=false` `--query-time-threshold=1`, single batch `govard sh` setup, `maestro_perf_log_stats` streaming (bounded 2 MiB), Govard-native `govard audit run --checks lint,profiler --url https://example.test/<path>.html` single-URL profiler lease where needed. Every checkbox below either `checked` with evidence or `Skipped: <reason>` — no silent omission.
+
+Scope: deep — use for release: 7 pages (1 home + 3 category small/medium/large + 3 product), `--include-call-stack=true` `--query-time-threshold=0`, two-pass call-stack (pass 1 false for counts, pass 2 true for 1–2 N+1 traces), same batch `govard sh` + `trap single`, same streaming, plus `EXPLAIN` on prod-sized tables (200k+ rows) and `pt-query-digest` when available. Same gate: every checkbox checked or explicitly Skipped.
 
 ## URLs Audited
 - Homepage: <actual URL> (usually one; list more only if the store has multiple storefront views)
@@ -132,4 +144,23 @@ Shapes table above: an empty table with no comment reads as "not checked."
 1. ...
 2. ...
 3. ...
+
+## Skipped Matrix — every unchecked box needs a reason
+
+Every checkbox in the report must be either `[x]` with evidence visible above, or `- [ ] Skipped: <reason>`. A box that is simply absent is unfinished per Workflow step 10 gate. Copy this matrix and fill each row — do not delete rows to hide uncovered work.
+
+| Section | Checkbox | Status | Evidence or Skipped: <reason> |
+|---------|----------|--------|-------------------------------|
+| Infrastructure | Application Mode | [ ] | `bin/magento deploy:mode:show` → ... / Skipped: <reason> |
+| Infrastructure | PHP OPcache | [ ] | `govard sh -c "php -i \| grep opcache"` → ... / Skipped: <reason> |
+| Infrastructure | Redis Session/Cache/Varnish | [ ] | `...` / Skipped: <reason> |
+| Cache Status | All critical caches / FPC | [ ] | `bin/magento cache:status` → ... / Skipped: <reason> |
+| Cache Invalidation | No unexplained flushes / targeted tag / ban.list | [ ] | `varnishadm ban.list` / `grep -rn "clean()" app/code` → ... / Skipped: <reason> |
+| Client-Side AJAX | Baseline XHR / sections.xml / reload storms | [ ] | Network tab XHR count + `grep -rn "sections.xml"` → ... / Skipped: <reason> |
+| Indexer/Cron | Update by Schedule / cron draining | [ ] | `bin/magento indexer:status` + `cron_schedule` → ... / Skipped: <reason> |
+| Database | Query count / Repeated Shapes / Per-Page Detail / Slow Query EXPLAIN | [ ] | `maestro_perf_log_stats` streaming / `grep -c '## QUERY'` / `pt-query-digest` / `EXPLAIN` prod 200k → ... / Skipped: <reason> |
+| Block/Template | Slowest Blocks/Templates (>5% or Cnt≥10) | [ ] | `artifacts/profiler/profile.csv` SHA + HTML profiler table → ... / Skipped: DB user lacks SUPER / profiler lease `is already held` / host cannot reach URL |
+| Core Web Vitals | LCP/INP/CLS | [ ] | Chrome DevTools MCP trace / Lighthouse → ... / Skipped: no Chrome MCP this session |
+
+Example header for a quick PR (top of this template already contains `Scope: quick`): keep that line. For deep, change to `Scope: deep` and ensure 7 pages + two-pass + `EXPLAIN` prod 200k are in evidence column above.
 ```
