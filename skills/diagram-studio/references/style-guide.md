@@ -72,6 +72,6 @@ Rules:
 - **P margin 4px + line-height 1.6** — subtitle and meta have air, not `margin:0`.
 - **Meta pills 8px gap + 3×10 padding** — `flowchart TB` and `10 plugins` don't run together (`flowchart TB10` bug).
 - **Figure note 12px** — `.figure .note` and `pre.mermaid + .note` must have `margin-top:12px`, not 0 (pre `margin:0` + note stuck bug in `harness-architecture.html`).
-- **Cluster header padding via mermaid init, not CSS** — use `%%{init: {'flowchart': {'padding': 28, 'nodeSpacing': 24, 'rankSpacing': 60}}}%%` so Runtime / Microkernel headers have 28px top padding (bottom ok at 24, top still sát → viewBox 2156×4037 → 2231×4157).
+- **Cluster header padding via mermaid init + spacer, not CSS** — use `%%{init: {'flowchart': {'padding': 24, 'nodeSpacing': 24, 'rankSpacing': 60}}}%%` for bottom gap; for top gap (still sát at 24) add transparent spacer `padRuntime[" "]:::spacer` → `padRuntime --> GovardCLI` with `classDef spacer fill:transparent,stroke:transparent` (viewBox 2156×4037 → 2156×4109, header → node gap +72px).
 - Verify with `grep -n "header.*margin\|line-height" docs/diagrams/maestro-harness-deck.html` — must show 16px/1.6, not 0. For SVG, `grep "%%{init" docs/architecture.md` must show `padding.*10`.
 
