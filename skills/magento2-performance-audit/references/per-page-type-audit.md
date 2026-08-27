@@ -22,53 +22,87 @@ Notes:
 - **Batch govard sh** means collapsing multiple container-local setup lines (`mkdir lock`, `bin/magento dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup discard) into a single `govard sh -c "..."` where sequencing allows — one round-trip instead of five. Captures themselves stay sequential (one `curl` + `cat var/debug/db.log` per page) under the same lock.
 - **Govard-native profiler lease** (`govard audit run --checks lint,profiler --url https://example.test/<path>.html --format json`) is a quick complement — machine-captured single URL into `artifacts/profiler/profile.csv` with SHA in `audit-result.json`. It ships no query log and no cross-page matrix — keep the manual per-page query-log captures above as the primary evidence.
 
-## 0. Pick genuinely representative pages first
+## 0. Pick genuinely representative pages first — host-first discovery (5s max)
 
-Before measuring anything, verify the specific URLs you're about to test aren't degenerate cases — this is the single easiest way to get a misleading audit.
+Before measuring anything, verify the specific URLs you're about to test aren't degenerate cases — this is the single easiest way to get a misleading audit. Discovery is **host-first, 5s max per URL** — host curl is the primary transport; container curl is fallback only.
 
-> **Check for a DB table prefix before running any query below.** Magento 2 supports an optional
+> **Resolve the table prefix before running any query below.** Magento 2 supports an optional
 > table prefix (`db.table_prefix` in `app/etc/env.php`, set via `bin/magento setup:install
 > --db-prefix=...` or inherited from a prefixed remote sync) — every bare table name in this file
 > (`catalog_category_product`, `catalog_category_entity`, `catalog_product_website`,
-> `url_rewrite`, `eav_attribute`, etc.) assumes no prefix. Check first:
+> `url_rewrite`, `eav_attribute`, etc.) assumes no prefix. Resolve it first:
 > ```bash
+> # Primary: read from env.php (authoritative)
 > govard sh -c "grep -A1 \"'table_prefix'\" app/etc/env.php"
+> # Fallback inference when env.php is empty/missing: SHOW TABLES LIKE '%url_rewrite'
+> govard db query "SHOW TABLES LIKE '%url_rewrite'"
 > ```
-> If it's non-empty, prepend it to every table name in every query in this file (and anywhere else
+> If either returns a non-empty prefix, prepend it to every table name in every query in this file (and anywhere else
 > in this audit you write ad hoc SQL against app tables — this does not apply to MySQL system
 > tables/variables in `references/database-query-profiling.md`'s slow-query checks, or to
 > `EXPLAIN`ing SQL already captured from the query log, since that SQL already has the real prefix
 > baked in). A query against the bare name on a prefixed install fails loudly ("table doesn't
 > exist"), which at least isn't silent — but don't just retry with a guessed prefix, confirm it
-> from `env.php` first.
+> from `env.php` / `SHOW TABLES` first. All examples below use `<prefix>` as placeholder for that resolved prefix (empty string when no prefix).
+
+> **Check `is_active` column existence via `information_schema` — not hard-coded.** Some installs
+> (or custom entity setups) may lack `is_active` on `catalog_category_entity`. Do not assume it exists:
+> ```bash
+> govard db query "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='<prefix>catalog_category_entity' AND COLUMN_NAME='is_active'"
+> ```
+> If the column exists, filter candidates with `WHERE is_active=1` (or the EAV `catalog_category_entity_int` join below); if it doesn't exist, omit the `is_active` filter entirely and rely on HTTP 200 reachability instead. Never hard-code a `magento` database name — use `DATABASE()`.
+
+### Discovery: DB candidates → host-first 5s curl → fallback `Skipped: no 200 URL`
 
 ```bash
-# Category: pull a spread of product counts, not just one — you want a small, a medium,
-# and a large category (not the single largest root category, which is its own edge case)
-govard db query "SELECT category_id, COUNT(*) cnt FROM catalog_category_product GROUP BY category_id ORDER BY cnt LIMIT 200"
+# 1. DB candidates — pull request_path for category/product url_rewrites (limit 20) and a spread
+#    of category sizes (small/medium/large), not just one:
+govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN ('category','product') LIMIT 20"
+govard db query "SELECT category_id, COUNT(*) cnt FROM <prefix>catalog_category_product GROUP BY category_id ORDER BY cnt LIMIT 200"
 # then pick 3 across that range, e.g. one ~10, one ~50-100, one ~200+
 
-# Category: a candidate's product-count row says nothing about whether it's actually enabled —
-# an inactive category still has real catalog_category_product rows and a resolvable
-# url_rewrite, so it looks like a perfectly good pick right up until the curl to it 404s.
-# Check is_active for every candidate before treating a 404 as "picked the wrong URL":
-govard db query "SELECT cce.entity_id, cv.value AS is_active FROM catalog_category_entity cce
-  LEFT JOIN catalog_category_entity_int cv ON cv.entity_id=cce.entity_id
-    AND cv.attribute_id=(SELECT attribute_id FROM eav_attribute WHERE attribute_code='is_active'
-      AND entity_type_id=(SELECT entity_type_id FROM eav_entity_type WHERE entity_type_code='catalog_category'))
+# Category is_active gate — only when information_schema confirms the column exists:
+# (a) information_schema check above → if present, use EAV or flat column filter:
+govard db query "SELECT cce.entity_id, cv.value AS is_active FROM <prefix>catalog_category_entity cce
+  LEFT JOIN <prefix>catalog_category_entity_int cv ON cv.entity_id=cce.entity_id
+    AND cv.attribute_id=(SELECT attribute_id FROM <prefix>eav_attribute WHERE attribute_code='is_active'
+      AND entity_type_id=(SELECT entity_type_id FROM <prefix>eav_entity_type WHERE entity_type_code='catalog_category'))
     AND cv.store_id=0
   WHERE cce.entity_id IN (<candidate ids>)"
+# (b) if information_schema returned 0 rows for is_active, skip this filter — rely on curl 200 below.
 
 # Product: confirm each candidate is assigned to a website (unassigned products 404 / aren't routable)
-govard db query "SELECT * FROM catalog_product_website WHERE product_id=<id>"
+govard db query "SELECT * FROM <prefix>catalog_product_website WHERE product_id=<id>"
 
-# Product: also watch for url_rewrite entries that 301/302 redirect elsewhere (including,
-# in some data sets, out to a live production domain) — follow redirects manually first,
-# don't blindly -L through them into a request against someone's production site
-curl -sk -o /dev/null -w "%{http_code} -> %{redirect_url}\n" https://store.test/<product-url>.html
+# 2. Host-first reachability — 5s max per URL, --connect-timeout 3, sequential, stop when quota met.
+#    Quick: stop when 1 category + 1 product reach 200 (≤15s total, 3 pages: 1 home + 1 cat + 1 product).
+#    Deep:  stop when 3 category + 3 product reach 200 (≤30s total, 7 pages: 1 home + 3 cat + 3 product).
+#    Dual-audience: On DSH host curl / Otherwise container curl (govard sh curl).
+#    Do NOT blindly -L through 301/302 — check for redirects to live production domains first.
+
+# On DSH — host curl (primary):
+for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN ('category','product') LIMIT 20" | tail -n +2); do
+  code=$(curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code}" "https://store.test/$path")
+  echo "$path -> $code"
+  # collect 200s until quota: quick needs 1 cat+1 product, deep needs 3+3
+done
+# quick must finish host discovery in ≤15s (3 URLs × 5s), deep in ≤30s (6 URLs × 5s); abort early on quota.
+
+# Otherwise (non-DSH) — container curl (same 5s budget, same sequential quota):
+govard sh -c 'for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN ("category","product") LIMIT 20" | tail -n +2); do curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} %{redirect_url}\n" "https://store.test/$path"; done'
+
+# Product redirect guard — follow redirects manually first, don't blindly -L into production:
+curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} -> %{redirect_url}\n" https://store.test/<product-url>.html
+
+# 3. Fallback — if host curl yields insufficient 200s, try one govard sh curl pass; if still
+#    insufficient, record Skipped: no 200 URL and audit continues with DB-derived paths as
+#    best-effort (do not block the audit, do not invent URLs):
+#    Skipped: no 200 URL — using DB paths, audit continues with DB paths
 ```
 
-Pick 3 categories spanning small/medium/large product counts (not the single largest root category, not an edge case, confirmed `is_active`), and 3 products that each resolve 200 directly — varying product type (simple/configurable) if the catalog has both.
+Pick 3 categories spanning small/medium/large product counts (quick: 1 category; deep: 3 categories) — not the single largest root category, not an edge case, confirmed `is_active` only when `information_schema` confirms the column exists — and products that each resolve 200 directly (quick: 1 product; deep: 3 products) — varying product type (simple/configurable) if the catalog has both. Quick 3 pages vs deep 7 pages preserved; 7 details gate unchanged (deep: 7 `<details>` mandatory, quick: `Skipped: quick — 3 pages only`).
+
+> **Dual-audience transport:** On DSH host curl / Otherwise container curl. If the container cannot resolve `*.test` (proxy/DNS), log `Skipped: container cannot resolve *.test proxy — use host curl` and retry on the host; do not move captures into the container to work around a host routing problem.
 
 ## 1. Set up the uncached measurement environment
 
