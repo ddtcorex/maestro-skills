@@ -140,6 +140,27 @@ Shapes table above: an empty table with no comment reads as "not checked."
 | INP | X.Xms | PASS/FAIL |
 | CLS | X.XXX | PASS/FAIL |
 
+## Per-Page Query Detail — deep mandatory gate
+
+> **Deep (`Scope: deep`) must populate this section for all 7 pages.** Each page gets one `<details>` (HTML) / collapsed block (markdown) with: page label + URL + total queries (pass1/pass2) + distinct-shape count + unfiltered table `Count | SQL normalized` (via `maestro_perf_log_stats` streaming bounded 2MiB, not hand-grep). Quick (`Scope: quick`) may use the Skipped row below, but must state `Skipped: quick — 3 pages only, Per-Page Detail deferred to deep` and remains in the Skipped Matrix. A deep report that omits this section or shows only the summary `363/221/611...` without the 7 tables fails the step 10 gate.
+
+<details><summary>home — 363 queries, 42 shapes</summary>
+
+| Count | SQL (normalized) |
+|-------|------------------|
+| 42 | `SELECT ... FROM catalog_product_entity WHERE entity_id IN (...)` |
+| 18 | `SELECT ... FROM catalog_category_product_index WHERE ...` |
+
+</details>
+<details><summary>category small — 221 queries, 31 shapes — `https://example.test/eveil/livres/livre-sonore.html`</summary>
+
+| Count | SQL (normalized) |
+|-------|------------------|
+| ... | ... |
+
+</details>
+<!-- repeat for category medium, category large, product bundle, product simple 1, product simple 2 — 7 total for deep -->
+
 ## Recommendations
 1. ...
 2. ...
@@ -158,7 +179,8 @@ Every checkbox in the report must be either `[x]` with evidence visible above, o
 | Cache Invalidation | No unexplained flushes / targeted tag / ban.list | [ ] | `varnishadm ban.list` / `grep -rn "clean()" app/code` → ... / Skipped: <reason> |
 | Client-Side AJAX | Baseline XHR / sections.xml / reload storms | [ ] | Network tab XHR count + `grep -rn "sections.xml"` → ... / Skipped: <reason> |
 | Indexer/Cron | Update by Schedule / cron draining | [ ] | `bin/magento indexer:status` + `cron_schedule` → ... / Skipped: <reason> |
-| Database | Query count / Repeated Shapes / Per-Page Detail / Slow Query EXPLAIN | [ ] | `maestro_perf_log_stats` streaming / `grep -c '## QUERY'` / `pt-query-digest` / `EXPLAIN` prod 200k → ... / Skipped: <reason> |
+| Database | Query count / Repeated Shapes / Per-Page Detail / Slow Query EXPLAIN | [ ] | `maestro_perf_log_stats` streaming / `grep -c '## QUERY'` / `pt-query-digest` / `EXPLAIN` prod 200k → ... / Skipped: quick — 3 pages only, Per-Page Detail deferred to deep |
+| Per-Page Query Detail | 7 pages unfiltered tables (deep) | [ ] | 7 × `<details>` Count|SQL tables above — see Per-Page Query Detail section / Skipped: quick — 3 pages only, Per-Page Detail deferred to deep |
 | Block/Template | Slowest Blocks/Templates (>5% or Cnt≥10) | [ ] | `artifacts/profiler/profile.csv` SHA + HTML profiler table → ... / Skipped: DB user lacks SUPER / profiler lease `is already held` / host cannot reach URL |
 | Core Web Vitals | LCP/INP/CLS | [ ] | Chrome DevTools MCP trace / Lighthouse → ... / Skipped: no Chrome MCP this session |
 
