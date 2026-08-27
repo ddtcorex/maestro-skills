@@ -72,5 +72,6 @@ Rules:
 - **P margin 4px + line-height 1.6** — subtitle and meta have air, not `margin:0`.
 - **Meta pills 8px gap + 3×10 padding** — `flowchart TB` and `10 plugins` don't run together (`flowchart TB10` bug).
 - **Figure note 12px** — `.figure .note` and `pre.mermaid + .note` must have `margin-top:12px`, not 0 (pre `margin:0` + note stuck bug in `harness-architecture.html`).
-- Verify with `grep -n "header.*margin\|line-height" docs/diagrams/maestro-harness-deck.html` — must show 16px/1.6, not 0. For SVG, `grep cluster-label` must show `padding-bottom:4px`.
+- **Cluster header padding via mermaid init, not CSS** — use `%%{init: {'flowchart': {'padding': 10, 'nodeSpacing': 18, 'rankSpacing': 28}}}%%` so Runtime/Microkernel headers don't overlap content below. CSS `.cluster-label span {padding: 4px 0 12px}` looks right but increases label size without moving cluster rect → makes overlap worse ("càng sửa càng dính").
+- Verify with `grep -n "header.*margin\|line-height" docs/diagrams/maestro-harness-deck.html` — must show 16px/1.6, not 0. For SVG, `grep "%%{init" docs/architecture.md` must show `padding.*10`.
 
