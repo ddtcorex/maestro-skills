@@ -4,6 +4,11 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-08-28
+
+### Added
+- `magento2-performance-audit`: **Branch & Env Gate** (`Step 0` `branch?:string` `scope?:quick|deep` `git fetch --all --prune → rev-parse → checkout -f → pull --ff-only` `Skipped: local diverged`, interactive `ask_user_question` when `On DSH` undefined) + `govard status → env up ~11s + curl 200 verify` before infra, and **host-first discovery `5s` max** (`host curl --max-time 5 --connect-timeout 3` primary `On DSH host curl / Otherwise container curl` fallback `Skipped: container cannot resolve *.test proxy` + `Skipped: no 200 URL`) with `table_prefix` (`app/etc/env.php`/`SHOW TABLES LIKE '%url_rewrite'` `<prefix>` placeholder) and `is_active` adaptive (`information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='<prefix>catalog_category_entity' AND COLUMN_NAME='is_active'`, `DATABASE()` not hard-coded `magento`) for `quick ≤15s deep ≤30s`, `quick 3 pages Skipped per-page` vs `deep 7 pages 7 details mandatory` preserved, `reliability > tốc độ tối đa` `quick 3–5m/deep 8–12m` stable `fix hết 1 lượt` `5` groups verified on `example-project` `develop 543e46c24 Already up to date` `7×200 160–376 QUERY`.
+
 ## [2.3.0] - 2026-08-27
 
 ### Added
