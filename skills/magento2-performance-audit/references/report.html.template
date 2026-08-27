@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}} — {{date}}</title>
+<style>
+:root{--bg:#f8fafc;--card:#ffffff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--green:#16a34a;--green-bg:#dcfce7;--yellow:#ca8a04;--yellow-bg:#fef9c3;--red:#dc2626;--red-bg:#fee2e2;--blue:#2563eb}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+.header{ background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;padding:32px 24px}
+.header h1{margin:0 0 8px;font-size:28px;letter-spacing:-0.02em}
+.header .meta{opacity:0.85;font-size:13px;line-height:1.7}
+.header .meta code{background:rgba(255,255,255,0.14);padding:2px 6px;border-radius:6px;font-size:12px}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 1px 2px rgba(15,23,42,0.04)}
+.card h2{margin:0 0 12px;font-size:16px;letter-spacing:-0.01em;display:flex;align-items:center;gap:8px}
+h2 .badge{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:4px 8px;border-radius:999px;border:1px solid var(--border)}
+.badge-green{background:var(--green-bg);color:var(--green);border-color:#bbf7d0}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow);border-color:#fde68a}
+.badge-red{background:var(--red-bg);color:var(--red);border-color:#fecaca}
+.badge-gray{background:#f1f5f9;color:var(--muted)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}
+.kpi .box{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff}
+.kpi .box .label{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
+.kpi .box .value{font-size:20px;font-weight:700;margin-top:4px}
+.kpi .box .sub{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f8fafc;font-weight:600;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted)}
+td code, li code{background:#f1f5f9;padding:1px 6px;border-radius:6px;font-size:12px}
+.check{margin:6px 0;display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.check .icon{width:18px;height:18px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+.icon-ok{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
+.icon-warn{background:var(--yellow-bg);color:var(--yellow);border:1px solid #fde68a}
+.icon-fail{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+.icon-skip{background:#f1f5f9;color:var(--muted);border:1px solid var(--border)}
+ul{margin:8px 0;padding-left:18px}
+.footer{color:var(--muted);font-size:12px;text-align:center;padding:16px}
+.verdict{font-weight:700}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>{{title}}</h1>
+  <div class="meta">
+    <div>Date: <b>{{date}}</b> · Govard <code>{{govard_version}}</code> · <code>{{host}}</code> · profile <code>{{profile}}</code></div>
+    <div>Magento <code>{{magento_version}}</code> · PHP <code>{{php_version}}</code> · MariaDB <code>{{mariadb_version}}</code> · Redis <code>{{redis_version}}</code> · OpenSearch <code>{{opensearch_version}}</code> · {{fpc}}</div>
+    <div>Lint audit <code>{{lint_session}}</code> · <b>{{lint_findings}}</b> findings · <b>{{lint_duration}}</b> · {{lint_size}}</div>
+  </div>
+</div>
+<div class="container">
+
+<div class="kpi">
+  <div class="box"><div class="label">Infra</div><div class="value">{{infra_verdict}}</div><div class="sub">{{infra_sub}}</div></div>
+  <div class="box"><div class="label">Cache</div><div class="value">{{cache_verdict}}</div><div class="sub">{{cache_sub}}</div></div>
+  <div class="box"><div class="label">Indexer</div><div class="value">{{indexer_verdict}}</div><div class="sub">{{indexer_sub}}</div></div>
+  <div class="box"><div class="label">Cron</div><div class="value">{{cron_verdict}}</div><div class="sub">{{cron_sub}}</div></div>
+  <div class="box"><div class="label">DB slow ≥1s</div><div class="value">{{db_slow}}</div><div class="sub">{{db_slow_sub}}</div></div>
+  <div class="box"><div class="label">Lint findings</div><div class="value">{{lint_findings}}</div><div class="sub">{{lint_sub}}</div></div>
+</div>
+
+<div class="card">
+  <h2>URLs Audited <span class="badge badge-gray">{{scope}} · {{page_count}} pages · double-pass</span></h2>
+  <table>
+    <tr><th>Type</th><th>URL</th><th>Queries</th></tr>
+    {{urls_rows}}
+  </table>
+  <div style="color:var(--muted);font-size:12px;margin-top:6px">{{urls_note}}</div>
+</div>
+
+<div class="card">
+  <h2>Infrastructure <span class="badge {{infra_badge}}">{{infra_status}}</span></h2>
+  {{infra_checks}}
+  <div style="margin-top:8px;font-size:13px">Verdict: <span class="verdict">{{infra_verdict_text}}</span> — {{infra_verdict_detail}}</div>
+</div>
+
+<div class="card">
+  <h2>Cache Status <span class="badge {{cache_badge}}">{{cache_status}}</span></h2>
+  {{cache_checks}}
+</div>
+
+<div class="card">
+  <h2>Cache Invalidation Efficiency <span class="badge {{cache_inv_badge}}">{{cache_inv_status}}</span></h2>
+  {{cache_inv_checks}}
+</div>
+
+<div class="card">
+  <h2>Client-Side AJAX Load <span class="badge {{ajax_badge}}">{{ajax_status}}</span></h2>
+  {{ajax_checks}}
+</div>
+
+<div class="card">
+  <h2>Indexer Configuration</h2>
+  {{indexer_checks}}
+</div>
+
+<div class="card">
+  <h2>Database</h2>
+  <table>
+    <tr><th>Page</th><th>Queries</th><th>TIME max</th><th>TIME avg</th><th>≥1s</th><th>≥0.05s</th><th>≥0.01s</th></tr>
+    {{db_rows}}
+  </table>
+  <ul>
+    {{db_bullets}}
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Per-Page Query Detail <span class="badge {{perpage_badge}}">{{perpage_status}}</span></h2>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Deep: 7 pages unfiltered per-page tables (mandatory). Quick: Skipped matrix entry only. Each <code>&lt;details&gt;</code> shows total queries + distinct-shape count; tables are <code>Count | SQL (normalized)</code>.</div>
+  {{perpage_details}}
+</div>
+
+<div class="card">
+  <h2>Top Repeated Query Shapes</h2>
+  <table>
+    <tr><th>Shape (normalized)</th><th>Count</th><th>Pages</th><th>Avg ms</th><th>Max ms</th><th>Evidence</th></tr>
+    {{repeated_rows}}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Top Timers <span class="badge {{timers_badge}}">{{timers_status}}</span></h2>
+  {{timers_content}}
+</div>
+
+<div class="card">
+  <h2>Core Web Vitals <span class="badge {{cwv_badge}}">{{cwv_status}}</span></h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th><th>Status</th></tr>
+    {{cwv_rows}}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Code-Level Performance Patterns</h2>
+  <ul>{{code_patterns}}</ul>
+</div>
+
+<div class="card" style="border-left:4px solid var(--red)">
+  <h2>Recommendations <span class="badge badge-red">{{rec_count}} actions</span></h2>
+  <ol style="margin:8px 0;padding-left:18px;font-size:13px">{{recommendations}}</ol>
+</div>
+
+<div class="card">
+  <h2>Coverage Note <span class="badge badge-green">Self-verified</span></h2>
+  <div style="font-size:13px;color:var(--muted)">{{coverage_note}}</div>
+</div>
+
+<div class="footer">Generated {{date}} from live govard captures on <code>{{host}}</code> (audit <code>{{lint_session}}</code> + per-page <code>{{perpage_session}}</code>). Logs retained <code>{{logs}}</code>. <a href="report.md">Markdown</a> · <a href="report.pdf">PDF via Print</a></div>
+
+</div>
+</body>
+</html>
