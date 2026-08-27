@@ -72,6 +72,6 @@ Rules:
 - **P margin 4px + line-height 1.6** — subtitle and meta have air, not `margin:0`.
 - **Meta pills 8px gap + 3×10 padding** — `flowchart TB` and `10 plugins` don't run together (`flowchart TB10` bug).
 - **Figure note 12px** — `.figure .note` and `pre.mermaid + .note` must have `margin-top:12px`, not 0 (pre `margin:0` + note stuck bug in `harness-architecture.html`).
-- **Cluster label 4px** — `.cluster-label span` must have `padding-bottom:4px` and `line-height:1.6` so "Runtime Layer — Govard" doesn't stick to nodes below (cluster header stuck bug). Add `transform: translateY(2px)` for extra air.
+- **Cluster label 4px + inner 16px** — `.cluster-label span` must have `padding-bottom:4px` (small) to `12px` for large `Integration Layer` header, `line-height:1.6`, `transform: translateY(2px→4px)`, plus `#my-svg-Core, #my-svg-OpsStudio { transform: translateY(16px) }` so Plugins header (y=8, Core at y=45.5, gap 13.5px) doesn't stick to Core below.
 - Verify with `grep -n "header.*margin\|line-height" docs/diagrams/maestro-harness-deck.html` — must show 16px/1.6, not 0. For SVG, `grep cluster-label` must show `padding-bottom:4px`.
 
