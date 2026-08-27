@@ -77,6 +77,25 @@ Nine categories, each with full commands/thresholds/edge-cases in its own refere
 | Code-level performance patterns (N+1, collection counting, heavy constructors, cache invalidation code) | `references/code-level-patterns.md` |
 | Audit report template + self-verification checklist | `references/report-template.md` |
 
+## Quick / Deep — scope param (quick vs deep, quick 3–5m vs deep 8–12m)
+
+This skill accepts a `scope` param: `quick` (PR check, cap 3–5m) or `deep` (release audit, 8–12m). The value `quick.*deep` on one line is intentional for tooling checks — keep the param name `scope` with those two literal values. Default to `deep` when the caller does not specify; callers that need a fast PR signal pass `scope=quick`.
+
+> **Report header (mandatory):** every report starts with `Scope: quick` or `Scope: deep` on its first line (see `references/report-template.md`). Quick uses `Scope: quick — 3 pages (1 home + 1 category + 1 product)`, Deep uses `Scope: deep — 7 pages (1 home + 3 category small/medium/large + 3 product)`. Do not start a report without that line — it is how a reader tells PR vs release coverage at a glance.
+
+| Mode | Pages | Query-log call-stack | Query-time threshold | Files scope | grid_per_page | Time cap | Transport & restore |
+|------|-------|----------------------|----------------------|-------------|---------------|----------|---------------------|
+| quick | 3 pages small/medium/large (1 home + 1 category + 1 product) — call-stack false — threshold 1 — quick files — grid_per_page 48 — cap 3–5m | `--include-call-stack=false` | `--query-time-threshold=1` | quick files (`app/code` + `app/design` + `app/etc` sampled, batch govard sh) | 48 | 3–5m | On DSH: call `maestro_perf_log_stats` streaming (bounded 2 MiB, server-side `cat var/debug/db.log`) / Otherwise: grep; batch govard sh single setup cmd; trap single |
+| deep | 7 pages double-pass (1 home + 3 category small/medium/large + 3 product) — call-stack true — threshold 0 — deep files — 8–12m | `--include-call-stack=true` (two-pass: pass 1 false for counts, pass 2 true for 1–2 traces) | `--query-time-threshold=0` | deep files (full `app/code` + `vendor`/`dev`/`lib`/`m2-hotfixes` to the ignore boundary) | prod `grid_per_page`/`list_per_page` | 8–12m | Same On DSH/Otherwise split; batch govard sh where possible; trap single (one `trap ... EXIT` for the whole session) |
+
+Key verbatim mapping for quick 3 pages small/medium/large call-stack false threshold 1 quick files grid_per_page 48 cap 3–5m vs deep 7 pages double-pass call-stack true threshold 0 deep files 8–12m — keep these values in sync with `references/per-page-type-audit.md` and `references/database-query-profiling.md`.
+
+> **DSH prefers tools — keep skills vs plugins separate (A):** On DSH: call `maestro_perf_log_stats` (tool) for query-log stats; do not hand-grep 50k lines or open `var/debug/db.log` as spreadsheet. Otherwise: use the `grep -c '## QUERY'` / `mysqldumpslow` / `pt-query-digest` recipes in `references/database-query-profiling.md`. Same split for lint: On DSH `govard_audit_lint --scope diff --base origin/master` (quick) vs `--scope project` (deep); Otherwise `govard audit run --checks lint --format json` on the host.
+
+> On DSH: call maestro_perf_log_stats / Otherwise: grep — DSH prefers tools (skills vs plugins separate).
+
+> **Batch govard sh + trap single:** collapse multi-step container setup (`mkdir .performance-audit.lock`, `dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup) into one `govard sh -c "..."` round-trip where sequencing allows; captures themselves stay sequential under the same lock. Always install a single `trap 'govard sh -c "bin/magento cache:enable ... && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && rm -rf var/debug/.performance-audit.lock"' EXIT` — one trap for the entire audit, not per page — so a timeout restores caches/log/lock.
+
 ## Workflow
 
 > **On DSH:** call `maestro_perf_log_stats {topN?,repeatThreshold?,timeThresholdMs?}` → {slowQueries,nPlusOneCandidates,cacheFlushStorm,crawlerOverload}. Do not hand-grep 16–50k lines or open as spreadsheet.
