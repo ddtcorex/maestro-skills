@@ -4,6 +4,11 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.4.1] - 2026-08-28
+
+### Fixed
+- Release workflow `pnpm-version` empty `""` required `packageManager` and broke with `Multiple versions`; set `pnpm-version: "11"` explicitly to match CI `verify` workflow (`pnpm/action-setup@v4` `version: 11`).
+
 ## [2.4.0] - 2026-08-28
 
 ### Added
