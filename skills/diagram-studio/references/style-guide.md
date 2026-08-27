@@ -53,3 +53,23 @@ When exporting to `docs/diagrams/*.html`, map tokens to CSS variables:
 
 Keep HTML self-contained (inline CSS, no external JS) for client deck portability.
 
+## Deck HTML Layout Tokens
+
+When exporting to `docs/diagrams/maestro-harness-deck.html` (3-page A4 deck), use these spacing tokens to avoid cramped headers (density 4/10 for text too):
+
+```css
+/* Header — generous whitespace, not wall of text */
+.page header { margin-bottom: 16px; }
+.page header h1 { margin: 0 0 8px; line-height: 1.3; }
+.page header p { margin: 4px 0; line-height: 1.6; }
+.page header p.meta { margin-top: 8px; }
+.meta span { padding: 3px 10px; margin-right: 8px; margin-bottom: 4px; line-height: 1.4; }
+```
+
+Rules:
+- **Header margin 16px** — generous gap before the diagram image, not 12px cramped.
+- **H1 margin 8px + line-height 1.3** — title breathes, not stuck to subtitle.
+- **P margin 4px + line-height 1.6** — subtitle and meta have air, not `margin:0`.
+- **Meta pills 8px gap + 3×10 padding** — `flowchart TB` and `10 plugins` don't run together (`flowchart TB10` bug).
+- Verify with `grep -n "header.*margin\|line-height" docs/diagrams/maestro-harness-deck.html` — must show 16px/1.6, not 0.
+

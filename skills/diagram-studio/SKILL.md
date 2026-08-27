@@ -49,7 +49,8 @@ Extracted from `cathrynlavery/diagram-design` — see `references/diagram-design
 
 - `docs/architecture.md §1.1` — single source for the umbrella architecture (do not duplicate elsewhere).
 - `docs/specs/*-design.md` — for RFC/spec diagrams; each spec may embed one Mermaid block that lives with the design.
-- `docs/diagrams/<slug>.html` — for editorial export (optional, self-contained HTML+SVG for client decks). Link preview via `![Preview](diagrams/<slug>.html)` in markdown when needed.
+- `docs/diagrams/<slug>.html` — for editorial export (optional, self-contained HTML+SVG for client decks). Link preview via `![Preview](diagrams/<slug>.html)` in markdown when needed. Use spacing tokens from `references/style-guide.md#deck-html-layout-tokens` (header 16px, line-height 1.6) so deck text isn't cramped — verify with `grep line-height`.
+- `docs/diagrams/maestro-harness-deck.html` — 3-page A4 deck (cover + 2 diagrams). Must use deck layout tokens above; header `flowchart TB` and `10 plugins + meta` must have 8px gap, not `flowchart TB10`.
 
 Add `docs/diagrams/.gitkeep` if the folder is otherwise empty.
 
