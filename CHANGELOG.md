@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] - 2026-08-27
+
+### Added
+- `diagram-studio`: Hybrid Mermaid + editorial HTML studio for 5 diagram types (flowchart/sequence/class/er/state) — GitHub-native Mermaid + optional self-contained HTML+SVG for client decks. Editorial discipline from `cathrynlavery/diagram-design` (density 4/10, accent 1-2 via `classDef focal fill:#eb6c36`, no shadows, rx:6). Audience Rules (team: svg+pre+tokens vs client: svg only) + deck layout tokens (header 16px/1.6). 2-layer cluster header fix: `init padding 24/rankSpacing 60` + spacer `padRuntime` + SVG `y+16/8` per cluster (never CSS `span {padding}`), vertical 2156×4109. Verification via `packages/dsh-maestro-diagram` (`mermaid_verify`/`mermaid_drift`).
+
+### Fixed
+- `diagram-studio` tests now vitest-compatible (pressure 0 tests + verify-cli ENOENT/process.exit) — CI 30/30.
+
 ## [2.2.1] - 2026-08-26
 
 ### Added
