@@ -6,17 +6,45 @@ repo="${DSH_REPO:-}"
 log="${DSH_RESTART_LOG:-/tmp/dsh-web-restart.log}"
 confirmed=false
 dry_run=false
+auto_mode=false
+
+dry_boot_and_verify() {
+  local dsh_repo="$1"
+  local port="${2:-0}"
+  local marker="${3:-}"
+  local dsh_home
+  dsh_home="$(mktemp -d)"
+  local log_tmp
+  log_tmp="$(mktemp)"
+  # ephemeral boot with isolated DSH_HOME
+  DSH_HOME="$dsh_home" pnpm --dir "$dsh_repo" exec dsh web --port "$port" --no-open >"$log_tmp" 2>&1 &
+  local pid=$!
+  local ok=false
+  for _ in $(seq 1 15); do
+    if curl -s "http://127.0.0.1:$port/" 2>/dev/null | grep -q "${marker:-}"; then
+      ok=true
+      break
+    fi
+    if ! kill -0 "$pid" 2>/dev/null; then break; fi
+    sleep 1
+  done
+  kill -TERM "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  rm -rf "$dsh_home" "$log_tmp"
+  [[ "$ok" == true ]]
+}
 
 usage() {
   cat <<'EOF'
-Usage: restart-dsh-web.sh --repo <deepseek-harness> [--log <path>] [--confirm] [--dry-run]
+Usage: restart-dsh-web.sh --repo <deepseek-harness> [--log <path>] [--confirm|--auto] [--dry-run]
 
 Safely hand over the DSH Web process that owns ports 3000 and 3080.
 
 Options:
   --repo <path>  DeepSeek Harness checkout (or set DSH_REPO).
   --log <path>   Append-only launch log (or set DSH_RESTART_LOG).
-  --confirm      Permit a real process handover. Required unless --dry-run.
+  --confirm      Permit a real process handover (human-gated). Required unless --dry-run.
+  --auto         Permit auto handover (supervisor, no consent prompt). Alias for --confirm with auto log prefix.
   --dry-run      Print the resolved process tree; never stop or launch anything.
   -h, --help     Show this help text.
 EOF
@@ -41,6 +69,11 @@ while (($#)); do
       ;;
     --confirm)
       confirmed=true
+      shift
+      ;;
+    --auto)
+      confirmed=true
+      auto_mode=true
       shift
       ;;
     --dry-run)
