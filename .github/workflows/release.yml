@@ -7,13 +7,13 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
-  release:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Validate plugin manifests
         run: |
           jq empty .claude-plugin/plugin.json
@@ -23,18 +23,10 @@ jobs:
           test -x install.sh
           bash -n install.sh
 
-      - name: Extract changelog section for this version
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          awk -v ver="$version" '
-            /^## \[/ { if (found) exit; if (index($0, "[" ver "]")) { found=1; next } }
-            found { print }
-          ' CHANGELOG.md > release-notes.md
-          cat release-notes.md
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ github.ref_name }}
-          body_path: release-notes.md
-          generate_release_notes: true
+  release:
+    needs: validate
+    uses: ddtcorex/dsh-maestro-ci/.github/workflows/node-release.yml@22511d64e0dec4e5926388848a347973ec2e3b12
+    with:
+      pnpm-version: ""
+    secrets:
+      npm-token: ${{ secrets.NPM_TOKEN }}
