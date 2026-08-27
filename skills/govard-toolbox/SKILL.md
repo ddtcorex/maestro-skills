@@ -225,7 +225,18 @@ govard audit rerun --session SESSION_ID           # exact rerun by session, prof
 govard audit toolchain status                     # lint image health
 ```
 
-`--mode` validates early (`auto`, `project`, `module_in_project`, `standalone`) -- typo `module` fails with `unknown audit target mode (valid modes: ...)`. `govard env up/pull` now uses resilient per-image pulls (`--ignore-buildable`, reuse compatible local image or build Govard image locally). Stale `diagnostics` lease (`is already held`) -- `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `.govard/*/custom/govard-audit-profiler-*.conf`; 7-page manual audit costs ~2.5-3 min on reference project -- keep all 7 with `timeout 300` and trap restore, not fewer pages.
+`--mode` validates early (`auto`, `project`, `module_in_project`, `standalone`) -- typo `module` fails with `unknown audit target mode (valid modes: ...)`. `govard env up/pull` now uses resilient per-image pulls (`--ignore-buildable`, reuse compatible local image or build Govard image locally). Stale `diagnostics` lease (`is already held`) -- `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `.govard/*/custom/govard-audit-profiler-*.conf`; 7-page manual audit costs ~2.5-3 min on reference project -- keep all 7 with `timeout 300` and trap single, not fewer pages.
+
+### Lint scope — quick (diff) vs deep (project) — quick vs deep
+
+Lint supports **quick** (PR) vs **deep** (release) scope — keep this quick.*deep mapping in sync with `magento2-performance-audit`'s `Scope: quick` / `Scope: deep` header.
+
+| Mode | Govard scope | Base | Time | What it lints |
+|------|--------------|------|------|---------------|
+| quick | `--scope diff --base origin/master` | `origin/master` (or `origin/main` if master missing — validate with `git rev-parse --verify origin/master` first) | ~15–30s (diff of <500 files vs 9743 project) | Changed files only via `git diff --name-only --diff-filter=ACMRT origin/master...HEAD` intersected with `.magelintignore` quick profile (ignore `vendor`/`dev/tests`/`lib`/`m2-hotfixes` to keep quick under 500 findings) — still honors always-ignore `pub/media`/`pub/static`/`var`/`generated`/`node_modules`/`.worktrees`/`.git` |
+| deep | `--scope project` | — | ~45–127s | Full project to the always-ignore boundary only — includes `vendor`/`dev/tests`/`lib`/`m2-hotfixes` when that boundary applies, but never `pub/media`/`var`/`generated` — report every `Scope: deep` finding with evidence or `Skipped: <reason>` |
+
+On DSH: call `govard_audit_lint {worktreePath?, scope?: "diff"|"project", base?: "origin/master"}` → `{lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}`; it already uses `scope diff` + `jobs min(nproc,4)` + stale `diagnostics` cleanup internally. Otherwise: shell `govard audit run --checks lint --scope diff --base origin/master --format json` (quick) or `--scope project --format json` (deep). Text mode caps at 10 and is colorized — use `--format json` for agents and never hand-parse text/exit codes. For workflow-level lint quick/deep, prefer `govard_audit_lint` on DSH and `govard audit run --checks lint --scope diff --base origin/master` otherwise — keep skills vs plugins separate (A).
 
 ## Detailed References
 

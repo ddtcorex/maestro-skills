@@ -8,6 +8,20 @@ A single-page spot check isn't representative — different page types have very
 
 > **Expected cost on a real store like reference project (3.2G/60k files in `pub/media`):** homepage 50k queries (with call-stack) → 16-26s per capture, 7 pages → ~110-140s for captures alone + 31s setup + 10s restore ≈ 2.5-3 min. The harness `tools.bash` default 60s will kill this — run with `timeout 300` or `run_in_background` with polling, and always trap restore (see “Always restore” below). Keep all 7 pages; this cost is intentional — a single-category spot check cannot reveal per-item N+1s that only become visible across small/medium/large.
 
+## Quick vs Deep — pages, instrumentation, and transport
+
+This reference supports both **quick** (3–5 min PR check) and **deep** (8–12 min release audit) modes. Pick the mode before starting and keep every parameter in the same row — do not mix quick pages with deep call-stack settings.
+
+| Mode | Pages | Query-log call-stack | Query-time threshold | govard sh transport | Stats | Restore trap | Govard-native profiler lease |
+|------|-------|----------------------|----------------------|---------------------|-------|--------------|------------------------------|
+| quick | 3 pages (1 home + 1 category + 1 product) | `--include-call-stack=false` | `--query-time-threshold=1` (1s, only slow queries) | batch govard sh — setup + warmup + 3 captures in **1 cmd** where possible | `maestro_perf_log_stats` streaming (bounded 2 MiB, server-side `cat var/debug/db.log`) | trap single — one `trap '... restore ...' EXIT` for the entire session | `govard audit run --checks lint,profiler --url <absolute http(s) url>` quick single-URL lease (`artifacts/profiler/profile.csv` SHA) as complement, not replacement |
+| deep | 7 pages (1 home + 3 category small/medium/large + 3 product) | `--include-call-stack=true` | `--query-time-threshold=0` (all queries) | batch govard sh where possible, but per-page captures stay sequential under single lock | `maestro_perf_log_stats` streaming same bounded path, then two-pass re-capture for 1–2 N+1 candidates with call-stack=true | trap single — same one trap, covers both passes | same Govard-native profiler lease for all 7 pages when `--url` is provided; captures `artifacts/profiler/profile.csv` per URL with `Accept: text/html` so stock Magento enables the CSV |
+
+Notes:
+- **On DSH:** call `maestro_perf_log_stats` (streaming, bounded) instead of hand-grep of 16–50k line `var/debug/db.log`. Otherwise: local `grep -c '## QUERY'` recipes in `references/database-query-profiling.md`.
+- **Batch govard sh** means collapsing multiple container-local setup lines (`mkdir lock`, `bin/magento dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup discard) into a single `govard sh -c "..."` where sequencing allows — one round-trip instead of five. Captures themselves stay sequential (one `curl` + `cat var/debug/db.log` per page) under the same lock.
+- **Govard-native profiler lease** (`govard audit run --checks lint,profiler --url https://example.test/<path>.html --format json`) is a quick complement — machine-captured single URL into `artifacts/profiler/profile.csv` with SHA in `audit-result.json`. It ships no query log and no cross-page matrix — keep the manual per-page query-log captures above as the primary evidence.
+
 ## 0. Pick genuinely representative pages first
 
 Before measuring anything, verify the specific URLs you're about to test aren't degenerate cases — this is the single easiest way to get a misleading audit.
@@ -63,10 +77,19 @@ Pick 3 categories spanning small/medium/large product counts (not the single lar
 # Full lock semantics and owner checks: references/database-query-profiling.md.
 audit_token="$(date +%s)-$$"
 govard sh -c "lock=var/debug/.performance-audit.lock; mkdir \"\$lock\" || { echo 'SKIPPED: query-log capture already owned'; exit 1; }; printf '%s\\n' '$audit_token' > \"\$lock/owner\""
-govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:profiler:enable html"
-govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0"
-govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento cache:disable full_page block_html layout"
-govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento cache:flush"
+# Batch govard sh (quick: 1 cmd) — deep keeps the same 1-cmd batch but with call-stack true / threshold 0.
+# Quick: --include-call-stack=false --query-time-threshold=1  | Deep: --include-call-stack=true --query-time-threshold=0
+govard sh -c "
+  set -e
+  test \"$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1
+  bin/magento dev:profiler:enable html
+  # quick: --include-call-stack=false --query-time-threshold=1 ; deep: --include-call-stack=true --query-time-threshold=0
+  bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=false --query-time-threshold=1
+  bin/magento cache:disable full_page block_html layout
+  bin/magento cache:flush
+"
+# Deep alternative (7 pages, full fidelity): replace the line above with:
+# bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0
 
 # One throwaway homepage request first (discard its output/log) — this lets config/eav/
 # compiled_config caches rebuild after the flush. Confirm it's actually 200 before proceeding —
@@ -119,7 +142,13 @@ Analyze each page's `*.html` for its profiler table (see `references/html-profil
 govard sh -c "lock=var/debug/.performance-audit.lock; test \"\$(cat \"\$lock/owner\" 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && : > var/debug/db.log && rm \"\$lock/owner\" && rmdir \"\$lock\""
 ```
 
-If the harness kills the script mid-capture (timeout, Ctrl+C), caches and `dev:profiler`/`dev:query-log` stay enabled and the `var/debug/.performance-audit.lock` remains. Always trap restore: wrap the capture loop in `trap 'govard sh -c "bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && rm -rf var/debug/.performance-audit.lock"' EXIT` and, for Govard-native `audit --checks profiler`, clean a stale `diagnostics` lease with `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `rm .govard/apache/custom/govard-audit-profiler-*.conf` if `is already held` appears.
+If the harness kills the script mid-capture (timeout, Ctrl+C), caches and `dev:profiler`/`dev:query-log` stay enabled and the `var/debug/.performance-audit.lock` remains. Always trap restore — **trap single**: one `trap` for the entire session, not per-page:
+
+```bash
+trap 'govard sh -c "bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && rm -rf var/debug/.performance-audit.lock"' EXIT
+```
+
+This single trap covers setup + all captures + both passes. Do not add a second trap inside the loop — the last trap wins and would drop the restore. For Govard-native `audit --checks profiler`, clean a stale `diagnostics` lease with `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `rm .govard/apache/custom/govard-audit-profiler-*.conf` if `is already held` appears. On DSH, prefer `maestro_perf_log_stats` streaming for post-capture analysis (bounded 2 MiB, no spreadsheet open of 50k lines).
 
 Don't leave a target environment with caches disabled and full query logging on — this is a diagnostic state, not a normal running state, and matters especially if the target is shared with other developers or is staging rather than a disposable local box.
 

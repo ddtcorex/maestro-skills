@@ -1,0 +1,85 @@
+name: Bug Report
+description: Report a reproducible bug in maestro-skills.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please search existing issues to avoid duplicates.
+        For security vulnerabilities, use private reporting: https://github.com/ddtcorex/maestro-skills/security/advisories
+
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      description: Output of `npm view @ddtcorex/maestro-skills version` or version in package.json
+      placeholder: "2.2.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the project is affected?
+      options:
+        - Skill content (SKILL.md)
+        - Cordis plugin (src/ / DSH preset)
+        - install.sh / marketplace manifests
+        - Superpowers fork / sync
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node.js, pnpm, Claude Code / Codex CLI / DSH versions
+      render: bash
+      placeholder: |
+        uname -a
+        node --version
+        pnpm --version
+        claude --version
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. Observe error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or screenshots
+      render: shell
+
+  - type: textarea
+    id: contact
+    attributes:
+      label: Contact
+      description: Optional — how to reach you for follow-up (also reachable at kaido4492@gmail.com)
+      placeholder: kaido4492@gmail.com
