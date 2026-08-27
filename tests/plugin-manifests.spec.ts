@@ -16,7 +16,7 @@ describe('release manifests', () => {
       json('.codex-plugin/plugin.json'),
       json('.claude-plugin/marketplace.json'),
     ])
-    const version = '2.3.0'
+    const version = '2.3.1'
     expect(pkg.version).toBe(version)
     expect(claude.version).toBe(version)
     expect(codex.version).toBe(version)
