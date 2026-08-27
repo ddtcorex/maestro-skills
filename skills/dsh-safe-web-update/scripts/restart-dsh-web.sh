@@ -127,6 +127,57 @@ if [[ "$dry_run" == true ]]; then
   exit 0
 fi
 
+# --- safe-guard: don't restart while tools are still running (torn prevention) ---
+# Scan for dangling open turns (turn/start without turn/end) within last 5m.
+# If found, wait up to 30s for them to finish, then require --auto to force.
+check_dangling() {
+  local count_dangling
+  count_dangling() {
+    node --input-type=module <<'NODE' 2>/dev/null || echo 0
+import fs from 'node:fs'
+import { execSync } from 'node:child_process'
+try{
+  const root = (process.env.DSH_HOME || (await import('node:os')).homedir() + '/.dsh') + '/sessions'
+  let count=0
+  for(const proj of fs.readdirSync(root)){
+    const pp = root + '/' + proj
+    try{ if(!fs.statSync(pp).isDirectory()) continue }catch{continue}
+    for(const sess of fs.readdirSync(pp)){
+      const p = pp + '/' + sess + '/session.jsonl.zstd'
+      try{ fs.statSync(p) }catch{continue}
+      try{
+        const st = fs.statSync(p)
+        if(Date.now() - st.mtimeMs > 5*60*1000) continue
+      }catch{continue}
+      try{
+        const out = execSync(`zstd -d -c ${JSON.stringify(p)} 2>/dev/null | tail -n 20`, {encoding:'utf8', timeout:2000})
+        const lastStart = out.lastIndexOf('"type":"turn/start"')
+        if(lastStart!==-1 && !out.slice(lastStart).includes('"type":"turn/end"')) count++
+      }catch{}
+    }
+  }
+  console.log(count)
+}catch{ console.log(0) }
+NODE
+  }
+  local dangling
+  dangling="$(count_dangling)"
+  if [[ "$dangling" != "0" && -n "$dangling" ]]; then
+    printf '[restart] WARN: %s dangling open turn(s) within 5m — tools may be running\n' "$dangling" | tee -a "$log" >&2
+    if [[ "$auto_mode" != true ]]; then
+      printf '[restart] waiting 30s for tools to finish (re-run with --auto to force)\n' | tee -a "$log" >&2
+      for _ in $(seq 1 30); do sleep 1; done
+      local dangling2
+      dangling2="$(count_dangling)"
+      if [[ "$dangling2" != "0" && -n "$dangling2" ]]; then
+        printf '[restart] still %s dangling after wait — aborting (use --auto to force)\n' "$dangling2" | tee -a "$log" >&2
+        fail "refusing restart with $dangling2 dangling turn(s) — tools still running" 64
+      fi
+    fi
+  fi
+}
+check_dangling
+
 mkdir -p "$(dirname "$log")"
 printf '[restart] stopping process tree: %s\n' "$(tr '\n' ' ' <<<"$tree_pids")" >> "$log"
 kill -TERM $tree_pids 2>/dev/null || true
