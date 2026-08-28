@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.4.2] - 2026-08-28
+
+### Fixed
+- `dsh-safe-web-update`: three live-incident fixes to `restart-dsh-web.sh` from a single 2026-08-28 systemd-managed `dsh-web` session — (1) `resolve_tree()` no longer climbs past a `systemd --user` ancestor into the manager's own PID, which previously sent it `SIGTERM` and tore down every user unit (dsh-web, dsh-web-supervisor, keepalive) instead of just dsh-web; (2) when `systemctl --user is-active dsh-web.service` is true, stop/start goes through `systemctl --user stop`/`start` instead of raw `kill`/`nohup pnpm`, since a raw `kill -TERM` on a `Restart=always` unit's MainPID looks like a crash and races systemd's own auto-relaunch for the port; (3) the post-launch health poll now accepts HTTP 401 (browser-token auth, healthy since DSH 0.1.2) instead of only 200, so it stops spinning the full 90s timeout on an already-healthy service.
+- `dsh-safe-web-update`: `check_dangling()` scans sessions for an open `turn/start` without a matching `turn/end` within the last 5 minutes and waits up to 30s (or aborts unless `--auto`) before stopping the process tree, preventing torn Zstandard frames when a restart lands while tools are still running.
+- `dsh-safe-web-update`: writes `~/.dsh/.supervisor/planned-restart` right before stopping the process tree (removed on every exit path via `trap`) so `dsh-web-supervisor`'s health poll can distinguish an intentional restart from a crash instead of racing its own rollback against this script.
+- CI: pass `pnpm-version: ""` to the reusable `node-plugin.yml` workflow — its default `'11'` collided with this repo's `packageManager: pnpm@11.7.0` pin (`ERR_PNPM_BAD_PM_VERSION`), failing CI on `master` itself regardless of any in-flight PR.
+
+### Changed
+- `dsh-safe-web-update` docs: forbid an agent from self-restarting `dsh web` and require an explicit human handoff before the guarded `--confirm` run.
+
 ## [2.4.1] - 2026-08-28
 
 ### Fixed
