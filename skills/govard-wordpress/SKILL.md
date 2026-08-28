@@ -32,13 +32,13 @@ govard sh
 wp --info
 ```
 
-Govard default for WordPress: `stack.php_version 8.3`, `web_root /`, `db mariadb 11.4`. Verify with `govard config get stack.php_version`.
+Govard default for WordPress (verified 2026-08-28 `govard-test-wordpress`): `stack.php_version 8.0` (PHP 8.0.30), `web_root /`, `db mariadb 10.6`. Verify with `govard config get stack.php_version`. Note: request `--framework-version 6` currently installs WP 7.1 (latest); PHP/DB versions are template defaults and may differ per bootstrap.
 
 ## Cache Management
 
 ```bash
-# Object cache flush (requires object-cache drop-in, else no-op)
-govard tool wp cache flush
+# Object cache flush (requires installed site; object-cache drop-in else no-op)
+govard tool wp cache flush  # fresh DB without install returns "The site you have requested is not installed"
 
 # Transients
 govard tool wp transient delete --all
@@ -47,12 +47,14 @@ govard tool wp transient delete --all
 govard tool wp rocket clean --confirm
 ```
 
+Verified 2026-08-28: `cache flush` succeeds after `wp core install` (`Success: The cache was flushed`), fails pre-install.
+
 No Govard-level `frontend_sync` for WordPress — use `govard tool npm run watch` if the theme uses a build step.
 
 ## Plugin & Theme Management
 
 ```bash
-# List
+# List — requires installed site (verified: fresh govard-test-wordpress shows akismet 5.7.2 + hello 1.7.2 after install, fails pre-install)
 govard tool wp plugin list
 govard tool wp theme list
 
@@ -70,7 +72,7 @@ govard tool wp theme update --all
 ## Rewrite & Core
 
 ```bash
-# Flush rewrite rules (after CPT/taxonomy changes)
+# Flush rewrite rules (after CPT/taxonomy changes) — requires installed site; fresh install with empty DB warns "Rewrite rules are empty"
 govard tool wp rewrite flush
 govard tool wp rewrite list
 
@@ -80,8 +82,9 @@ govard tool wp core verify-checksums
 # Search-replace (after domain change, e.g. staging sync)
 govard tool wp search-replace 'https://staging.example.com' 'https://wordpress.test' --all-tables
 
-# Fresh install (Govard fresh install already runs wp core install)
+# Fresh install — Govard bootstrap creates wp-config.php but leaves DB empty (verified 2026-08-28: govard-test-wordpress required manual install)
 govard tool wp core install --url=https://wordpress.test --title="Local" --admin_user=admin --admin_email=admin@example.com
+# After install: govard tool wp core is-installed && govard tool wp db query "SHOW TABLES" shows wp_* tables
 ```
 
 Govard injects `wp-config.php` salts automatically on `govard env up`. For multisite (`WP_ALLOW_MULTISITE true`), add `extra_domains` in `.govard.yml` for each site domain.
