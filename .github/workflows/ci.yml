@@ -15,3 +15,8 @@ permissions:
 jobs:
   verify:
     uses: ddtcorex/dsh-maestro-ci/.github/workflows/node-plugin.yml@85d17f85a15c9a5e0a39638eb72925a095625d0e
+    with:
+      # package.json pins packageManager: pnpm@11.7.0 — an explicit version
+      # here collides with it (ERR_PNPM_BAD_PM_VERSION). Empty string opts
+      # into node-plugin.yml's packageManager-only pnpm/action-setup step.
+      pnpm-version: ''
