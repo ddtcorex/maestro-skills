@@ -32,7 +32,7 @@ description instead of committing dated process files.
 ## What this repo is
 
 A dual-ecosystem plugin (`maestro-skills`, npm `@ddtcorex/maestro-skills`)
-bundling 26 skills in two halves: 12 Magento 2 / Govard domain skills written
+bundling 28 skills in two halves: 14 Magento 2 / Govard domain skills written
 here, plus the 14-skill **superpowers process library forked verbatim from
 [obra/superpowers](https://github.com/obra/superpowers) v6.3.0** (MIT — see
 `THIRD-PARTY-NOTICES.md`). Distributed via self-listing marketplaces for both
