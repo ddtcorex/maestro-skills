@@ -256,6 +256,66 @@ govard tool magento cache:clean cache_tag_frontend
 govard varnish status
 ```
 
+## Testing
+
+Magento testing through Govard — verified 2026-08-28 via `internal/cmd/test_project.go` + `internal/frameworks/magento2/magento2.go` (govard v1.65.0). Every snippet uses host-side `govard test` dispatch (no `govard sh -c "govard"` nesting).
+
+### Unit Tests
+
+```bash
+# Default suite (PHPUnit, memory_limit=-1)
+govard test unit
+govard test phpunit -- --filter Vendor_ModuleTest --stop-on-failure
+
+# Direct PHPUnit for fine-grained control
+govard tool magento --help  # verify binary path
+govard tool php -d memory_limit=-1 vendor/bin/phpunit --testsuite unit --filter MyFilter
+```
+
+`govard test unit` runs `php -d memory_limit=-1 vendor/bin/phpunit` inside the PHP container (`govard-test-wordpress`/`symfony` envs confirm memory wrapper).
+
+### Integration Tests
+
+Requires `dev/tests/integration/etc/install-config-mysql.php` (copy from `.dist`) and a dedicated test DB:
+
+```bash
+# Prepare (once)
+cp dev/tests/integration/etc/install-config-mysql.php.dist dev/tests/integration/etc/install-config-mysql.php
+# edit DB credentials to match Govard DB (govard db info → wordpress/magento / db:3306)
+govard db query "CREATE DATABASE magento_integration_tests"
+
+# Run — Govard maps to php -c dev/tests/integration/phpunit.xml vendor/bin/phpunit
+govard test integration
+govard test integration -- --filter CatalogProductTest --stop-on-failure
+
+# Verbose via direct binary
+govard tool php -c dev/tests/integration/phpunit.xml -d memory_limit=-1 vendor/bin/phpunit --filter MyTest
+```
+
+`govard test integration` resolves via `frameworkTestCommand("magento2","integration")` → `php -c dev/tests/integration/phpunit.xml vendor/bin/phpunit` (`magento2.go:58`). Without `install-config-mysql.php` it exits explaining the missing file — not a Govard bug.
+
+### MFTF (Magento Functional Testing Framework)
+
+```bash
+# Generate and run acceptance tests
+govard tool php vendor/bin/mftf generate:tests
+govard test mftf -- --verbose
+# Direct
+govard tool php vendor/bin/codecept run -- --steps
+```
+
+Requires `dev/tests/acceptance` suite and Selenium/Chrome container (not part of default Govard stack — document as opt-in).
+
+### Static / Coverage Helpers
+
+- Static analysis is via `govard audit run --checks lint` (PHPCS + PHPStan), not `govard test phpstan` — see `magento2-linter` for provider matrix. `govard test phpstan` runs `vendor/bin/phpstan analyze app src` directly if needed.
+- Coverage (requires Xdebug — `govard debug on`):
+  ```bash
+  govard tool php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-html var/coverage
+  ```
+
+Prerequisites: `vendor/bin/phpunit` must exist (`composer install`); integration/MFTF need DB/Selenium. `govard test --help` lists `phpunit|phpstan|mftf|unit|integration`; unknown suite returns `unknown test suite: <name>`.
+
 ## Logging
 
 For agents, prefer bounded tail reads (no `-f` follow — it never returns):

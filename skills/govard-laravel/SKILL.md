@@ -105,16 +105,73 @@ govard tool artisan route:list --path=api
 
 ## Testing
 
+Laravel testing through Govard — verified 2026-08-28 via `internal/cmd/test_project.go` + `internal/frameworks/laravel/laravel.go` (govard v1.65.0). `govard test` dispatches inside the PHP container with `memory_limit=-1` for PHPUnit.
+
+### Govard Test Shortcuts
+
 ```bash
-# Run tests
+# Default suite — Govard maps to php artisan test (laravel DefaultTestCommand)
+govard test
+govard test -- --filter UserTest --stop-on-failure
+
+# Explicit PHPUnit (bypasses Artisan wrapper, uses memory wrapper)
+govard test unit
+govard test phpunit -- --filter UserTest --testsuite Feature
+
+# Static analysis via PHPStan (if vendor/bin/phpstan exists)
+govard test phpstan
+govard test phpstan -- --level=8 app
+```
+
+`govard test --help` lists `phpunit|phpstan|mftf|unit|integration`; unknown suite → `unknown test suite: <name>`.
+
+### Artisan Test (framework-native)
+
+```bash
+# All tests
 govard tool artisan test
 
-# With PHPUnit
-govard tool php artisan test
-govard tool php vendor/bin/phpunit
+# Parallel (requires pestphp/pest or phpunit 10+ with --parallel support)
+govard tool artisan test --parallel
 
-# Specific test
-govard tool php vendor/bin/phpunit --filter=UserTest
+# Filter / stop on failure
+govard tool artisan test --filter=UserTest --stop-on-failure
+
+# Pest (if pestphp/pest installed — drop-in for PHPUnit)
+govard tool pest -- --filter="creates user"
+govard tool php vendor/bin/pest --filter="UserTest"
+
+# Direct PHPUnit
+govard tool php -d memory_limit=-1 vendor/bin/phpunit --filter=UserTest --testsuite Feature
+govard tool php -d memory_limit=-1 vendor/bin/phpunit --stop-on-failure --testdox
+```
+
+### Coverage (requires Xdebug)
+
+```bash
+# Enable Xdebug for coverage (Govard)
+govard debug on  # or govard debug --mode=coverage
+
+# Artisan coverage
+govard tool artisan test --coverage --min=80
+
+# PHPUnit coverage directly
+govard tool php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-html coverage
+govard tool php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-text --min=80
+
+# Via phpdbg (no Xdebug)
+govard tool phpdbg -qrr vendor/bin/phpunit --coverage-html coverage
+```
+
+Coverage HTML lands in `coverage/` at project root — open `coverage/index.html` via `https://laravel.test/coverage/` or `govard open` if web root exposes it.
+
+### VSCode Integration
+
+If `govard vscode` is used, PHPUnit path mapping is auto-wired:
+
+```bash
+govard vscode phpunit -- --filter=UserTest
+# Maps to php -d memory_limit=-1 vendor/bin/phpunit inside container (see internal/cmd/vscode_setup.go)
 ```
 
 ## Frontend Assets
