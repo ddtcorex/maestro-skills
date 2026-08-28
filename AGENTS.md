@@ -332,3 +332,5 @@ manual release step in the GitHub UI.
   When adding or removing a skill, update every count and the compatibility
   matrix in the same change — the catalog spec catches frontmatter drift but
   not prose counts.
+
+- **Always request approval before merge or release:** never merge a PR/MR or publish a release (`git tag`/`pnpm publish`/`gh release`) without an explicit human approval — request review (`gh pr ready` / `gh pr request-review` / ask in chat) and wait for `APPROVED`.
