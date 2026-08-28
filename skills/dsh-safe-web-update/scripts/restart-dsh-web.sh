@@ -112,8 +112,18 @@ resolve_tree() {
   local current="$1"
   local parent command_line
   while [[ -n "$current" && "$current" != 1 ]]; do
-    printf '%s\n' "$current"
     command_line="$(ps -o cmd= -p "$current" 2>/dev/null || true)"
+    # Never walk into a service manager: when dsh-web runs as a systemd
+    # --user unit (ExecStart=node ... directly, no intervening pnpm
+    # wrapper), the parent of the listener process IS the manager itself.
+    # Without this guard the loop keeps climbing (no "pnpm" match, parent
+    # != 1 yet) and includes the manager's own PID in tree_pids -- SIGTERM
+    # to it tears down every user unit, not just dsh-web (2026-08-28
+    # incident: killed the whole systemd --user session).
+    case "$command_line" in
+      *systemd\ --user*) break ;;
+    esac
+    printf '%s\n' "$current"
     [[ "$command_line" == *pnpm* ]] && break
     parent="$(ps -o ppid= -p "$current" 2>/dev/null | tr -d '[:space:]')"
     [[ "$parent" == "$current" ]] && break
