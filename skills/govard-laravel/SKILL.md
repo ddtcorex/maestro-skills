@@ -105,7 +105,7 @@ govard tool artisan route:list --path=api
 
 ## Testing
 
-Laravel testing through Govard — verified 2026-08-28 via `internal/cmd/test_project.go` + `internal/frameworks/laravel/laravel.go` (govard v1.65.0). `govard test` dispatches inside the PHP container with `memory_limit=-1` for PHPUnit.
+Laravel testing through Govard — verified 2026-08-28 fresh `govard-test-laravel` (Laravel 13.29.0 via `laravel/laravel` latest, PHP 8.3.33, PHPUnit 12.5.34, `govard test` → `php artisan test` 2/2 pass) via `internal/cmd/test_project.go` + `internal/frameworks/laravel/laravel.go` (govard v1.65.0). Note: `--framework-version 11` currently installs latest Laravel 13 (`bootstrap.go:46` unpinned `laravel/laravel` for 11/12; only 10/9 pinned) — `phpunit`/`artisan test` behavior identical. `pest` not installed by default (`vendor/bin/pest` missing, `allow-plugins: pestphp/pest-plugin` true). `govard test` dispatches inside the PHP container with `memory_limit=-1` for PHPUnit.
 
 ### Govard Test Shortcuts
 
