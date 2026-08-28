@@ -48,7 +48,7 @@ govard tool symfony cache:clear
 govard tool symfony cache:pool:clear cache.app
 ```
 
-Govard's `stack.php_version` (default `8.4` for Symfony) determines the PHP runtime; `govard config get stack.php_version` shows the active version.
+Govard's `stack.php_version` (default `8.2` for the Symfony 7 skeleton; Symfony 8 requires `8.4`) determines the PHP runtime; `govard config get stack.php_version` shows the active version. Verified 2026-08-28 on fresh `symfony/skeleton` `7.4.17` (`govard-test-symfony`, PHP 8.2.33, MariaDB 10.11) — bootstrap warns `Cannot use symfony/skeleton v8.1.99 as it requires php >=8.4`.
 
 ## Routing & Debug
 
@@ -68,6 +68,8 @@ govard tool symfony debug:config framework
 ```
 
 ## Doctrine ORM
+
+> Prerequisite: the fresh `symfony/skeleton` ships without Doctrine. Install first: `govard tool composer require symfony/orm-pack`
 
 ```bash
 # Migrations — always dry-run first on a fresh DB
@@ -90,7 +92,7 @@ govard tool symfony doctrine:fixtures:load --append
 govard db query "SELECT * FROM migration_versions LIMIT 5"
 ```
 
-On a fresh Govard Symfony install the DB is empty — `migrate --dry-run` is safe; real migrate requires `govard env up` and a reachable `DATABASE_URL`.
+On a fresh Govard Symfony install the DB is empty — `migrate --dry-run` is safe after `symfony/orm-pack`; real migrate requires `govard env up` and a reachable `DATABASE_URL`. Verified 2026-08-28: fresh skeleton without `orm-pack` returns `There are no commands defined in the "doctrine:migrations" namespace`.
 
 ## Assets
 
@@ -111,12 +113,14 @@ Symfony has no Govard `frontend_sync` watcher (unlike Hyvä/Luma). Use `govard t
 
 ## Environment (.env)
 
-Govard injects `DATABASE_URL`, `MAILER_DSN`, and `APP_ENV` via layered config. Check current values:
+Govard injects `DATABASE_URL`, `MAILER_DSN`, and `APP_ENV` via `.env.local` (Symfony dotenv, not container env). Check current values:
 
 ```bash
 govard config get stack.php_version
 govard config get stack.db_version
-govard shell -c "printenv | grep -E 'APP_ENV|DATABASE_URL|MAILER_DSN'"
+cat .env.local
+# or inside container
+govard tool symfony debug:container --env-vars | grep -E 'APP_ENV|DATABASE_URL|MAILER_DSN'
 ```
 
 - `APP_ENV` defaults to `dev` locally; Govard does not overwrite a committed `.env`.
@@ -128,12 +132,12 @@ For env-specific overrides use `GOVARD_ENV=staging govard env up` (loads `.govar
 ## Audit (Lint)
 
 ```bash
-# Govard-native lint (if Symfony declares audit.lint)
+# Govard-native lint (provider declared but resolver currently unsupported for Symfony)
 govard audit run --checks lint
 govard audit run --checks lint --format json
 ```
 
-If the project has no `audit.lint` declaration, lint is not natively gated — use `govard tool symfony` to run PHPStan/PHPCS directly via `govard tool php vendor/bin/phpstan`.
+`audit.lint.provider: govard` is generated in `.govard.yml` but `govard audit run` currently returns `no framework can resolve audit target` for Symfony (verified 2026-08-28 — bootstrap warns `Auto configuration is not supported for framework "symfony" yet`). Use `govard tool php vendor/bin/phpstan` / `vendor/bin/phpcs` directly until Govard audit adds Symfony support.
 
 ## Common Workflows
 
