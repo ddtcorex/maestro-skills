@@ -78,6 +78,22 @@ Do not read the top of an old append-only log as liveness evidence. Instead:
 
 - Kill the process from an inline agent shell; the killing action can terminate
   that shell before it relaunches DSH.
+- **Never invoke this skill from inside a DSH chat session's agent turn.** The agent itself runs inside `dsh web`; killing `dsh web` from its own turn interrupts that turn (`interrupted` in the append-only log) and the `setsid nohup` relaunch never completes from the killed shell. If you are an agent, stop and hand the restart to the human: print the exact `setsid nohup ... --confirm` command for the human to run in their own terminal, do not execute it.
 - Restart for a client-only or static change.
 - Hard-code a PID or a local developer's workspace path.
 - Treat a 200 response alone as proof that a rebuilt plugin was loaded.
+
+## Agent handoff (required when you are an agent)
+
+If you are running inside `dsh web` (any `dsh-*` skill, `maestro-*` skill, or subagent), you **must not** execute the restart yourself:
+
+1. Run all preflight checks (`--dry-run`, `pnpm verify`, marker grep) and report the results.
+2. Print the exact detached command the human should run, e.g.:
+
+   ```bash
+   setsid nohup bash <skill-resource-base>/scripts/restart-dsh-web.sh \
+     --repo /path/to/deepseek-harness --confirm \
+     </dev/null >/dev/null 2>&1 &
+   ```
+
+3. Wait for explicit human confirmation in a new terminal. The interrupted turn will rehydrate from the log when the browser reconnects — no data is lost.
