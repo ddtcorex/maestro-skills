@@ -16,7 +16,11 @@ describe('release manifests', () => {
       json('.codex-plugin/plugin.json'),
       json('.claude-plugin/marketplace.json'),
     ])
-    const version = '2.4.1'
+    // Read from package.json rather than a hardcoded literal: a fixed
+    // version string here would need editing on every future release,
+    // exactly the drift this test exists to catch elsewhere.
+    const version = pkg.version
+    expect(typeof version).toBe('string')
     expect(pkg.version).toBe(version)
     expect(claude.version).toBe(version)
     expect(codex.version).toBe(version)
