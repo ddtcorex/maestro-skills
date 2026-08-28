@@ -134,8 +134,17 @@ resolve_tree() {
 tree_pids="$(for pid in $listener_pids; do resolve_tree "$pid"; done | sort -u)"
 [[ -n "$tree_pids" ]] || fail 'could not resolve a process tree for the listeners'
 
+# dsh-web.service has Restart=always: a raw `kill -TERM` on its MainPID looks
+# like a crash to systemd, which immediately relaunches it -- racing this
+# script's own relaunch for ports 3000/3080 (observed live 2026-08-28: restart
+# counter climbed past 20 before either side won). When systemd owns it,
+# defer the whole stop/start to systemctl instead of managing PIDs directly.
+systemd_managed=false
+systemctl --user is-active --quiet dsh-web.service 2>/dev/null && systemd_managed=true
+
 printf '[restart] listener pids: %s\n' "$(tr '\n' ' ' <<<"$listener_pids")"
 printf '[restart] process tree: %s\n' "$(tr '\n' ' ' <<<"$tree_pids")"
+printf '[restart] managed by: %s\n' "$([[ "$systemd_managed" == true ]] && echo 'systemd (dsh-web.service)' || echo 'raw process (no systemd unit)')"
 
 if [[ "$dry_run" == true ]]; then
   printf '[restart] dry-run: no process will be stopped or launched\n'
@@ -203,28 +212,35 @@ mkdir -p "$(dirname "$marker")"
 date -Iseconds > "$marker"
 trap 'rm -f "$marker"' EXIT
 
-kill -TERM $tree_pids 2>/dev/null || true
+if [[ "$systemd_managed" == true ]]; then
+  # systemctl stop is a clean, intentional stop -- Restart=always does not
+  # fire for it, unlike an out-of-band kill of the unit's MainPID.
+  printf '[restart] stopping dsh-web.service via systemctl\n' >> "$log"
+  systemctl --user stop dsh-web.service 2>>"$log" || fail 'systemctl --user stop dsh-web.service failed'
+else
+  kill -TERM $tree_pids 2>/dev/null || true
 
-tree_stopped=false
-for _ in $(seq 1 20); do
-  alive=false
-  for pid in $tree_pids; do
-    if kill -0 "$pid" 2>/dev/null; then
-      alive=true
+  tree_stopped=false
+  for _ in $(seq 1 20); do
+    alive=false
+    for pid in $tree_pids; do
+      if kill -0 "$pid" 2>/dev/null; then
+        alive=true
+        break
+      fi
+    done
+    if [[ "$alive" == false ]]; then
+      tree_stopped=true
       break
     fi
+    sleep 0.5
   done
-  if [[ "$alive" == false ]]; then
-    tree_stopped=true
-    break
-  fi
-  sleep 0.5
-done
 
-if [[ "$tree_stopped" != true ]]; then
-  printf '[restart] process tree did not stop after TERM; sending KILL\n' >> "$log"
-  kill -KILL $tree_pids 2>/dev/null || true
-  sleep 1
+  if [[ "$tree_stopped" != true ]]; then
+    printf '[restart] process tree did not stop after TERM; sending KILL\n' >> "$log"
+    kill -KILL $tree_pids 2>/dev/null || true
+    sleep 1
+  fi
 fi
 
 for port in 3000 3080; do
@@ -234,21 +250,30 @@ for port in 3000 3080; do
 done
 
 command -v curl >/dev/null 2>&1 || fail 'required command is unavailable: curl'
-command -v setsid >/dev/null 2>&1 || fail 'required command is unavailable: setsid'
-command -v pnpm >/dev/null 2>&1 || fail 'required command is unavailable: pnpm'
 
-printf '[restart] launching DSH Web from %s\n' "$repo" >> "$log"
-(
-  cd "$repo"
-  setsid nohup "$(command -v pnpm)" dsh web --no-open </dev/null >> "$log" 2>&1 &
-)
+if [[ "$systemd_managed" == true ]]; then
+  printf '[restart] starting dsh-web.service via systemctl\n' >> "$log"
+  systemctl --user start dsh-web.service 2>>"$log" || fail 'systemctl --user start dsh-web.service failed'
+else
+  command -v setsid >/dev/null 2>&1 || fail 'required command is unavailable: setsid'
+  command -v pnpm >/dev/null 2>&1 || fail 'required command is unavailable: pnpm'
+
+  printf '[restart] launching DSH Web from %s\n' "$repo" >> "$log"
+  (
+    cd "$repo"
+    setsid nohup "$(command -v pnpm)" dsh web --no-open </dev/null >> "$log" 2>&1 &
+  )
+fi
 
 for _ in $(seq 1 90); do
-  if [[ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3080/ || true)" == 200 ]]; then
-    printf '[restart] DSH Web is serving HTTP 200 on port 3080\n'
+  # 401 is healthy: dsh-web is up but requires the browser token (matches
+  # dsh-web-supervisor's own health-poller convention since DSH 0.1.2).
+  code="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3080/ || true)"
+  if [[ "$code" == 200 || "$code" == 401 ]]; then
+    printf '[restart] DSH Web is serving HTTP %s on port 3080\n' "$code"
     exit 0
   fi
   sleep 1
 done
 
-fail 'DSH Web did not serve HTTP 200 on port 3080 before timeout'
+fail 'DSH Web did not serve HTTP 200/401 on port 3080 before timeout'
