@@ -4,6 +4,11 @@ set -euo pipefail
 
 repo="${DSH_REPO:-}"
 log="${DSH_RESTART_LOG:-/tmp/dsh-web-restart.log}"
+# Coordination with dsh-web-supervisor (see workspace docs/specs/
+# 2026-08-28-supervisor-planned-restart-design.md): the supervisor treats a
+# down poll as a crash unless this marker is fresh, so it never races this
+# script's own kill -> dry-boot -> relaunch sequence with its own rollback.
+marker="${DSH_SUPERVISOR_MARKER:-$HOME/.dsh/.supervisor/planned-restart}"
 confirmed=false
 dry_run=false
 auto_mode=false
@@ -180,6 +185,14 @@ check_dangling
 
 mkdir -p "$(dirname "$log")"
 printf '[restart] stopping process tree: %s\n' "$(tr '\n' ' ' <<<"$tree_pids")" >> "$log"
+
+# Mark this as an intentional restart before the port goes down, so
+# dsh-web-supervisor's health poll does not race us with its own rollback.
+# Removed on every exit path (success or failure) via the trap.
+mkdir -p "$(dirname "$marker")"
+date -Iseconds > "$marker"
+trap 'rm -f "$marker"' EXIT
+
 kill -TERM $tree_pids 2>/dev/null || true
 
 tree_stopped=false
