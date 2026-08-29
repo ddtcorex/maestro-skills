@@ -30,7 +30,13 @@ For generic PHP (strict_types/PSR-12/PHPStan/Security) see php-dev-core.
 govard tool artisan config:cache
 govard tool artisan config:clear
 govard tool artisan cache:clear
+
+# Route cache
 govard tool artisan route:cache
+govard tool artisan route:clear
+
+# View cache
+govard tool artisan view:cache
 govard tool artisan view:clear
 ```
 
@@ -41,79 +47,136 @@ For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4
 ## Database
 
 ```bash
+# Migrations
 govard tool artisan migrate
 govard tool artisan migrate:fresh
+govard tool artisan migrate:refresh
+govard tool artisan migrate:rollback
 govard tool artisan migrate:status
+
+# Seeders
+govard tool artisan db:seed
 govard tool artisan db:seed --class=UserSeeder
+
+# Factory
+govard tool artisan make:factory PostFactory
 govard tool artisan tinker
+
+# Direct SQL
 govard db connect
 ```
 
 ## Queue Operations
 
 ```bash
+# Start queue worker
 govard tool artisan queue:work
+
+# Queue withSupervisor
 govard svc up
-govard tool artisan queue:failed
+
+# Retry failed jobs
 govard tool artisan queue:retry all
+govard tool artisan queue:failed
+
+# Clear queue
+govard tool artisan queue:flush
 ```
 
 ## Scheduler
 
 ```bash
+# Run scheduler (keep in cron)
 govard tool artisan schedule:run
+
+# List scheduled
 govard tool artisan schedule:list
 ```
 
 ## Development
 
 ```bash
+# Create commands
 govard tool artisan make:command MyCommand
 govard tool artisan make:controller MyController
-govard tool artisan make:model Post -mcr
-govard tool artisan route:list --path=api
+govard tool artisan make:model Post
+govard tool artisan make:migration create_posts_table
+
+# Tinker (interactive REPL)
 govard tool artisan tinker
+
+# Show routes
+govard tool artisan route:list
+govard tool artisan route:list --path=api
 ```
 
 ## Testing
 
-Laravel testing through Govard — verified 2026-08-28 via `internal/cmd/test_project.go` + `internal/frameworks/laravel/laravel.go` (govard v1.65.0).
-
 ```bash
-govard test
-govard test -- --filter UserTest --stop-on-failure
-govard test phpunit -- --filter UserTest --testsuite Feature
-govard tool artisan test --parallel
-govard tool php -d memory_limit=-1 vendor/bin/phpunit --filter=UserTest
-```
+# Run tests
+govard tool artisan test
 
-Coverage requires Xdebug (`govard debug on`): `govard tool artisan test --coverage --min=80`.
+# With PHPUnit
+govard tool php artisan test
+govard tool php vendor/bin/phpunit
+
+# Specific test
+govard tool php vendor/bin/phpunit --filter=UserTest
+```
 
 ## Frontend Assets
 
 ```bash
+# Node modules
 govard tool npm install
 govard tool npm run dev
 govard tool npm run prod
-rm -rf node_modules/.vite  # clear Vite cache
+govard tool npm run watch
+
+# Laravel Mix (if using)
+govard tool npm run dev
+govard tool npm run production
+
+# Clear Vite cache
+# node_modules is bind-mounted into the container; clearing from the host is safe
+rm -rf node_modules/.vite
 ```
 
 ## Logging
 
 ```bash
+# View logs
 tail -f storage/logs/laravel.log
+
+# Clear logs
 govard tool artisan log:clear
+
+# Laravel Debugbar (if installed)
+curl -s https://local.test/_debugbar/open
 ```
 
 ## Common Workflows
 
+### After Pulling Code
+
 ```bash
-# After pulling code
 govard tool composer install
 govard tool artisan migrate
 govard tool artisan cache:clear
+govard tool npm install && govard tool npm run dev
+```
 
-# Deployment prep
+### Creating Features
+
+```bash
+govard tool artisan make:model Post -mcr  # Model + Migration + Controller
+govard tool artisan migrate
+govard tool artisan route:list
+```
+
+### Deployment Prep
+
+```bash
 govard tool artisan config:cache
 govard tool artisan route:cache
 govard tool artisan view:cache

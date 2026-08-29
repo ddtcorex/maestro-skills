@@ -36,11 +36,11 @@ wp --info
 
 Govard default for WordPress (verified 2026-08-28 `govard-test-wordpress`): `stack.php_version 8.0` (PHP 8.0.30), `web_root /`, `db mariadb 10.6`. Verify with `govard config get stack.php_version`. Note: request `--framework-version 6` currently installs WP 7.1 (latest); PHP/DB versions are template defaults and may differ per bootstrap.
 
+Bedrock layout `web/wp/wp-includes/version.php` is auto-detected via `web/wp/wp-includes/version.php` (see `govard-toolbox` for provider details).
+
 ## Audit
 
 For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4-framework matrix and `govard audit run --checks lint --provider govard --mode project --format json` see `govard-toolbox` ## Audit.
-
-Bedrock layout `web/wp/wp-includes/version.php` is auto-detected via `web/wp/wp-includes/version.php` (see `govard-toolbox` for provider details).
 
 ## Cache Management
 
