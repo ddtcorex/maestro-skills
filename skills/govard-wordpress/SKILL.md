@@ -40,7 +40,7 @@ Bedrock layout `web/wp/wp-includes/version.php` is auto-detected via `web/wp/wp-
 
 ## Audit
 
-For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4-framework matrix and `govard audit run --checks lint --provider govard --mode project --format json` see `govard-toolbox` ## Audit.
+For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4-framework matrix and `govard audit run --checks lint --lint-provider govard --mode project --format json` see `govard-toolbox` ## Audit.
 
 ## Cache Management
 

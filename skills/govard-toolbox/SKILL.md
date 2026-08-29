@@ -214,7 +214,20 @@ govard config set stack.php_version 8.4
 
 > For generic PHP patterns (strict_types/PSR-12/Composer/PHPStan/PDO) see `php-dev-core`.
 
-Govard's persistent audit gate for Magento 2/Mage-OS -- see `magento2-linter` for full policy (`target --mode`, PHP matrix, provider rules, caching/rerun identity). Text streams live like `vendor/bin/phpcs` (TTY colorized + uncapped, piped capped + plain); `json` stays a single object on stdout for AI agents. A failed/cancelled run still renders before exiting non-zero.
+Govard's persistent audit gate for Magento 2/Mage-OS **and** Laravel/Symfony/WordPress -- see `magento2-linter` for full Magento policy (`target --mode`, PHP matrix, provider rules, caching/rerun identity) and this section for the 4-framework matrix. Text streams live like `vendor/bin/phpcs` (TTY colorized + uncapped, piped capped + plain); `json` stays a single object on stdout for AI agents. A failed/cancelled run still renders before exiting non-zero.
+
+### Audit Matrix — 4 Frameworks
+
+Govard `audit run --checks lint --lint-provider govard --mode project --format json` is native for all 4 frameworks. Detection is via framework markers; no project-level `phpcs.xml`/`phpstan.neon` required for fallback. PHPStan level `5` and linters `phpcs + phpstan` are fixed across the matrix.
+
+| Framework | Detection Marker | CodingStandard | PHP | PHPStan | Linters |
+|-----------|----------------|----------------|-----|---------|---------|
+| Laravel | `artisan` file or `laravel/framework` in `composer.json` | `PSR12` | `8.1`–`8.4` | `5` | `phpcs`, `phpstan` |
+| Symfony | `bin/console` + `symfony/skeleton` or `symfony/framework-bundle` | `Symfony` | `8.1`–`8.4` | `5` | `phpcs`, `phpstan` |
+| WordPress | `wp-includes/version.php` or Bedrock `web/wp/wp-includes/version.php` | `WordPress` | `8.1`–`8.4` | `5` | `phpcs`, `phpstan` |
+| Magento 2 / Mage-OS | `bin/magento` + `magento/magento2` requirement | `Magento2` | `8.1`–`8.4` (standalone `8.1`–`8.5`, `7.4`/`8.0` only for `project`/`module_in_project`) | `5` | `phpcs`, `phpstan` |
+
+`--lint-provider govard` is the native provider (alias `--provider` kept for back-compat but deprecated). Use `--mode project` for the common case; `--mode standalone` only for isolated packages, `--mode module_in_project` only for Magento `app/code` modules.
 
 > **On DSH:** call `govard_audit_lint {worktreePath?}` → {lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}. Do not hand-parse text/exit codes.
 > **Otherwise:** `govard audit run --checks lint --format json` (machine-clean, one JSON on stdout, diagnostics on stderr; text mode capped at 10 and colorized — not for agents).
@@ -239,6 +252,10 @@ Lint supports **quick** (PR) vs **deep** (release) scope — keep this quick.*de
 | deep | `--scope project` | — | ~45–127s | Full project to the always-ignore boundary only — includes `vendor`/`dev/tests`/`lib`/`m2-hotfixes` when that boundary applies, but never `pub/media`/`var`/`generated` — report every `Scope: deep` finding with evidence or `Skipped: <reason>` |
 
 On DSH: call `govard_audit_lint {worktreePath?, scope?: "diff"|"project", base?: "origin/master"}` → `{lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}`; it already uses `scope diff` + `jobs min(nproc,4)` + stale `diagnostics` cleanup internally. Otherwise: shell `govard audit run --checks lint --scope diff --base origin/master --format json` (quick) or `--scope project --format json` (deep). Text mode caps at 10 and is colorized — use `--format json` for agents and never hand-parse text/exit codes. For workflow-level lint quick/deep, prefer `govard_audit_lint` on DSH and `govard audit run --checks lint --scope diff --base origin/master` otherwise — keep skills vs plugins separate (A).
+
+> **Timeout — use govard's auto, not shell `timeout`:** since `v1.67.0` `govard audit` has `--timeout auto` (default, 90s–30m framework-aware: 80ms/file magento2, 70ms wordpress, 20ms symfony/laravel + 60s base + 50% headroom, at least 10m for magento/wordpress). Verified `2026-08-29`: `symfony` 11k files → `2m15s` auto, `wordpress` fresh 1.5k → `~4m`, large `wordpress` 8k → `15m` auto (actual `219s`/`450s`), large `magento2` 10k non-vendor → `30m` auto (actual `590s` cold / `178s` warm, `1197s` cold for 20k findings). Shell `timeout 120/300` caused `cancelled` + orphan `govard-audit-*` containers + stale `~/.govard/audit/<id>/lock`; govard's internal `context.WithTimeout` cancels cleanly and prints `INFO audit timeout 2m15s (auto-estimated…)` in text (silent in `json`). Override only when needed: `--timeout 300s`/`10m`/`0` (no limit).
+
+> **Toolchain & image — verify after build:** after `make build` (which embeds `ContextDigest` SHA256 of `docker/audit-magento/Dockerfile+bin+toolchains+tests`), run `govard audit toolchain build` then `govard audit toolchain status` must show `Present: yes` and same `Context digest`. Since `v1.67.0` the toolchain natively bundles `WPCS 3.4.1` + `Symfony CS 3.16.0` via `composer global config allow-plugins` then `installed_paths` fallback, and `RestrictedCodeSniff.php` is patched `file_exists ? include : []` (commit `2011f24`) because `magento-coding-standard 40` (used on php 8.1+) may ship without `_files/restricted_classes.php` per-toolchain. Quick check: `docker run --rm govard-local/magelint:… /opt/govard/toolchains/php-8.3/vendor/bin/phpcs -i` must list `WordPress, Symfony, Magento2`. Wrong `ENTRYPOINT` on `docker commit` gives `sh: Illegal option --` — always `commit --change='ENTRYPOINT ["/usr/local/bin/magelint"]'`. Lock `audit lock ... already held (waited 30s)` → `rm -f ~/.govard/audit/<projectId>/lock` + `docker rm -f govard-audit-*` if holder crashed. Global `govard 1.65.0 != bin 1.67.0` → manual `sudo cp govard/bin/govard /usr/local/bin/govard` (approval prompts disabled, TTY required).
 
 ## Detailed References
 

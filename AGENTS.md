@@ -159,7 +159,7 @@ invocation notes in `using-superpowers/SKILL.md`.
   requirement — never drop `THIRD-PARTY-NOTICES.md`.
 - Skill **name collisions** would shadow across providers: never name a new
   domain skill the same as (or after renaming) a superpowers skill.
-- The ~170–220 words-per-lesson budget below applies to the 11 domain
+- The ~170–220 words-per-lesson budget below applies to the 17 domain
   skills' reference files only, not to forked upstream content.
 
 ### Adding a lesson to a skill reference file

@@ -25,7 +25,7 @@ Hyvä is a modern Magento 2 frontend framework with dramatically simplified Java
 
 **REQUIRED BACKGROUND:** Load `magento2-dev-core` first — it defines the PHP/backend patterns (DI, escaping, repositories) this skill assumes for any ViewModel or backend code behind a Hyvä template.
 
-Hyvä and Luma (`magento2-frontend-dev`) are mutually exclusive theme stacks — check the theme's `theme.xml` parent (`Hyva/default`/`Hyva/reset` vs `Magento/blank`) and `composer.json` for `hyva-themes/*` packages before assuming either applies. Pair with `govard-magento` for the container/CLI side.
+Hyvä and Luma (`magento2-frontend-dev`) are mutually exclusive theme stacks — check the theme's `theme.xml` parent (`Hyva/default`/`Hyva/reset` vs `Magento/blank`) and `composer.json` for `hyva-themes/*` packages before assuming either applies. Hybrid projects (e.g. dual-stack) keep both: `app/design/frontend/<Vendor>/hyva_*` → this skill, `app/design/frontend/<Vendor>/luma_child` → `magento2-frontend-dev`. Pair with `govard-magento` for the container/CLI side.
 
 ## Detect the project's actual setup first
 
@@ -415,7 +415,7 @@ Newer Hyvä themes use Tailwind v4, which drops `tailwind.config.js` for a CSS-b
 }
 ```
 
-Generate tokens/sources with `npx hyva-sources` / `npx hyva-tokens` rather than hand-rolling them.
+Generate tokens/sources with `npx hyva-sources` / `npx hyva-tokens` rather than hand-rolling them. Alpine gating: Tailwind v4 sources come from CSS `@source` directives and `hyva.config.json` `tailwind.include`/`exclude`; editing `hyva.config.json` on a v3 setup is a silent no-op — verify `web/tailwind/package.json` `tailwindcss` major before touching either config.
 
 ### Directory Structure
 ```

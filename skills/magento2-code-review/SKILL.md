@@ -56,6 +56,9 @@ skills expected to run before a release.
 Full mechanics, exact commands, and the remote-fetch limitation:
 `references/scope-modes.md`.
 
+> **Govard audit for PR/MR:** prefer `govard audit run --checks lint --mode project --scope diff --base auto --format json`
+> (auto-detects base via `git merge-base HEAD origin/HEAD` || `gh pr view --json baseRefName`); `--provider` is an alias for `--lint-provider`, and `--allow-xdebug` is required when `stack.features.xdebug: true`.
+
 ## Workflow
 
 1. Determine scope (ask if ambiguous — a bare "review this" with no target
