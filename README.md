@@ -2,7 +2,7 @@
 
 A unified skills library for AI coding agents, packaged as a universal plugin for **DeepSeek Harness (DSH)**, **Claude Code**, **Codex CLI**, **OpenCode**, and **GitHub Copilot** — two halves in one bundle:
 
-- **Domain skills (11)** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs.
+- **Domain skills (17)** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel, Symfony, WordPress, generic PHP): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs, plus `php-dev-core` and `diagram-studio`.
 - **Process skills (14)** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v6.3.0 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
 
 Every skill follows the open [Agent Skills standard](https://agentskills.io) (a `SKILL.md` file with `name`/`description` frontmatter), which all major AI Agent tools understand.

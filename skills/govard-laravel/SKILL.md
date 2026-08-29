@@ -25,6 +25,8 @@ For generic PHP (strict_types/PSR-12/PHPStan/Security) see php-dev-core.
 
 ## Artisan Commands
 
+Laravel's `artisan` CLI runs inside the PHP container via `govard tool artisan`. Govard exposes every artisan command without entering the container shell:
+
 ```bash
 # Cache management
 govard tool artisan config:cache
@@ -42,7 +44,7 @@ govard tool artisan view:clear
 
 ## Audit
 
-For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4-framework matrix and `govard audit run --checks lint --provider govard --mode project --format json` see `govard-toolbox` ## Audit.
+For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4-framework matrix and `govard audit run --checks lint --lint-provider govard --mode project --format json` see `govard-toolbox` ## Audit.
 
 ## Database
 
@@ -65,6 +67,8 @@ govard tool artisan tinker
 # Direct SQL
 govard db connect
 ```
+
+Govard `stack.php_version` defaults to 8.4 for Laravel 11; verify with `govard config get stack.php_version` before running fresh migrations.
 
 ## Queue Operations
 
@@ -141,6 +145,22 @@ govard tool npm run production
 # node_modules is bind-mounted into the container; clearing from the host is safe
 rm -rf node_modules/.vite
 ```
+
+Laravel has no Govard `frontend_sync` watcher (unlike Hyvä/Luma). Use `govard tool npm run watch` for live builds.
+
+## Environment (.env)
+
+Govard injects `APP_KEY`, `DB_CONNECTION`, `DB_HOST`, and `APP_ENV` via `.env`. Check values:
+
+```bash
+govard config get stack.php_version
+cat .env | grep -E 'APP_ENV|DB_'
+govard tool artisan env
+```
+
+- `APP_ENV` defaults to `local`; Govard does not overwrite a committed `.env`.
+- `DB_CONNECTION` is auto-wired to Govard MariaDB (`mariadb 11.4` default).
+- `APP_KEY` is generated on `govard env up` if missing.
 
 ## Logging
 

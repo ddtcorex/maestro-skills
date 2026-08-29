@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.6.0] - 2026-08-29
+
+### Fixed
+- `govard-laravel`: restore 661w (keep audit 2-line + Artisan full), fix `--provider govard` → `--lint-provider govard` typo line 39; `govard-symfony` 661w keep + same flag fix; `govard-wordpress` 770w keep Bedrock `web/wp` note in `## WP-CLI` + flag fix — all 3 declare `depends: [govard-toolbox, php-dev-core]` and delegate generic PHP audit to `php-dev-core`.
+- `php-dev-core`: keep 1327w, delegate note intact, fix 4 `govard audit run --checks lint --provider govard` → `--lint-provider govard` occurrences (PHPCS/PHPStan/Verification Checklist) plus `references/coding-standards.md`.
+
+### Changed
+- `govard-toolbox`: add 4-framework audit matrix (Laravel `PSR12`, Symfony `Symfony`, WordPress `WordPress`, Magento2 `Magento2`) with detection markers, PHP `8.1`–`8.4`, PHPStan level `5`, `phpcs`+`phpstan`; expand `## Audit` intro to cover all 4 frameworks and document `--lint-provider govard` native (alias `--provider` deprecated).
+- `magento2-frontend-dev`: add hybrid Hyvä/Luma gating — `composer.json` `hyva-themes/*` + `theme.xml` `Hyva/*` check, dual-stack `luma_child` → frontend-dev vs `hyva_*` → `hyva-dev` (hybrid dual-stack example).
+- `magento2-hyva-dev`: add Tailwind v4 `hyva.config.json` CSS-based config + Alpine gating (`@source`/`tailwind.include`/`exclude`, `hyva.config.json` silent no-op on v3, verify `web/tailwind/package.json` major), hybrid dual-stack note.
+- `magento2-linter`: keep Govard-Native gate (`govard audit run --checks lint` is real gate, bare `vendor/bin/phpcs`/`phpstan` is pre-check only).
+- `README.md`: domain skills `11` → `17` (31 total = 17 domain + 14 superpowers), list Symfony/WordPress/PHP plus `diagram-studio`.
+- 5-way version bump `2.5.0` → `2.6.0` (`package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` `metadata.version` + `plugins[0].version`, `.codex-plugin/plugin.json`) + `tsc` build `lib/index.js`.
+
 ## [2.5.0] - 2026-08-29
 
 ### Added

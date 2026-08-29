@@ -21,7 +21,7 @@ This skill covers Luma/Blank theme development, Knockout.js, RequireJS, LESS CSS
 
 **REQUIRED BACKGROUND:** Load `magento2-dev-core` first — it defines the escaping (`escapeHtml`/`escapeHtmlAttr`/`escapeJs`) and backend patterns this skill's templates and view models rely on.
 
-This skill targets Luma/Blank-derived themes. If the project's `theme.xml` parent is `Hyva/default` or `Hyva/reset` (or `composer.json` requires `hyva-themes/*`), use `magento2-hyva-dev` instead — the two frontend stacks are mutually exclusive and share almost no code patterns.
+This skill targets Luma/Blank-derived themes. If the project's `theme.xml` parent is `Hyva/default` or `Hyva/reset` (or `composer.json` requires `hyva-themes/*`), use `magento2-hyva-dev` instead — the two frontend stacks are mutually exclusive and share almost no code patterns. Hybrid projects (e.g. dual-stack) keep both: `app/design/frontend/<Vendor>/luma_child` → this skill, `app/design/frontend/<Vendor>/hyva_*` → `magento2-hyva-dev` (check both `theme.xml` parent **and** `composer.json` `hyva-themes/*` before assuming either applies).
 
 ## Theme Structure
 
