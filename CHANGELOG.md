@@ -4,6 +4,11 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.6.0] - 2026-08-29
+
+### Added
+- `maestro-design` skill — Tailwind + shadcn/ui + Radix design system, Figma→code hybrid, 15 curated styles, 12 industry rules, Design System Box, MASTER.md persist, 8-point checklist. Four references: `tokens` (color/typography/spacing/radius/shadow), `components` (15 primitives + composition), `figma-workflow` (auto-layout→flex/grid, variants→props), `a11y-motion` (WCAG 2.2, resilient UX, motion). Pure markdown, no Python.
+
 ## [2.5.0] - 2026-08-29
 
 ### Added
