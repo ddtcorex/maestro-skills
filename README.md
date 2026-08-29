@@ -79,6 +79,8 @@ All 31 skills work identically on every listed tool.
 | Toolchains (Govard) | [govard-toolbox](skills/govard-toolbox/SKILL.md), [govard-magento](skills/govard-magento/SKILL.md), [govard-laravel](skills/govard-laravel/SKILL.md), [review-in-worktree](skills/review-in-worktree/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | PHP Foundation | [php-dev-core](skills/php-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
+| Skill | Description |
+|-------|-------------|
 | php-dev-core | Generic PHP foundation (PSR-12/Composer/PHPStan/Security) |
 
 ---
