@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.7.0] - 2026-08-29
+
+### Added
+- `govard-toolbox`: distill `2026-08-29` bulk-verify lessons — `--timeout auto` (default `90s–30m` framework-aware: `80ms`/`70ms`/`20ms` per-file, `15m` floor for `wordpress`/`magento2` → `22.5m` auto) and **toolchain & image verification** after `make build` (check `ContextDigest` SHA256, `WPCS 3.4.1`+`Symfony 3.16.0` bundle, `RestrictedCodeSniff` patch, `ENTRYPOINT` `commit --change`, lock cleanup, `global==bin` parity). Prevents `cancelled`/`infra_error`/`PSR12 fallback` on large `wordpress`/`magento2`.
+
+### Changed
+- 5-way version bump `2.6.0` → `2.7.0` (`package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` `metadata.version` + `plugins[0].version`, `.codex-plugin/plugin.json`) synced with `govard 1.67.0` bulk-verify hardening.
+
 ## [2.6.0] - 2026-08-29
 
 ### Added
