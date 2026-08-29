@@ -212,6 +212,8 @@ govard config set stack.php_version 8.4
 
 ## Audit
 
+> For generic PHP patterns (strict_types/PSR-12/Composer/PHPStan/PDO) see `php-dev-core`.
+
 Govard's persistent audit gate for Magento 2/Mage-OS -- see `magento2-linter` for full policy (`target --mode`, PHP matrix, provider rules, caching/rerun identity). Text streams live like `vendor/bin/phpcs` (TTY colorized + uncapped, piped capped + plain); `json` stays a single object on stdout for AI agents. A failed/cancelled run still renders before exiting non-zero.
 
 > **On DSH:** call `govard_audit_lint {worktreePath?}` → {lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}. Do not hand-parse text/exit codes.
