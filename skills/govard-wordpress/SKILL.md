@@ -1,7 +1,7 @@
 ---
 name: govard-wordpress
 description: |
-  This skill should be used when the user asks to "clear WordPress cache", "run wp cli", "run wp commands", "flush rewrite rules", "manage WordPress plugins via govard", or "wordpress wp-config". Provides WordPress-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
+  This skill should be used when the user asks to "clear WordPress cache", "run wp cli", "run wp commands", "flush rewrite rules", "manage WordPress plugins via govard", "wordpress wp-config", "audit WordPress", "lint WordPress", or "govard audit". Provides WordPress-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox]
 metadata:
@@ -33,6 +33,18 @@ wp --info
 ```
 
 Govard default for WordPress (verified 2026-08-28 `govard-test-wordpress`): `stack.php_version 8.0` (PHP 8.0.30), `web_root /`, `db mariadb 10.6`. Verify with `govard config get stack.php_version`. Note: request `--framework-version 6` currently installs WP 7.1 (latest); PHP/DB versions are template defaults and may differ per bootstrap.
+
+## Audit
+
+WordPress projects (including Bedrock layout `web/wp/wp-includes/version.php`) support `govard audit run --checks lint --provider govard --mode project` out-of-box: AuditLint `WordPress` standard, fallback `PSR12`, linters `phpcs` + `phpstan`, PHP `8.1-8.4`, PHPStan level `5`. Detection via `wp-config.php`, `wp-includes/version.php`, Bedrock `web/wp/wp-includes/version.php`, or Composer `johnpbloch/wordpress` / `roots/wordpress` / `wordpress/wordpress`.
+
+`--mode project` is required — `module`/`standalone` are not supported for WordPress and return a helpful error (`use --mode project`). Bedrock projects are detected via `web/wp/wp-includes/version.php` and audited from the project root with `--mode project`.
+
+```bash
+govard audit run --checks lint --provider govard --mode project
+```
+
+Base audit flow and flags: see `govard-toolbox` Audit section.
 
 ## Cache Management
 

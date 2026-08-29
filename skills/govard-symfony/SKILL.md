@@ -1,7 +1,7 @@
 ---
 name: govard-symfony
 description: |
-  This skill should be used when the user asks to "clear Symfony cache", "run bin/console commands", "run doctrine migrations", "debug Symfony routes", "run Symfony CLI", "govard symfony", or "symfony cache:clear". Provides Symfony-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
+  This skill should be used when the user asks to "clear Symfony cache", "run bin/console commands", "run doctrine migrations", "debug Symfony routes", "run Symfony CLI", "govard symfony", "symfony cache:clear", "lint Symfony project", "audit Symfony", or "govard audit". Provides Symfony-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox]
 metadata:
@@ -31,6 +31,18 @@ govard tool symfony make:controller BlogController
 govard sh
 bin/console cache:clear
 ```
+
+## Audit
+
+Symfony projects support `govard audit run --checks lint --provider govard --mode project` out-of-box: AuditLint `Symfony` standard, `phpstan-symfony` extension, fallback `PSR12` if Symfony standard not bundled. Detection via `bin/console` or `symfony/framework-bundle` Composer requirement.
+
+`--mode project` is required — `module`/`standalone` are not supported for Symfony and return a helpful error (`use --mode project`).
+
+```bash
+govard audit run --checks lint --provider govard --mode project
+```
+
+Base audit flow and flags: see `govard-toolbox` Audit section.
 
 ## Cache Management
 
@@ -128,16 +140,6 @@ govard tool symfony debug:container --env-vars | grep -E 'APP_ENV|DATABASE_URL|M
 - `MAILER_DSN` points to Mailpit (`mail:1025`) — see `govard open mail` (`https://mail.govard.test`).
 
 For env-specific overrides use `GOVARD_ENV=staging govard env up` (loads `.govard.staging.yml`).
-
-## Audit (Lint)
-
-```bash
-# Govard-native lint (provider declared but resolver currently unsupported for Symfony)
-govard audit run --checks lint
-govard audit run --checks lint --format json
-```
-
-`audit.lint.provider: govard` is generated in `.govard.yml` but `govard audit run` currently returns `no framework can resolve audit target` for Symfony (verified 2026-08-28 — bootstrap warns `Auto configuration is not supported for framework "symfony" yet`). Use `govard tool php vendor/bin/phpstan` / `vendor/bin/phpcs` directly until Govard audit adds Symfony support.
 
 ## Common Workflows
 

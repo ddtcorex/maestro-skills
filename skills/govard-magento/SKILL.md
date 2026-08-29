@@ -25,12 +25,13 @@ This skill covers only container/CLI shortcuts. For module architecture, DI, and
 
 ## Code Quality Audit
 
-`govard audit run --checks lint` is the native, persistent lint gate for this
-project — target-mode resolution, the PHP matrix, provider rules, and
-caching/rerun identity are all covered in `magento2-linter`'s
-"Govard-Native Lint Audit Is the Real Gate" section; this skill doesn't
-duplicate that policy. To re-check the exact same session (e.g. after a
-fix) instead of starting a fresh, non-comparable run:
+`govard audit run --checks lint` (on DSH: `govard_audit_lint`) is the native, persistent lint gate — framework-agnostic across Govard. For **Magento 2 / Mage-OS**, policy details (target-mode resolution, PHP matrix, provider rules, caching/rerun identity, pub/media guard) are still covered in `magento2-linter`'s "Govard-Native Lint Audit Is the Real Gate" section; this skill doesn't duplicate that policy. Govard audit now also supports **Laravel / Symfony / WordPress** via their respective skills.
+
+> For non-Magento frameworks, see `govard-laravel`, `govard-symfony`, `govard-wordpress` for AuditLint details (PSR12 / Symfony / WordPress, Bedrock, fallback).
+
+> **On DSH:** prefer `govard_audit_lint` over hand-parsing `govard audit` text output — it returns machine-clean `{lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}`. Policy details for Magento 2/Mage-OS live in `magento2-linter`.
+
+To re-check the exact same session (e.g. after a fix) instead of starting a fresh, non-comparable run:
 
 ```bash
 govard audit rerun --session SESSION_ID
@@ -43,7 +44,7 @@ govard audit run --checks lint,profiler --url 'https://<domain>/'
 ```
 
 The profiler CSV lands under the run's `artifacts/profiler/` with its SHA-256 recorded in the
-result — open it in a spreadsheet to read per-timer costs. Policy details live in
+result — open it in a spreadsheet to read per-timer costs. Policy details for Magento 2/Mage-OS live in
 `magento2-linter`.
 
 ## Magento CLI

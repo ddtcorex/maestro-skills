@@ -1,11 +1,11 @@
 ---
 name: govard-toolbox
 description: |
-  This skill should be used when the user asks to "start/stop environment", "govard up",
-  "govard down", "run commands in container", "govard sh", "do database operations", "db dump",
-  "db import", "sync with remote", "bootstrap from staging", "debug configuration", or "set up
-  Xdebug". Provides high-level shortcuts and references for the Govard development environment
-  orchestrator. This is the BASE skill — for framework-specific shortcuts, also load
+  Use when the user asks to "start/stop environment", "govard up", "govard down", "run commands
+  in container", "govard sh", "do database operations", "db dump", "db import", "sync with remote",
+  "bootstrap from staging", "debug configuration", "set up Xdebug", "run audit", "lint", or
+  "audit toolchain". Provides high-level shortcuts and references for the Govard development
+  environment orchestrator. This is the BASE skill — for framework-specific shortcuts, also load
   govard-magento or govard-laravel.
 compatibility: claude, codex, opencode, copilot, dsh
 metadata:
@@ -212,31 +212,28 @@ govard config set stack.php_version 8.4
 
 ## Audit
 
-Govard's persistent audit gate for Magento 2/Mage-OS -- see `magento2-linter` for full policy (`target --mode`, PHP matrix, provider rules, caching/rerun identity). Text streams live like `vendor/bin/phpcs` (TTY colorized + uncapped, piped capped + plain); `json` stays a single object on stdout for AI agents. A failed/cancelled run still renders before exiting non-zero.
+Govard's persistent audit gate — `govard audit run --checks lint --provider govard --mode project` now supports Magento 2, Laravel, Symfony, WordPress out-of-box (4-framework) with fallback PSR12 for Laravel/Symfony/WordPress when native standard not yet bundled. Text streams live like `vendor/bin/phpcs` (TTY uncapped, piped capped); `json` stays single object on stdout. Failed/cancelled run still renders before non-zero exit.
 
-> **On DSH:** call `govard_audit_lint {worktreePath?}` → {lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}. Do not hand-parse text/exit codes.
-> **Otherwise:** `govard audit run --checks lint --format json` (machine-clean, one JSON on stdout, diagnostics on stderr; text mode capped at 10 and colorized — not for agents).
+> **On DSH:** `govard_audit_lint {worktreePath?}` → {lint,pubMediaGuard,rawJson,summary}. Do not hand-parse.
+> **Otherwise:** `govard audit run --checks lint --provider govard --mode project --format json` (one JSON on stdout, diagnostics on stderr).
+
+| Framework | Audit | Notes |
+|-----------|-------|-------|
+| Magento2 | ✅ | Magento2 |
+| Laravel | ✅ (PSR12) | PSR12 fallback |
+| Symfony | ✅ (Symfony+fallback PSR12) | Symfony + PSR12 fallback |
+| WordPress | ✅ (WordPress+fallback PSR12, Bedrock web/wp/wp-includes) | WordPress + PSR12 fallback, Bedrock `web/wp/wp-includes` |
+| others | — | no standard |
 
 ```bash
-govard audit run --checks lint                    # project or module_in_project, default text streams live
-govard audit run --checks lint --format json      # machine-clean for agents, diagnostics on stderr
-govard audit run --checks lint,profiler --url https://shop.test/  # also capture profiler CSV (v1.64.0+)
+govard audit run --checks lint --provider govard --mode project --format json  # machine-clean for agents
+govard audit run --checks lint --provider govard --mode project                # text streams live
+govard audit run --checks lint,profiler --provider govard --mode project --url https://shop.test/  # profiler CSV (v1.64.0+, Magento)
 govard audit rerun --session SESSION_ID           # exact rerun by session, profiler URL included
 govard audit toolchain status                     # lint image health
 ```
 
-`--mode` validates early (`auto`, `project`, `module_in_project`, `standalone`) -- typo `module` fails with `unknown audit target mode (valid modes: ...)`. `govard env up/pull` now uses resilient per-image pulls (`--ignore-buildable`, reuse compatible local image or build Govard image locally). Stale `diagnostics` lease (`is already held`) -- `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `.govard/*/custom/govard-audit-profiler-*.conf`; 7-page manual audit costs ~2.5-3 min on reference project -- keep all 7 with `timeout 300` and trap single, not fewer pages.
-
-### Lint scope — quick (diff) vs deep (project) — quick vs deep
-
-Lint supports **quick** (PR) vs **deep** (release) scope — keep this quick.*deep mapping in sync with `magento2-performance-audit`'s `Scope: quick` / `Scope: deep` header.
-
-| Mode | Govard scope | Base | Time | What it lints |
-|------|--------------|------|------|---------------|
-| quick | `--scope diff --base origin/master` | `origin/master` (or `origin/main` if master missing — validate with `git rev-parse --verify origin/master` first) | ~15–30s (diff of <500 files vs 9743 project) | Changed files only via `git diff --name-only --diff-filter=ACMRT origin/master...HEAD` intersected with `.magelintignore` quick profile (ignore `vendor`/`dev/tests`/`lib`/`m2-hotfixes` to keep quick under 500 findings) — still honors always-ignore `pub/media`/`pub/static`/`var`/`generated`/`node_modules`/`.worktrees`/`.git` |
-| deep | `--scope project` | — | ~45–127s | Full project to the always-ignore boundary only — includes `vendor`/`dev/tests`/`lib`/`m2-hotfixes` when that boundary applies, but never `pub/media`/`var`/`generated` — report every `Scope: deep` finding with evidence or `Skipped: <reason>` |
-
-On DSH: call `govard_audit_lint {worktreePath?, scope?: "diff"|"project", base?: "origin/master"}` → `{lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}`; it already uses `scope diff` + `jobs min(nproc,4)` + stale `diagnostics` cleanup internally. Otherwise: shell `govard audit run --checks lint --scope diff --base origin/master --format json` (quick) or `--scope project --format json` (deep). Text mode caps at 10 and is colorized — use `--format json` for agents and never hand-parse text/exit codes. For workflow-level lint quick/deep, prefer `govard_audit_lint` on DSH and `govard audit run --checks lint --scope diff --base origin/master` otherwise — keep skills vs plugins separate (A).
+`--mode` validates early (`auto`, `project`, `module_in_project`, `standalone`) — `module` fails. Profiler (`--checks lint,profiler --url`) is Magento-specific (v1.64.0+). Scope `quick` vs `deep`: `--scope diff --base origin/master` (~15–30s) vs `--scope project` (~45–127s); on DSH `govard_audit_lint {scope, base}` handles `diff`/`project` internally.
 
 ## Detailed References
 
