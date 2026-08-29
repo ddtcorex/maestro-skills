@@ -127,8 +127,8 @@ Two gates: PHPCS for style, PHPStan for types. Both must pass before merge.
 
 ```bash
 vendor/bin/phpcs --standard=PSR12 src tests
-govard audit run --checks lint --provider govard --mode project --format json
-govard audit run --checks lint --provider govard --mode project  # text, capped
+govard audit run --checks lint --lint-provider govard --mode project --format json
+govard audit run --checks lint --lint-provider govard --mode project  # text, capped
 ```
 
 Fix auto-fixable violations with `phpcbf --standard=PSR12 src`.
@@ -139,7 +139,7 @@ Level 6 is the minimum; raise to 8 when possible.
 
 ```bash
 vendor/bin/phpstan analyse -c phpstan.neon
-govard audit run --checks lint --provider govard --mode project --format json
+govard audit run --checks lint --lint-provider govard --mode project --format json
 ```
 
 Sample `phpstan.neon` (full config in `references/coding-standards.md`):
@@ -255,7 +255,7 @@ vendor/bin/phpstan analyse -c phpstan.neon  # 3. Types L6+
 composer validate --strict                   # 4. Manifest valid
 composer audit                               # 5. No known CVEs
 vendor/bin/phpunit --testdox                 # 6. Tests green
-govard audit run --checks lint --provider govard --mode project --format json  # 7. Govard gate
+govard audit run --checks lint --lint-provider govard --mode project --format json  # 7. Govard gate
 ```
 
 Govard audit (`--checks lint`) bundles PHPCS, PHPStan, and the pub/media guard. Keep it green in `--scope project` for releases and `--scope diff --base origin/master` for PRs.

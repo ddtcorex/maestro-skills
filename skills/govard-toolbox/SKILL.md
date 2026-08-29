@@ -214,7 +214,20 @@ govard config set stack.php_version 8.4
 
 > For generic PHP patterns (strict_types/PSR-12/Composer/PHPStan/PDO) see `php-dev-core`.
 
-Govard's persistent audit gate for Magento 2/Mage-OS -- see `magento2-linter` for full policy (`target --mode`, PHP matrix, provider rules, caching/rerun identity). Text streams live like `vendor/bin/phpcs` (TTY colorized + uncapped, piped capped + plain); `json` stays a single object on stdout for AI agents. A failed/cancelled run still renders before exiting non-zero.
+Govard's persistent audit gate for Magento 2/Mage-OS **and** Laravel/Symfony/WordPress -- see `magento2-linter` for full Magento policy (`target --mode`, PHP matrix, provider rules, caching/rerun identity) and this section for the 4-framework matrix. Text streams live like `vendor/bin/phpcs` (TTY colorized + uncapped, piped capped + plain); `json` stays a single object on stdout for AI agents. A failed/cancelled run still renders before exiting non-zero.
+
+### Audit Matrix — 4 Frameworks
+
+Govard `audit run --checks lint --lint-provider govard --mode project --format json` is native for all 4 frameworks. Detection is via framework markers; no project-level `phpcs.xml`/`phpstan.neon` required for fallback. PHPStan level `5` and linters `phpcs + phpstan` are fixed across the matrix.
+
+| Framework | Detection Marker | CodingStandard | PHP | PHPStan | Linters |
+|-----------|----------------|----------------|-----|---------|---------|
+| Laravel | `artisan` file or `laravel/framework` in `composer.json` | `PSR12` | `8.1`–`8.4` | `5` | `phpcs`, `phpstan` |
+| Symfony | `bin/console` + `symfony/skeleton` or `symfony/framework-bundle` | `Symfony` | `8.1`–`8.4` | `5` | `phpcs`, `phpstan` |
+| WordPress | `wp-includes/version.php` or Bedrock `web/wp/wp-includes/version.php` | `WordPress` | `8.1`–`8.4` | `5` | `phpcs`, `phpstan` |
+| Magento 2 / Mage-OS | `bin/magento` + `magento/magento2` requirement | `Magento2` | `8.1`–`8.4` (standalone `8.1`–`8.5`, `7.4`/`8.0` only for `project`/`module_in_project`) | `5` | `phpcs`, `phpstan` |
+
+`--lint-provider govard` is the native provider (alias `--provider` kept for back-compat but deprecated). Use `--mode project` for the common case; `--mode standalone` only for isolated packages, `--mode module_in_project` only for Magento `app/code` modules.
 
 > **On DSH:** call `govard_audit_lint {worktreePath?}` → {lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}. Do not hand-parse text/exit codes.
 > **Otherwise:** `govard audit run --checks lint --format json` (machine-clean, one JSON on stdout, diagnostics on stderr; text mode capped at 10 and colorized — not for agents).

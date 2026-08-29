@@ -116,7 +116,7 @@ Run analysis:
 
 ```bash
 vendor/bin/phpstan analyse -c phpstan.neon
-govard audit run --checks lint --provider govard --mode project --format json
+govard audit run --checks lint --lint-provider govard --mode project --format json
 ```
 
 Treat every error as a defect — add types instead of extending `ignoreErrors`. Baseline only for third-party legacy code with an expiry comment.
