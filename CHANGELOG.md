@@ -4,6 +4,11 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.5.0] - 2026-08-29
+
+### Added
+- `php-dev-core`: Generic PHP foundation skill (PSR-12/Composer/PHPStan/Security) — 5 pillars (Coding Standards, Composer, Static Analysis, Security, Testing) with 3 references (`coding-standards`, `security-best-practices`, `architecture-patterns`), `depends: [govard-toolbox]`. Downstream `govard-laravel`, `govard-symfony`, `govard-wordpress` delegate generic PHP audit to `php-dev-core` and declare `depends: [govard-toolbox, php-dev-core]`; `govard-toolbox` and `magento2-dev-core` add cross-ref. — feat(skills): add php-dev-core
+
 ## [2.4.2] - 2026-08-28
 
 ### Fixed

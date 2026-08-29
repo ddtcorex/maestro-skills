@@ -33,7 +33,7 @@ maestro-skills/
 ├── .codex-plugin/                   # Codex CLI plugin manifest
 ├── .agents/plugins/                 # Codex marketplace manifest
 │
-└── skills/                          # 26 skills total
+└── skills/                          # 31 skills total
     ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v6.3.0)
     │   ├── brainstorming/              # Socratic design refinement with approval gates
     │   ├── test-driven-development/    # RED-GREEN-REFACTOR iron law
@@ -68,7 +68,7 @@ maestro-skills/
 
 ## 🤖 Skill Compatibility Matrix
 
-All 26 skills work identically on every listed tool.
+All 31 skills work identically on every listed tool.
 
 | Group | Skills | Claude Code | Codex CLI | OpenCode | GitHub Copilot | DeepSeek Harness |
 |---|---|---|---|---|---|---|
@@ -77,6 +77,9 @@ All 26 skills work identically on every listed tool.
 | Linting & Auditing | [magento2-linter](skills/magento2-linter/SKILL.md), [magento2-performance-audit](skills/magento2-performance-audit/SKILL.md), [magento2-security-scan](skills/magento2-security-scan/SKILL.md), [magento2-code-review](skills/magento2-code-review/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Frameworks | [magento2-hyva-dev](skills/magento2-hyva-dev/SKILL.md), [magento2-frontend-dev](skills/magento2-frontend-dev/SKILL.md), [magento2-backend-dev](skills/magento2-backend-dev/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Toolchains (Govard) | [govard-toolbox](skills/govard-toolbox/SKILL.md), [govard-magento](skills/govard-magento/SKILL.md), [govard-laravel](skills/govard-laravel/SKILL.md), [review-in-worktree](skills/review-in-worktree/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| PHP Foundation | [php-dev-core](skills/php-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+| php-dev-core | Generic PHP foundation (PSR-12/Composer/PHPStan/Security) |
 
 ---
 
@@ -84,7 +87,7 @@ All 26 skills work identically on every listed tool.
 
 ### 1. DeepSeek Harness (DSH) — as a plugin (recommended)
 
-One command is a complete install — the plugin serves all 26 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
+One command is a complete install — the plugin serves all 31 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
 
 ```bash
 dsh plugin --profile web add github:ddtcorex/maestro-skills

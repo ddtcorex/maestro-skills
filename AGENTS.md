@@ -32,7 +32,7 @@ description instead of committing dated process files.
 ## What this repo is
 
 A dual-ecosystem plugin (`maestro-skills`, npm `@ddtcorex/maestro-skills`)
-bundling 26 skills in two halves: 12 Magento 2 / Govard domain skills written
+bundling 31 skills in two halves: 17 Magento 2 / Govard domain skills written
 here, plus the 14-skill **superpowers process library forked verbatim from
 [obra/superpowers](https://github.com/obra/superpowers) v6.3.0** (MIT — see
 `THIRD-PARTY-NOTICES.md`). Distributed via self-listing marketplaces for both
@@ -75,7 +75,7 @@ both point at the *same* `skills/` directory so neither duplicates content:
   `.agents/plugins/marketplace.json` that self-lists this repo the same way
   (`"source": {"source": "local", "path": "./"}`). Verified end-to-end
   against the real `codex` binary: `codex plugin marketplace add .` then
-  `codex plugin add maestro-skills@ddtcorex` resolves all 25 skills
+  `codex plugin add maestro-skills@ddtcorex` resolves all 31 skills
   with zero copying.
 
 The marketplace top-level `name` is `ddtcorex` and the plugin's `name` is `maestro-skills`,
@@ -88,7 +88,7 @@ its own) — nothing enforces they match automatically.
 
 ### One SKILL.md format, four incompatible project-level paths, two plugin loaders
 
-All 25 skills follow the [Agent Skills standard](https://agentskills.io) (a
+All 31 skills follow the [Agent Skills standard](https://agentskills.io) (a
 `SKILL.md` file with `name`/`description` YAML frontmatter) — a format Claude
 Code, OpenCode, Codex CLI, and GitHub Copilot all read identically. What
 differs is which directory name each tool scans in a *consuming project* for
@@ -236,7 +236,7 @@ export CODEX_HOME=$(mktemp -d)
 codex plugin marketplace add .
 codex plugin list --available --json   # confirm maestro-skills@ddtcorex is listed
 codex plugin add maestro-skills@ddtcorex
-codex plugin list --json               # confirm it installed and all 25 skills resolved
+codex plugin list --json               # confirm it installed and all 31 skills resolved
 unset CODEX_HOME                       # the temp dir is disposable -- nothing else to clean up
 
 # install.sh: syntax check and dry test in an isolated scratch dir (never

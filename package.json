@@ -1,6 +1,6 @@
 {
   "name": "@ddtcorex/maestro-skills",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "description": "Magento 2 development skills (8), Govard/Laravel environment tooling (3), and the superpowers process-skills library (14, forked from obra/superpowers), packaged as a Cordis plugin",
   "packageManager": "pnpm@11.7.0",
   "dsh": {
