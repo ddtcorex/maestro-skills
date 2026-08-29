@@ -3,10 +3,11 @@ name: govard-laravel
 description: |
   This skill should be used when the user asks to "run migrations", "run artisan commands",
   "clear Laravel cache", "config:cache", "run queue operations", "schedule:run", "tinker into
-  app", "artisan tinker", "run Laravel Pint", or "npm dev/prod". Provides Laravel-specific
-  Govard shortcuts and commands. DEPENDENT on govard-toolbox for base commands.
+  app", "artisan tinker", "run Laravel Pint", "lint Laravel project", "audit Laravel",
+  "govard audit", or "npm dev/prod". Provides Laravel-specific Govard shortcuts and commands.
+  DEPENDENT on govard-toolbox for base commands.
 compatibility: claude, codex, opencode, copilot, dsh
-depends: [govard-toolbox]
+depends: [govard-toolbox, php-dev-core]
 metadata:
   audience: developers
   workflow: laravel
@@ -14,11 +15,13 @@ metadata:
 
 # Govard Laravel Commands
 
-Laravel-specific shortcuts and commands for Govard environments.
+Laravel-specific shortcuts for Govard environments.
 
 ## Related Skills
 
-**REQUIRED BACKGROUND:** Load `govard-toolbox` first — this skill only covers Laravel-specific shortcuts layered on top of Govard's base environment commands (`govard up`, `govard sh`, `govard db`, remote sync, Xdebug setup).
+**REQUIRED BACKGROUND:** Load `govard-toolbox` first — this skill only covers Laravel-specific shortcuts layered on top of Govard's base commands (`govard up`, `govard sh`, `govard db`).
+
+For generic PHP (strict_types/PSR-12/PHPStan/Security) see php-dev-core.
 
 ## Artisan Commands
 
@@ -36,6 +39,10 @@ govard tool artisan route:clear
 govard tool artisan view:cache
 govard tool artisan view:clear
 ```
+
+## Audit
+
+For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4-framework matrix and `govard audit run --checks lint --provider govard --mode project --format json` see `govard-toolbox` ## Audit.
 
 ## Database
 

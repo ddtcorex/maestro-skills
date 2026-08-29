@@ -23,6 +23,8 @@ This is the foundation the other Magento 2 skills build on: `magento2-frontend-d
 
 ## Core Architectural Standards
 
+> Note: For framework-agnostic PHP (PSR-12/Composer/PDO) see `php-dev-core`. This skill covers Magento-specific DI/Repository/Plugin.
+
 ### Dependency Injection (DI)
 
 **DO**: Use Constructor Injection for all dependencies.
