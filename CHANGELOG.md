@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.8.1] - 2026-08-30
+
+### Changed
+
+- `govard-toolbox`: sync `lint-jobs` default `2` → `min(nproc,4)` (4 on 12-core, clamped `2–8`) and `scope diff` filtering via `diff-files.txt` mounted as `GOVARD_LINT_DIFF_FILE` (`php/phtml` under target, `vendor/generated/var/pub/media` excluded, empty diff short-circuits as `passed` with `diff-empty` cache) to match `govard` PR #198 (`df1723a` `af9271e`) — quick diff now `3–5s` for 1 file vs `9m` full scan.
+
 ## [2.8.0] - 2026-08-30
 
 ### Fixed
