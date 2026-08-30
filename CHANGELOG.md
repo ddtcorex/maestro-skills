@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.8.0] - 2026-08-30
+
+### Fixed
+
+- `preset` (`maestro-skills` DSH preset): sync `agent.cordis.yml` persona `11→17` domain skills (`magento2-*, govard-*, php-dev-core, maestro-design, diagram-studio` + `Laravel, Symfony, WordPress, generic PHP`) and comment `25→31` skills to match `README 31 (17+14)` and `govard 1.67` 4-framework matrix; `preset.yml` description sync `Laravel → Laravel, Symfony, WordPress, generic PHP`. Fixes review preset staleness that left WP/Laravel/Symfony MRs on `generic` profile.
+
+### Changed
+
+- 5-way version bump `2.7.0` → `2.8.0` (`package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` `metadata.version` + `plugins[0].version`, `.codex-plugin/plugin.json`) for DSH host reload.
+
 ## [2.7.0] - 2026-08-29
 
 ### Added

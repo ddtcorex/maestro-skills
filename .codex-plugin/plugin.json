@@ -1,6 +1,6 @@
 {
   "name": "maestro-skills",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "Maestro Skills Hub & Cordis Plugin for Govard & supported web frameworks (Magento 2, Laravel, etc.) plus the superpowers process-skills library (forked from obra/superpowers)",
   "author": {
     "name": "DDTCoreX",
