@@ -2,7 +2,7 @@
 
 A unified skills library for AI coding agents, packaged as a universal plugin for **DeepSeek Harness (DSH)**, **Claude Code**, **Codex CLI**, **OpenCode**, and **GitHub Copilot** — two halves in one bundle:
 
-- **Domain skills (16)** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel, Symfony, WordPress, generic PHP): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs, plus `php-dev-core` and `diagram-studio`.
+- **Domain skills (17)** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel, Symfony, WordPress, generic PHP): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs, plus `php-dev-core` and `diagram-studio`.
 - **Process skills (14)** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v6.3.0 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
 
 Every skill follows the open [Agent Skills standard](https://agentskills.io) (a `SKILL.md` file with `name`/`description` frontmatter), which all major AI Agent tools understand.
@@ -33,7 +33,7 @@ maestro-skills/
 ├── .codex-plugin/                   # Codex CLI plugin manifest
 ├── .agents/plugins/                 # Codex marketplace manifest
 │
-└── skills/                          # 30 skills total
+└── skills/                          # 31 skills total
     ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v6.3.0)
     │   ├── brainstorming/              # Socratic design refinement with approval gates
     │   ├── test-driven-development/    # RED-GREEN-REFACTOR iron law
@@ -68,7 +68,7 @@ maestro-skills/
 
 ## 🤖 Skill Compatibility Matrix
 
-All 30 skills work identically on every listed tool.
+All 31 skills work identically on every listed tool.
 
 | Group | Skills | Claude Code | Codex CLI | OpenCode | GitHub Copilot | DeepSeek Harness |
 |---|---|---|---|---|---|---|
@@ -89,7 +89,7 @@ All 30 skills work identically on every listed tool.
 
 ### 1. DeepSeek Harness (DSH) — as a plugin (recommended)
 
-One command is a complete install — the plugin serves all 30 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
+One command is a complete install — the plugin serves all 31 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
 
 ```bash
 dsh plugin --profile web add github:ddtcorex/maestro-skills
