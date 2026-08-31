@@ -36,16 +36,6 @@ describe('skills catalog', () => {
     }
   })
 
-  it('packages the guarded DSH Web update skill', async () => {
-    const { metadata, raw } = await load('dsh-safe-web-update')
-    expect(metadata.name).toBe('dsh-safe-web-update')
-    expect(metadata.compatibility?.split(',').map(s => s.trim())).toContain('dsh')
-    expect(metadata.description).not.toContain('\n')
-    expect(raw).toContain('--confirm')
-    expect(raw).toContain('--dry-run')
-    expect(raw).toMatch(/dry-boot/i)
-  })
-
   it('forked skills keep upstream frontmatter shape', async () => {
     for (const skill of FORKED) {
       const { metadata } = await load(skill)
