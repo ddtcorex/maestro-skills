@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.9.0] - 2026-08-31
+
+### Added
+
+- `govard-toolbox`: add `govard verify` 5-phase executable harness reference (`references/verify.md`, 56 items P1 7 · P2 14 · P3 15 · P4 12 · P5 8, `When isMagento2` → 46 for Laravel/Symfony/WordPress, gates `P4-08` + `--allow-destructive`, `~/.govard/verify-runs/`, `--plan`/`--json`/`--phase`/`--project` flags, `DetectFramework` fallback). Checklist markdown template removed — `govard verify` is the single source. (#51)
+
+### Changed
+
+- `govard-toolbox` + `magento2-linter`: `magelint` → `glint` only (`govard-magelint` `ghcr.io/ddtcorex/govard-magelint` → `govard-glint` `ghcr.io/ddtcorex/govard-glint`, `docker/audit/bin/magelint` kept as symlink). (#50)
+
 ## [2.8.1] - 2026-08-30
 
 ### Changed
