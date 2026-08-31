@@ -1,6 +1,6 @@
 {
   "name": "@ddtcorex/maestro-skills",
-  "version": "2.9.0",
+  "version": "2.10.0",
   "description": "Govard domain skills (17) + superpowers library (14, forked from obra/superpowers), packaged as a Cordis plugin",
   "packageManager": "pnpm@11.7.0",
   "dsh": {
