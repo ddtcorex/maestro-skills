@@ -19,4 +19,6 @@ jobs:
       # package.json pins packageManager: pnpm@11.7.0 — an explicit version
       # here collides with it (ERR_PNPM_BAD_PM_VERSION). Empty string opts
       # into node-plugin.yml's packageManager-only pnpm/action-setup step.
-      pnpm-version: ''
+      # (Double quotes on purpose: rehearse.sh's YAML parse only recognizes
+      # double-quoted values; '' was misparsed as version '11'.)
+      pnpm-version: ""
