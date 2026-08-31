@@ -46,7 +46,7 @@ govard tool artisan view:clear
 
 For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4-framework matrix and `govard audit run --checks lint --lint-provider govard --mode project --format json` see `govard-toolbox` ## Audit.
 
-**Laravel lint excludes (since `v1.68.0` `eb129e2`):** `bootstrap/cache/*` and `storage/*` (`storage/framework/cache|sessions|views`, `storage/logs`) are **always ignored** — both `phpcs --ignore=*/bootstrap/cache/*,*/storage/*` and `phpstan excludePaths` in `docker/audit/bin/glint` (formerly `magelint`) and Go-side `govardLintDigest` filter in `internal/audit/lint_govard.go`. Fresh `laravel 11` audit no longer fails on `bootstrap/cache/packages.php`/`services.php` or `storage/framework/views/*.php`; remaining findings are real project files (`config/`, `app/`, `tests/`).
+**Laravel lint excludes (since `v1.68.0`):** `bootstrap/cache/*` and `storage/*` (`storage/framework/cache|sessions|views`, `storage/logs`) are **always ignored** — both `phpcs --ignore=*/bootstrap/cache/*,*/storage/*` and `phpstan excludePaths` in `docker/audit/bin/glint` and Go-side `filterGeneratedFindings` in `internal/audit/lint_govard.go`. Fresh `laravel 11` audit no longer fails on `bootstrap/cache/packages.php`/`services.php` or `storage/framework/views/*.php`; remaining findings are real project files (`config/`, `app/`, `tests/`).
 
 ## Database
 
