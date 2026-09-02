@@ -37,7 +37,10 @@ const SUBAGENT_PRESET_DESCRIPTION =
 
 /** Rewrite preset.yml name/description for the subagents-enabled variant. */
 export function subagentPresetYml(base: string): string {
-  return base
-    .replace(/^name: .*$/m, `name: ${SUBAGENT_PRESET_NAME}`)
-    .replace(/^description: .*$/m, `description: ${SUBAGENT_PRESET_DESCRIPTION}`)
+  // The description contains colons followed by a space (e.g. "Note: both"),
+  // which a YAML plain scalar cannot hold — emit it as a folded block scalar.
+  // The template's preset.yml is only {name, description}: rebuild those two
+  // lines and preserve any trailing content after them verbatim.
+  const trailing = base.split('\n').slice(2).join('\n')
+  return `name: ${SUBAGENT_PRESET_NAME}\ndescription: >-\n  ${SUBAGENT_PRESET_DESCRIPTION}\n${trailing}`
 }

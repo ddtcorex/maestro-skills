@@ -42,4 +42,22 @@ describe('subagentPresetYml', () => {
     expect(out).toContain('subagent_codex')
     expect(out).toContain('subagent_claude_code')
   })
+
+  it('emits a metadata doc DSH can parse (block scalar survives colons+spaces)', () => {
+    const out = subagentPresetYml('name: Maestro Skills\ndescription: base.\n')
+    const lines = out.split('\n')
+    // same rule js-yaml enforces for a plain scalar: a colon followed by a
+    // space on an unindented line would split into a mapping entry and fail
+    // readPresetMetadata; the description must be a folded block (indented)
+    // so "Note: both" stays content
+    expect(lines[0]).toBe('name: Maestro Skills + Subagents (Codex + Claude)')
+    expect(lines[1]).toBe('description: >-')
+    const contentLines = lines.slice(2)
+    expect(contentLines.length).toBeGreaterThan(0)
+    for (const line of contentLines) {
+      if (line.trim() === '') continue
+      expect(line.startsWith('  ')).toBe(true)
+    }
+    expect(out).toContain('Note: both')
+  })
 })
