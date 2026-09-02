@@ -121,7 +121,12 @@ installer is **optional**: the Cordis plugin serves the packaged skills itself
 and materializes the agent preset at startup (installs when missing, upgrades
 only pristine installs, never overwrites a user-modified preset — see
 `docs/specs/2026-09-02-dsh-maestro-preset-materialize-design.md`), so
-`dsh plugin add` alone is a complete install.
+`dsh plugin add` alone is a complete install. When `installSubagentPreset`
+is on (default), it additionally materializes **`maestro-skills-subagents`** —
+the same preset with the Codex/Claude delegation tool rows
+(`subagent_codex` / `subagent_claude_code`) enabled — so machines with the
+subagent bundles installed get both delegation tools without copying the
+preset by hand.
 
 ### Optional subagents-enabled preset variant (2026-09-02)
 
