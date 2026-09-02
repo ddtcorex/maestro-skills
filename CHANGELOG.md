@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.11.0] - 2026-09-03
+
+### Added
+
+- DSH plugin materializes a second agent preset `maestro-skills-subagents` ("Maestro Skills + Subagents (Codex + Claude)") at startup: the same `.dsh-plugin/` template with `disabled: true` stripped from the `tool-subagent-codex` / `tool-subagent-claude-code` rows, so sessions started on that preset can delegate to the Codex and Claude Code subagent providers (gate `installSubagentPreset`, default on). The shipped template keeps both rows disabled; the variant stamp hashes the transformed bytes. (#56)
+
+### Changed
+
+- DSH preset materialize accepts per-file `transforms` on `materializePreset`, hashing the transformed content for upgrade decisions; `maestro-skills-subagents` is produced through them. (#56)
+
 ## [2.10.0] - 2026-09-01
 
 ### Removed
