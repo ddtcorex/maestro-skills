@@ -11,6 +11,7 @@ import type {
 import { parseFrontmatter } from './frontmatter.js'
 import { materializePreset, readPackageVersion } from './preset-materialize.js'
 import type { MaterializeMode } from './preset-materialize.js'
+import { stripOptionalSubagentDisabled, subagentPresetYml } from './subagent-variant.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DEFAULT_SKILLS_DIR = resolve(__dirname, '../skills')
@@ -38,10 +39,20 @@ export interface Config {
    * Default: 'auto'.
    */
   presetUpgrade?: MaterializeMode
+  /**
+   * Also materialize the `maestro-skills-subagents` variant preset — the same
+   * bundled composition with `tool-subagent-codex` + `tool-subagent-claude-code`
+   * enabled — for machines that installed the optional subagent bundles.
+   * Default: true (harmless when the bundles are absent: an enabled tool row
+   * only registers once its provider is mounted).
+   */
+  installSubagentPreset?: boolean
 }
 
 /** Preset id and destination directory name under `<dshHome>/.agent-presets/`. */
 const PRESET_ID = 'maestro-skills'
+/** Variant preset id exposing the optional Codex/Claude subagent tools. */
+const SUBAGENT_PRESET_ID = 'maestro-skills-subagents'
 /** Files copied from .dsh-plugin/ into the preset directory. */
 const PRESET_FILES = ['preset.yml', 'agent.cordis.yml'] as const
 /** Bundled preset source directory (same layout in lib/ and src/). */
@@ -73,6 +84,27 @@ export function apply(ctx: Context, config: Config = {}) {
       } else {
         ctx.logger.info('maestro-skills: DSH agent preset installed at %s', res.dest)
       }
+    })()
+  }
+
+  if (config.installPreset !== false && config.installSubagentPreset !== false) {
+    void (async () => {
+      const res = await materializePreset({
+        presetId: SUBAGENT_PRESET_ID,
+        srcDir: PRESET_SRC_DIR,
+        presetFiles: PRESET_FILES,
+        mode: config.presetUpgrade ?? 'auto',
+        version: await readPackageVersion(__dirname),
+        transforms: {
+          'agent.cordis.yml': stripOptionalSubagentDisabled,
+          'preset.yml': subagentPresetYml,
+        },
+      })
+      if (res === undefined) {
+        ctx.logger.warn('maestro-skills: could not install the subagents preset variant (see .dsh-plugin/)')
+        return
+      }
+      ctx.logger.info('maestro-skills: subagents preset variant installed at %s', res.dest)
     })()
   }
 

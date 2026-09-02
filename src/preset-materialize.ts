@@ -34,6 +34,10 @@ export async function sha256File(path: string): Promise<string> {
   return createHash('sha256').update(data).digest('hex')
 }
 
+export function sha256Text(text: string): string {
+  return createHash('sha256').update(text, 'utf8').digest('hex')
+}
+
 export async function readStamp(path: string): Promise<PresetStamp | undefined> {
   try {
     const raw = await readFile(path, 'utf8')
@@ -73,6 +77,13 @@ export interface MaterializeOptions {
   /** Override for homedir() — tests point this at a temp dir. */
   homeDir?: string
   presetFiles: readonly string[]
+  /**
+   * Per-file content transforms applied before hashing and writing. A
+   * transformed file's stamp hash covers the *transformed* bytes, so an
+   * upgrade fires only when the transformed output changes (bundle template
+   * OR transform result), not when the raw source churns.
+   */
+  transforms?: Record<string, (content: string) => string>
   mode: MaterializeMode
   version: string
 }
@@ -96,20 +107,34 @@ export async function materializePreset(opts: MaterializeOptions): Promise<Mater
     for (const file of opts.presetFiles) {
       const srcPath = join(opts.srcDir, file)
       const dstPath = join(dest, file)
+      const transform = opts.transforms?.[file]
 
-      const [srcHash, dstStat] = await Promise.all([
-        sha256File(srcPath).catch(() => undefined),
-        stat(dstPath).catch(() => undefined),
-      ])
-      if (srcHash === undefined) return undefined // degraded bundle source: skip whole run
+      // Hash first: a transformed file's stamp covers the transformed bytes,
+      // a plain copy covers the raw bytes. Reads stay read-only so a later
+      // `skip`/`adopt` never overwrites a user-owned file.
+      let srcHash: string | undefined
+      let out: string | undefined
+      if (transform !== undefined) {
+        out = await readFile(srcPath, 'utf8').then(
+          (raw) => transform(raw),
+          () => undefined,
+        )
+        if (out === undefined) return undefined // degraded bundle source: skip whole run
+        srcHash = sha256Text(out)
+      } else {
+        srcHash = await sha256File(srcPath).catch(() => undefined)
+        if (srcHash === undefined) return undefined // degraded bundle source: skip whole run
+      }
 
+      const dstStat = await stat(dstPath).catch(() => undefined)
       const dstHash = dstStat ? await sha256File(dstPath) : undefined
       const stampHash = stamp?.files[file]?.sha256
       const action = decideFileAction({ srcHash, dstHash, stampHash, mode: opts.mode })
       actions[file] = action
 
       if (action === 'install' || action === 'upgrade') {
-        await copyFile(srcPath, dstPath)
+        if (out !== undefined) await writeFile(dstPath, out, 'utf8')
+        else await copyFile(srcPath, dstPath)
         nextFiles[file] = { sha256: srcHash }
       } else if (action === 'adopt') {
         nextFiles[file] = { sha256: dstHash as string }
