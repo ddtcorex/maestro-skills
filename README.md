@@ -97,6 +97,8 @@ dsh plugin --profile web add github:ddtcorex/maestro-skills
 
 Then restart `dsh web` and pick **Maestro Skills** in the Web GUI agent picker. No install.sh needed.
 
+**Codex + Claude delegation preset (optional bundles, optional preset):** when the web profile also installs the two optional subagent bundles (`@deepseek-ai/dsh-subagent-codex` and `@deepseek-ai/dsh-subagent-claude-code`), the plugin additionally materializes a **`maestro-skills-subagents`** preset — the same composition with `subagent_codex` and `subagent_claude_code` tool rows enabled, so the model can delegate to those products through their official app-server/SDK result contract instead of whichever CLI happens to be on `PATH`. Sessions pick **"Maestro Skills + Subagents (Codex + Claude)"** in the picker; both providers authenticate via their native subscription login, so quota-limited accounts may see provider-side quota errors until the limit resets.
+
 The package builds itself on install via its `prepare` script. pnpm ≥ 10 blocks git-dependency build scripts until you allow them — if the first add reports an ignored build, copy the key pnpm prints into the profile's `pnpm-workspace.yaml` and re-run:
 ```yaml
 allowBuilds:

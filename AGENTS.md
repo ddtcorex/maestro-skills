@@ -123,6 +123,24 @@ only pristine installs, never overwrites a user-modified preset — see
 `docs/specs/2026-09-02-dsh-maestro-preset-materialize-design.md`), so
 `dsh plugin add` alone is a complete install.
 
+### Optional subagents-enabled preset variant (2026-09-02)
+
+The same materialize path also generates a **`maestro-skills-subagents`**
+variant preset: the identical `.dsh-plugin/` template with `disabled: true`
+stripped from the `tool-subagent-codex` and `tool-subagent-claude-code` rows
+and a `preset.yml` advertising "Maestro Skills + Subagents (Codex + Claude)".
+The shipped template keeps both rows `disabled` (upstream default); the
+variant is produced at materialize time via per-file `transforms` on
+`MaterializeOptions`, and the `preset.materialize.json` stamp hashes the
+*transformed* bytes so upgrades fire correctly when the template changes.
+Gate: `installSubagentPreset` (default `true`) — harmless when the bundles
+are absent because an enabled tool row only registers when its provider is
+mounted. Machines that installed the optional
+`@deepseek-ai/dsh-subagent-codex` / `@deepseek-ai/dsh-subagent-claude-code`
+bundles get both delegation tools by picking this preset; sessions must be
+started after the preset appears (presets bind at session start). See the
+root spec's "Update 2026-09-02" addendum for the design.
+
 ### Skill dependency chain
 
 Some skills declare a non-enforced `depends:` frontmatter field documenting a
