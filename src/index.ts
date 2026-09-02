@@ -1,6 +1,5 @@
-import { copyFile, mkdir, readdir, readFile, stat, writeFile } from 'fs/promises'
+import { readdir, readFile, stat } from 'fs/promises'
 import { dirname, join, resolve } from 'path'
-import { homedir } from 'os'
 import { fileURLToPath } from 'url'
 import type { Context } from '@deepseek-ai/cordis'
 import type {
@@ -10,6 +9,8 @@ import type {
   SkillProviderControl,
 } from '@deepseek-ai/dsh-skill'
 import { parseFrontmatter } from './frontmatter.js'
+import { materializePreset, readPackageVersion } from './preset-materialize.js'
+import type { MaterializeMode } from './preset-materialize.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DEFAULT_SKILLS_DIR = resolve(__dirname, '../skills')
@@ -25,46 +26,54 @@ export interface Config {
   /**
    * Copy the bundled DSH agent preset into `<dshHome>/.agent-presets/maestro-skills/`
    * on startup so the preset appears in the Web GUI agent picker without running
-   * install.sh. Idempotent: files are re-copied on every boot so the preset tracks
-   * the installed plugin version. Default: true.
+   * install.sh. Installs only when missing; upgrades pristine installs; never
+   * overwrites a user-modified preset. Default: true.
    */
   installPreset?: boolean
+  /**
+   * Overwrite policy for an already-installed preset:
+   * 'auto' — upgrade when pristine (user untouched), keep when edited;
+   * 'keep' — never overwrite anything once installed;
+   * 'force' — copy the bundled preset over any state, including user edits.
+   * Default: 'auto'.
+   */
+  presetUpgrade?: MaterializeMode
 }
 
 /** Preset id and destination directory name under `<dshHome>/.agent-presets/`. */
 const PRESET_ID = 'maestro-skills'
 /** Files copied from .dsh-plugin/ into the preset directory. */
 const PRESET_FILES = ['preset.yml', 'agent.cordis.yml'] as const
-
-/**
- * Materialize the bundled DSH agent preset into the harness-home user root so
- * `dsh-agent-presets` discovery lists it in the Web GUI agent picker. This is
- * what makes `dsh plugin add` a complete install — install.sh only exists for
- * non-plugin (loose skill file) setups. Re-copied on every boot so an upgrade
- * of this package updates the preset; failures never break skill serving.
- */
-async function materializePreset(): Promise<string | undefined> {
-  try {
-    const dest = join(homedir(), '.dsh', '.agent-presets', PRESET_ID)
-    await mkdir(dest, { recursive: true })
-    for (const file of PRESET_FILES) {
-      await copyFile(join(__dirname, '../.dsh-plugin', file), join(dest, file))
-    }
-    return dest
-  } catch {
-    return undefined
-  }
-}
+/** Bundled preset source directory (same layout in lib/ and src/). */
+const PRESET_SRC_DIR = resolve(__dirname, '../.dsh-plugin')
 
 export function apply(ctx: Context, config: Config = {}) {
   const skillsDir = config.skillsDir ? resolve(config.skillsDir) : DEFAULT_SKILLS_DIR
   const rank = config.rank ?? 350
 
   if (config.installPreset !== false) {
-    void materializePreset().then(dest => {
-      if (dest !== undefined) ctx.logger.info('maestro-skills: DSH agent preset installed at %s', dest)
-      else ctx.logger.warn('maestro-skills: could not install the DSH agent preset (see .dsh-plugin/)')
-    })
+    void (async () => {
+      const res = await materializePreset({
+        presetId: PRESET_ID,
+        srcDir: PRESET_SRC_DIR,
+        presetFiles: PRESET_FILES,
+        mode: config.presetUpgrade ?? 'auto',
+        version: await readPackageVersion(__dirname),
+      })
+      if (res === undefined) {
+        ctx.logger.warn('maestro-skills: could not install the DSH agent preset (see .dsh-plugin/)')
+        return
+      }
+      const skipped = Object.entries(res.actions).filter(([, a]) => a === 'skip').map(([f]) => f)
+      if (skipped.length > 0) {
+        ctx.logger.warn(
+          'maestro-skills: preset files kept as-is (user-modified): %s (bundle .dsh-plugin left untouched)',
+          skipped.join(', '),
+        )
+      } else {
+        ctx.logger.info('maestro-skills: DSH agent preset installed at %s', res.dest)
+      }
+    })()
   }
 
   const unregister = ctx.skills.registerProvider((_control: SkillProviderControl) => {
