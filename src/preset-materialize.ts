@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
-import { readFile, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 export type MaterializeMode = 'auto' | 'keep' | 'force'
@@ -63,4 +64,67 @@ export async function readPackageVersion(hereDir: string): Promise<string> {
     }
   }
   return 'unknown'
+}
+
+export interface MaterializeOptions {
+  presetId: string
+  /** Directory containing the bundled preset files (e.g. .../.dsh-plugin). */
+  srcDir: string
+  /** Override for homedir() — tests point this at a temp dir. */
+  homeDir?: string
+  presetFiles: readonly string[]
+  mode: MaterializeMode
+  version: string
+}
+
+export interface MaterializeResult {
+  dest: string
+  actions: Record<string, FileAction>
+}
+
+export async function materializePreset(opts: MaterializeOptions): Promise<MaterializeResult | undefined> {
+  try {
+    const home = opts.homeDir ?? homedir()
+    const dest = join(home, '.dsh', '.agent-presets', opts.presetId)
+    await mkdir(dest, { recursive: true })
+
+    const stampPath = join(dest, 'preset.materialize.json')
+    const stamp = await readStamp(stampPath)
+    const actions: Record<string, FileAction> = {}
+    const nextFiles: PresetStamp['files'] = {}
+
+    for (const file of opts.presetFiles) {
+      const srcPath = join(opts.srcDir, file)
+      const dstPath = join(dest, file)
+
+      const [srcHash, dstStat] = await Promise.all([
+        sha256File(srcPath).catch(() => undefined),
+        stat(dstPath).catch(() => undefined),
+      ])
+      if (srcHash === undefined) return undefined // degraded bundle source: skip whole run
+
+      const dstHash = dstStat ? await sha256File(dstPath) : undefined
+      const stampHash = stamp?.files[file]?.sha256
+      const action = decideFileAction({ srcHash, dstHash, stampHash, mode: opts.mode })
+      actions[file] = action
+
+      if (action === 'install' || action === 'upgrade') {
+        await copyFile(srcPath, dstPath)
+        nextFiles[file] = { sha256: srcHash }
+      } else if (action === 'adopt') {
+        nextFiles[file] = { sha256: dstHash as string }
+      } else {
+        // no-op / skip: keep the prior stamp entry when present
+        if (stampHash !== undefined) nextFiles[file] = { sha256: stampHash }
+      }
+    }
+
+    const wrote = Object.values(actions).some(a => a === 'install' || a === 'upgrade' || a === 'adopt')
+    if (wrote) {
+      await writeStamp(stampPath, { version: opts.version, files: nextFiles })
+    }
+    return { dest, actions }
+  } catch {
+    return undefined
+  }
 }

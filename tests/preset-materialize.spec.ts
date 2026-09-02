@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   decideFileAction,
+  materializePreset,
   readPackageVersion,
   readStamp,
   sha256File,
@@ -77,5 +78,46 @@ describe('stamp + hash IO', () => {
     mkdirSync(srcDir, { recursive: true })
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'x', version: '1.2.3' }))
     expect(await readPackageVersion(srcDir)).toBe('1.2.3')
+  })
+})
+
+describe('materializePreset orchestrator', () => {
+  let dir: string
+  beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'preset-mat-orch-')) })
+  afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
+  const srcDir = () => { const s = join(dir, 'src-pkg'); mkdirSync(s, { recursive: true }); return s }
+
+  it('installs into a missing dir and writes the stamp with src hashes', async () => {
+    const src = srcDir()
+    const presetFiles = ['agent.cordis.yml', 'preset.yml']
+    for (const f of presetFiles) writeFileSync(join(src, f), `content-${f}`)
+    const res = await materializePreset({
+      presetId: 'dest',
+      srcDir: src,
+      presetFiles,
+      mode: 'auto',
+      version: '2.10.0',
+      homeDir: dir,
+    })
+    expect(res?.actions['agent.cordis.yml']).toBe('install')
+    expect(res?.actions['preset.yml']).toBe('install')
+    const dest = join(dir, '.dsh', '.agent-presets', 'dest')
+    expect(readFileSync(join(dest, 'agent.cordis.yml'), 'utf8')).toBe('content-agent.cordis.yml')
+    const stamp = await readStamp(join(dest, 'preset.materialize.json'))
+    expect(stamp?.version).toBe('2.10.0')
+    expect(stamp?.files['agent.cordis.yml'].sha256).toBe(await sha256File(join(src, 'agent.cordis.yml')))
+  })
+
+  it('skips a user-edited file and leaves it untouched', async () => {
+    const src = srcDir()
+    const presetFiles = ['agent.cordis.yml']
+    writeFileSync(join(src, presetFiles[0]), 'v1')
+    await materializePreset({ presetId: 'dest2', srcDir: src, presetFiles, mode: 'auto', version: '1.0.0', homeDir: dir })
+    const dest = join(dir, '.dsh', '.agent-presets', 'dest2')
+    // user edits the installed file
+    writeFileSync(join(dest, presetFiles[0]), 'USER EDIT')
+    const res = await materializePreset({ presetId: 'dest2', srcDir: src, presetFiles, mode: 'auto', version: '1.0.0', homeDir: dir })
+    expect(res?.actions[presetFiles[0]]).toBe('skip')
+    expect(readFileSync(join(dest, presetFiles[0]), 'utf8')).toBe('USER EDIT')
   })
 })

@@ -118,8 +118,10 @@ any tool — including Claude/Codex users who'd rather symlink skill files than
 install a plugin: it never tries to make one folder satisfy all four tools,
 it links per-tool into whichever directory each one actually scans. On DSH the
 installer is **optional**: the Cordis plugin serves the packaged skills itself
-and materializes the agent preset at startup, so `dsh plugin add` alone is a
-complete install.
+and materializes the agent preset at startup (installs when missing, upgrades
+only pristine installs, never overwrites a user-modified preset — see
+`docs/specs/2026-09-02-dsh-maestro-preset-materialize-design.md`), so
+`dsh plugin add` alone is a complete install.
 
 ### Skill dependency chain
 
