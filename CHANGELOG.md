@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.11.1] - 2026-09-04
+
+### Added
+
+- `govard-magento` gains a "Unit Tests" lesson: run PHPUnit with
+  `-c dev/tests/unit/phpunit.xml.dist --filter` (or bootstrap + direct
+  module path), never bare at the Magento root, never the full suite in
+  review, and capture status via `${PIPESTATUS[0]}` when piping.
+  (#60)
+
 ## [2.11.0] - 2026-09-03
 
 ### Added
