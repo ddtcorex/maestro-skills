@@ -46,6 +46,36 @@ The profiler CSV lands under the run's `artifacts/profiler/` with its SHA-256 re
 result — open it in a spreadsheet to read per-timer costs. Policy details live in
 `magento2-linter`.
 
+## Unit Tests
+
+Magento's project root ships no `phpunit.xml`, so a bare `vendor/bin/phpunit`
+there prints usage and exits 1 — that exit means "no configuration found",
+never "tests failed". The unit-suite configuration lives at
+`dev/tests/unit/phpunit.xml.dist`; always pass it explicitly with `-c` and
+scope the run with `--filter` (module or class name) so unrelated core suites
+never execute:
+
+```bash
+vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist --filter "MyModuleBatchLoader|ExampleTest"
+```
+
+For a direct path run (single module, no filter syntax), pair
+`--no-coverage` with the unit bootstrap:
+
+```bash
+vendor/bin/phpunit --no-coverage --bootstrap dev/tests/unit/framework/bootstrap.php app/code/Acme/Label/Test/Unit
+```
+
+Never run the full suite bare inside review or automated checks: Magento core
+fixtures conflict when loaded together (e.g. `Cannot redeclare
+generateExpectedPaypalSdkUrl()` from the Paypal module's `_files`), killing
+the run for reasons unrelated to the change under review. A healthy scoped run
+reports `OK` with its test/assertion counts; treat any `Fatal error` naming a
+`vendor/` `_files` fixture as a pre-existing repo condition, not a regression.
+When piping output through `tail`, capture the real status via
+`${PIPESTATUS[0]}` (or `set -o pipefail`) — a trailing `echo "EXIT:$?"` after
+a pipe reports `tail`'s status and masks PHPUnit failures as passes.
+
 ## Magento CLI
 
 ```bash
