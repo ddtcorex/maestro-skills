@@ -113,6 +113,16 @@ use Hyva\Theme\ViewModel\HyvaCsp;
 </script>
 ```
 
+> **$hyvaCsp is ambient — never demand an assignment.** The Hyvä theme
+> provides the `$hyvaCsp` view model to every template: a `/** @var */`
+> docblock (as above) is the complete setup, no
+> `$viewModels->require(HyvaCsp::class)` needed. `isset($hyvaCsp)` guards
+> are the correct pattern for templates that must also render without
+> Hyvä/CSP — never flag them as dead code, and never claim `isset()` is
+> always false from template text alone. If CSP registration genuinely
+> looks unwired, check layout XML / theme wiring first (a missing call to
+> a mechanism the project doesn't have is "not applicable", not a finding).
+
 ### CSP-Compatible Alpine.js Patterns
 
 **WRONG (CSP violations):**
