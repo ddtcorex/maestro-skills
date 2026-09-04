@@ -178,8 +178,11 @@ The `.govard.yml` at the project root defines the framework, PHP/Node/DB version
 | File | Purpose |
 |---|---|
 | `.govard.yml` | Team-shared base config (committed) |
+| `.govard.<profile>.yml` | Team-shared scope file for the active profile (committed; wins over base) |
 | `.govard.local.yml` (or `.govard/.govard.local.yml`) | Developer-local overrides (gitignored) |
 | `.govard.<env>.yml` | Environment overrides, activated via `GOVARD_ENV=<env>` |
+
+The profile name resolves from `--profile`, else the per-project registry (`~/.govard/projects.json`), else none — `govard config profile` shows the active one. **Never hand-edit `.govard.yml` to chase drift warnings while a profile layer is active**: `diag` compares the base file against detected runtime, but the running stack and every audit use the merged config with the profile applied, so a stale base is expected noise, not a bug. Verify with `govard config profile` (its values must match the running containers) instead of syncing the base — converging the base is a team decision via `govard doctor --fix` in a real TTY.
 
 ```yaml
 project_name: myproject
