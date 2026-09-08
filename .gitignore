@@ -16,5 +16,6 @@ lib/
 # Personal Claude Code plugin settings (see plugin-settings convention)
 .claude/*.local.md
 
-# Force-track CLAUDE.md even if a global (~/.config/git/ignore) rule excludes it
+# Force-track agent instruction files even if a global core.excludesFile rule excludes them
+!AGENTS.md
 !CLAUDE.md
