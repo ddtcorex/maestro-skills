@@ -21,6 +21,12 @@ Magento-specific shortcuts and commands for Govard environments.
 
 **REQUIRED BACKGROUND:** Load `govard-toolbox` first — this skill only covers Magento-specific shortcuts layered on top of Govard's base environment commands.
 
+**Docker requirement:** stack commands here (`govard up/down/sh`, `govard db`,
+`govard tool ...`) need Docker. On a host without it they exit `3` with
+`CAPABILITY_MISSING`; `govard audit run --checks integrity` still works and
+covers manifest/lock and Magento module/DI checks without a container.
+
+
 This skill covers only container/CLI shortcuts. For module architecture, DI, and security patterns, see `magento2-dev-core` and `magento2-backend-dev`; for code quality and performance checks, see `magento2-linter`, `magento2-security-scan`, and `magento2-performance-audit`.
 
 ## Code Quality Audit

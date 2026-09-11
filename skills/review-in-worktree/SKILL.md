@@ -52,6 +52,24 @@ Most automated reviews only need the diff, repository history, and the domain
 skills (`magento2-code-review`, `magento2-linter` guidance). Prefer this
 when the reviewer has no container rights or the MR is not meant to run.
 
+Container-free analysis is available for this case. `govard audit run` no longer
+needs a container when the check itself does not:
+
+```bash
+# Works on a bare worktree: no stack, no .govard.yml, no Docker.
+govard audit run --checks integrity --scope project --format json
+
+# A module inside a project, or a detached review tree:
+govard audit run --checks integrity --mode module_in_project --format json
+```
+
+It reports composer manifest/lock problems and Magento module/DI wiring problems
+(`govard-integrity` findings) and is a different body of evidence from lint —
+never present it as a substitute for `--checks lint`, which does need Docker.
+Exit codes: `0` clean, `1` findings, `3` a required capability is missing
+(`--error-json` prints the versioned envelope). Review the `integrity.json`
+artifact referenced by the run result for the exact finding list.
+
 ## Guardrails
 
 - Never point `GOVARD_PROJECT_DIR` at production or shared staging checkouts.

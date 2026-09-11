@@ -17,6 +17,12 @@ WordPress-specific shortcuts and commands for Govard environments.
 
 **REQUIRED BACKGROUND:** Load `govard-toolbox` first — this skill only covers WordPress-specific shortcuts layered on top of Govard's base environment commands (`govard up`, `govard sh`, `govard db`, remote sync, Xdebug setup).
 
+**Docker requirement:** stack commands here (`govard up/down/sh`, `govard db`,
+`govard tool ...`) need Docker. On a host without it they exit `3` with
+`CAPABILITY_MISSING`; `govard audit run --checks integrity` still works and
+covers manifest/lock and Magento module/DI checks without a container.
+
+
 For generic PHP (strict_types/PSR-12/PHPStan/Security) see php-dev-core.
 
 ## WP-CLI
