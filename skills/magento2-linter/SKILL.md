@@ -670,6 +670,13 @@ echo "Code quality checks passed!"
 
 ## Exit Codes
 
+These are the exit codes of the **shell/PHPCS/PHPStan snippet below**, not of
+Govard. Govard's own contract is different and capability-first: `3` =
+`CAPABILITY_MISSING` (a declared runtime capability such as docker is
+unavailable), `2` = usage, `4` = project configuration, and findings from
+`govard audit` surface as run status, not as a code in this table. Never read
+one table as if it were the other.
+
 | Code | Meaning |
 |------|---------|
 | 0 | All checks passed |
