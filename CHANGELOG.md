@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.12.0] - 2026-09-11
+
+### Added
+
+- `govard-toolbox` gains a "Host Without Docker" section: `govard capabilities`
+  for the derived command manifest, exit `3` / `CAPABILITY_MISSING` semantics,
+  `--error-json` for the machine-readable envelope, doctor's
+  required/severity/affects split with `--strict`, and
+  `govard audit run --checks integrity` for container-free analysis. (#66)
+- `review-in-worktree` Option 3 becomes a real tool path — `--checks integrity`
+  runs on a bare worktree with no stack and no container — with the evidence
+  boundary stated explicitly: integrity findings are not lint. (#66)
+
+### Changed
+
+- The four framework skills state the Docker requirement for stack commands and
+  point at the container-free check; `magento2-linter` separates its own script
+  exit-code table from Govard's capability-first contract. (#66)
+
+### Security
+
+- A new `tests/skill-contract.spec.ts` greps the documented contract markers, so
+  an entry-point or exit-code change cannot land without the skill being updated
+  in the same release. (#66)
+
 ## [2.11.1] - 2026-09-04
 
 ### Added
