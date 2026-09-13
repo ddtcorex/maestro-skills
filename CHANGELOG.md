@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.13.0] - 2026-09-14
+
+### Added
+
+- **Deployment sections.** `govard-toolbox` gains the base `## Deployment`
+  reference — the read-only-first order (`plan` → `check` → `deploy`), each
+  subcommand's capability requirement, build modes, the `--db-backup` boundary,
+  recovery with `--resume`/`--from`, and the sandbox rehearsal flow — and
+  `govard-laravel`, `govard-symfony` and `govard-wordpress` gain one section
+  each with their recipe's steps, shared state, settings, sandbox lists and the
+  trap that bites on a first deploy. The sections were corrected against the
+  implementation by a read-only review. (#70)
+
+### Changed
+
+- The four Govard skill descriptions carry deploy trigger phrases, so they load
+  on a deploy question rather than only on framework-command questions. (#70)
+
 ## [2.12.1] - 2026-09-13
 
 ### Fixed
