@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.12.1] - 2026-09-13
+
+### Fixed
+
+- Migrate the persona row to prefix/suffix and restore standard parity (#68).
+
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses
 [Semantic Versioning](https://semver.org/).
