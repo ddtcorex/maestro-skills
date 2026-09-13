@@ -1,7 +1,7 @@
 ---
 name: govard-symfony
 description: |
-  This skill should be used when the user asks to "clear Symfony cache", "run bin/console commands", "run doctrine migrations", "debug Symfony routes", "run Symfony CLI", "govard symfony", "symfony cache:clear", "lint Symfony project", "audit Symfony", or "govard audit". Provides Symfony-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
+  This skill should be used when the user asks to "clear Symfony cache", "run bin/console commands", "run doctrine migrations", "debug Symfony routes", "run Symfony CLI", "govard symfony", "symfony cache:clear", "lint Symfony project", "audit Symfony", "govard audit", "deploy Symfony", or "govard deploy". Provides Symfony-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox, php-dev-core]
 metadata:
@@ -140,6 +140,36 @@ govard tool symfony debug:container --env-vars | grep -E 'APP_ENV|DATABASE_URL|M
 - `MAILER_DSN` points to Mailpit (`mail:1025`) — see `govard open mail` (`https://mail.govard.test`).
 
 For env-specific overrides use `GOVARD_ENV=staging govard env up` (loads `.govard.staging.yml`).
+
+## Deployment
+
+Symfony ships a deploy recipe. Its point is *undoing* Composer's `auto-scripts`, which run `cache:clear` and `assets:install` in the wrong place — both belong on the target, not on whichever machine ran `composer install`.
+
+```bash
+govard deploy plan production          # the resolved pipeline — no connection, no Docker
+govard deploy check production         # preflight over ssh
+govard deploy production --yes
+```
+
+| Step | Command on the target |
+|---|---|
+| `build:vendors` | `composer install … --no-scripts` |
+| `build:assets` | `bin/console assets:install public --symlink --relative` — marked *needs the application*, so the target runs it even in artifact mode |
+| `build:frontend` | `frontend_command` inside each `frontend_dir` |
+| `db:migrate` | `doctrine:migrations:migrate --env=<symfony_env> --no-interaction --allow-no-migration` |
+| `app:cache:flush` | `cache:clear --no-warmup` then `cache:warmup`, both `--env=<symfony_env>` |
+| `app:workers:pause` | with `worker_control: true`: `messenger:stop-workers --env=<symfony_env>` |
+| `maintenance:enable` / `disable` | **empty** — Symfony has no core mechanism, so both are reported as skipped |
+| `db:backup` | **none** — `--db-backup` fails naming the reason |
+
+- `.env.local` is a shared **file**, `var/log` a shared **directory**; `var/cache` is deliberately **not** shared — the compiled container belongs to one release and one environment. `sync_paths` is `vendor` and `public/bundles`.
+- `symfony_env` (default `prod`) sets `--env` for every console command and is **not validated** — a typo builds the wrong cache directory, and `--allow-no-migration` is there because an empty `migrations/` directory is a healthy project.
+- **There is no maintenance window.** `db:migrate` runs against a live site; a project that needs a window anchors two `deploy.hooks` on `maintenance:enable` / `maintenance:disable`.
+- Sandbox: `default-mysql-client`, extensions `intl mysql mbstring xml curl zip`, services `mariadb` + `redis-server`.
+
+> **On DSH:** `govard_deploy_plan {remote:"production"}` prints this pipeline without connecting; `govard_deploy_check` runs the preflight. Running it stays in the terminal.
+
+Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> · worked config: <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-10-symfony>.
 
 ## Common Workflows
 
