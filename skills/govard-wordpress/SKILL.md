@@ -1,7 +1,7 @@
 ---
 name: govard-wordpress
 description: |
-  This skill should be used when the user asks to "clear WordPress cache", "run wp cli", "run wp commands", "flush rewrite rules", "manage WordPress plugins via govard", "wordpress wp-config", "audit WordPress", "lint WordPress", or "govard audit". Provides WordPress-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
+  This skill should be used when the user asks to "clear WordPress cache", "run wp cli", "run wp commands", "flush rewrite rules", "manage WordPress plugins via govard", "wordpress wp-config", "audit WordPress", "lint WordPress", "govard audit", "deploy WordPress", or "govard deploy". Provides WordPress-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox, php-dev-core]
 metadata:
@@ -143,6 +143,37 @@ govard shell -c "grep -A2 AUTH_KEY wp-config.php | head -10"
 extra_domains:
   - shop.wordpress.test
 ```
+
+## Deployment
+
+WordPress ships a deploy recipe for the **classic layout only** — core files and `wp-content/` in the repository root. A Bedrock layout (core in `vendor/`, docroot `web/`) and a content-only checkout are not supported.
+
+```bash
+govard deploy plan production          # the resolved pipeline — no connection, no Docker
+govard deploy check production         # preflight over ssh
+govard deploy production --yes
+```
+
+| Step | Command on the target |
+|---|---|
+| `build:vendors` | `composer install …` **only when** `composer.json` exists |
+| `db:migrate` | `wp core update-db`, or `wp_upgrade()` through `wp-load.php` without wp-cli |
+| `app:cache:flush` | `wp cache flush` + `wp rewrite flush --hard`, or the PHP equivalents |
+| `maintenance:enable` / `disable` | writes/removes `.maintenance` and a marked `wp-content/maintenance.php` in the **served** path |
+| `db:backup` / restore | `wp db export` / `wp db import` — the only recipe besides Magento's with a dump |
+| `deploy:verify` (`app`) | `wp core is-installed`, or `is_blog_installed()` without wp-cli |
+
+Three steps are **hybrids**: `wp` when the target has wp-cli, a `wp-load.php` PHP bootstrap when it does not.
+
+- **Seed `shared/wp-config.php` before the first deploy.** `deploy:shared` links a shared entry only when it already exists, so an unseeded `shared/` leaves the release with the repository's `wp-config.php` — the one naming the development database. The `app` check then fails as unreachable.
+- Maintenance writes `time() + 86400`, not WordPress's own `time()`: a flag older than ten minutes expires, so a longer window would silently reopen the site mid-migration. The drop-in carries a marker, so a project's own maintenance page is kept.
+- `--db-backup` needs **wp-cli on the target**: unlike the three hybrids, `wp db export`/`wp db import` have no `wp-load.php` fallback.
+- **In artifact mode** the only build step is the guarded `composer install`, so the artifact carries `vendor/` when the project has a `composer.json`; the database steps still run on the target.
+- Shared: `wp-config.php` (file), `wp-content/uploads` (dir); writable: `wp-content/{uploads,cache,upgrade,languages}`. Sandbox adds `wp-cli`, `default-mysql-client`, extensions `mysqli curl gd intl mbstring xml zip`, and `mariadb` + `redis-server`.
+
+> **On DSH:** `govard_deploy_plan {remote:"production"}` prints this pipeline without connecting; `govard_deploy_check` runs the preflight. Running it stays in the terminal.
+
+Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> · worked config: <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-11-wordpress>.
 
 ## Common Workflows
 

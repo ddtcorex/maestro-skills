@@ -4,7 +4,8 @@ description: |
   This skill should be used when the user asks to "start/stop environment", "govard up",
   "govard down", "run commands in container", "govard sh", "do database operations", "db dump",
   "db import", "sync with remote", "bootstrap from staging", "debug configuration", "set up
-  Xdebug", "govard verify", "checklist", or "QA harness". Provides high-level shortcuts and references for the Govard development environment
+  Xdebug", "govard verify", "checklist", "QA harness", "deploy to a remote", "govard deploy", "deploy plan", "deploy check",
+  "rollback a deploy", "deploy sandbox", or "rehearse a deploy". Provides high-level shortcuts and references for the Govard development environment
   orchestrator. This is the BASE skill — for framework-specific shortcuts, also load
   govard-magento or govard-laravel.
 compatibility: claude, codex, opencode, copilot, dsh
@@ -102,6 +103,42 @@ govard bootstrap --clone -e staging --no-pii --no-noise --yes
 # Preview plan
 govard bootstrap --clone -e staging --plan
 ```
+
+## Deployment
+
+Ships a git revision to a remote from `.govard.yml`. Read-only first, always:
+
+```bash
+govard deploy plan production          # every task with what it runs, or why this mode skips it (no ssh, no rsync, no Docker)
+govard deploy check production         # connectivity, permissions, layout, and the strategy that layout implies (ssh)
+govard deploy releases production      # what the target has
+govard deploy status production        # what it serves, and whether a release is half-published
+govard deploy production --yes         # run it
+govard deploy rollback production [--with-db]   # previous release; --with-db also restores its dump
+govard deploy production --resume      # continue a half-published release (or --from <task>)
+govard deploy unlock production [--force]       # lock left by an interrupted run
+```
+
+Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `deploy sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over.
+
+What the target runs comes from the framework **recipe** — Magento 2, Mage-OS (inherits it), Laravel, Symfony and WordPress ship one; any other framework gets the neutral pipeline with the application steps empty, filled by `deploy.hooks`.
+
+**Build modes.** `--build=auto` resolves by presence (an artifact directory means the build already happened); `server` builds on the target; `artifact` skips the five build tasks the artifact replaces, except those a recipe marks *needs the application*, which always run on the target. `govard deploy build --output <dir>` makes the artifact.
+
+**Backups.** `--db-backup` defaults off; when on, the dump lands in `shared/backups/deploy/<n>/` before the first database-mutating task, and `rollback --with-db` restores it. Magento and WordPress have a dump; **Laravel and Symfony do not**, so `--db-backup` on them is refused before the run starts (exit 4), naming the recipe.
+
+```bash
+# Rehearse the whole thing against a container playing the target
+govard deploy sandbox up --profile full --php 8.3 --docroot symlink   # profile, PHP series, target shape
+govard deploy --remote sandbox --yes
+govard deploy sandbox down --purge          # also removes the image, key and mirror
+```
+
+Sandbox lists come from the recipe; `deploy.settings.sandbox_{packages,extensions,services,tools}` **replace** them. `sandbox reset` also wipes `shared/`, so re-seed shared files.
+
+> **On DSH:** `govard_deploy_plan {remote, build?, artifactDir?}` and `govard_deploy_check {remote, build?, artifactDir?}` — both read-only, `remote` required. Running a deploy stays in the terminal; there is no tool for it.
+
+Per-framework detail: `govard-magento`, `govard-laravel`, `govard-symfony`, `govard-wordpress`. Full reference: <https://govard.ddtcorex.com/workflows/deployment>.
 
 ## Host Without Docker
 

@@ -4,7 +4,7 @@ description: |
   This skill should be used when the user asks to "run migrations", "run artisan commands",
   "clear Laravel cache", "config:cache", "run queue operations", "schedule:run", "tinker into
   app", "artisan tinker", "run Laravel Pint", "lint Laravel project", "audit Laravel",
-  "govard audit", or "npm dev/prod". Provides Laravel-specific Govard shortcuts and commands.
+  "govard audit", "npm dev/prod", "deploy Laravel", or "govard deploy". Provides Laravel-specific Govard shortcuts and commands.
   DEPENDENT on govard-toolbox for base commands.
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox, php-dev-core]
@@ -182,6 +182,41 @@ govard tool artisan log:clear
 # Laravel Debugbar (if installed)
 curl -s https://local.test/_debugbar/open
 ```
+
+## Deployment
+
+Laravel ships a deploy recipe, so `govard deploy` runs Laravel's own commands instead of the engine's neutral defaults. Watch before you run:
+
+```bash
+govard deploy plan production          # the resolved pipeline — no connection, no Docker
+govard deploy check production         # preflight over ssh
+govard deploy production --yes
+```
+
+| Step | Command on the target |
+|---|---|
+| `build:vendors` | `composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist` |
+| `build:frontend` | `frontend_command` inside each `frontend_dir`; an empty `frontend_dir` skips it |
+| `app:configure` | `artisan storage:link` |
+| `db:migrate` | `artisan migrate --force --no-interaction` |
+| `maintenance:enable` / `disable` | `artisan down` / `artisan up`, run in the **served** release |
+| `app:workers:pause` | with `worker_control: true`: `artisan queue:restart`, plus `horizon:terminate` if Horizon is installed |
+| `app:cache:flush` | `artisan optimize:clear` then `artisan optimize` |
+| `deploy:verify` (`app`) | `artisan db:show`; `migrate:status` on Laravel 10 and older |
+| `db:backup` | **none** — `--db-backup` fails naming the reason instead of producing no dump |
+
+`.env` is a shared **file** and `storage` a shared **directory** (the maintenance flag lives at `storage/framework/down`); `sync_paths` is `vendor` and `public/build` for an in-place docroot. Settings: `frontend_dir`, `frontend_command`, `worker_control`, `runtime_reload_command`.
+
+- The caches are built **on the target**: `artisan optimize` writes `bootstrap/cache/config.php`, and once that file exists the process environment no longer overrides `.env`.
+- Maintenance is guarded on `artisan` **and** `vendor/autoload.php` in the served path: on a first in-place deploy onto a fresh docroot both are absent, both steps exit 0, and **no window opens** — silently.
+- `queue:restart` exits 0 whatever the cache store is, so `worker_control: true` only means something with a persistent store (Redis).
+- **First deploy:** seed the target's `.env` first, or the release keeps the repository's copy, which names the local database.
+- **In artifact mode** no Laravel step stays on the target — nothing is marked *needs the application* — so the artifact must carry `vendor/` and `public/build`; `app:cache:flush` still runs on the target.
+- Sandbox: `default-mysql-client`, extensions `bcmath curl gd intl mbstring mysql sqlite3 xml zip`, services `mariadb` + `redis-server`.
+
+> **On DSH:** `govard_deploy_plan {remote:"production"}` prints this pipeline without connecting; `govard_deploy_check` runs the preflight. Running it stays in the terminal.
+
+Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> · worked config: <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-9-laravel>.
 
 ## Common Workflows
 
