@@ -109,26 +109,27 @@ govard bootstrap --clone -e staging --plan
 Ships a git revision to a remote from `.govard.yml`. Read-only first, always:
 
 ```bash
-govard deploy plan production          # every task, its source and where it runs (no ssh, no rsync, no Docker)
+govard deploy plan production          # every task with what it runs, or why this mode skips it (no ssh, no rsync, no Docker)
 govard deploy check production         # connectivity, permissions, layout, and the strategy that layout implies (ssh)
 govard deploy releases production      # what the target has
 govard deploy status production        # what it serves, and whether a release is half-published
 govard deploy production --yes         # run it
 govard deploy rollback production [--with-db]   # previous release; --with-db also restores its dump
+govard deploy production --resume      # continue a half-published release (or --from <task>)
 govard deploy unlock production [--force]       # lock left by an interrupted run
 ```
 
-Capabilities: `plan` and `build` need nothing; anything else needs `ssh,rsync`; `deploy sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run.
+Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `deploy sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over.
 
-What the target runs comes from the framework **recipe** — Magento 2, Mage-OS (inherits it), Laravel, Symfony and WordPress ship one; any other framework gets the neutral pipeline with the application steps empty, filled by `deploy.hooks` on a task id.
+What the target runs comes from the framework **recipe** — Magento 2, Mage-OS (inherits it), Laravel, Symfony and WordPress ship one; any other framework gets the neutral pipeline with the application steps empty, filled by `deploy.hooks`.
 
-**Build modes.** `--build=auto` resolves by presence: an artifact directory means the build already happened. `server` builds on the target. `artifact` skips the five build tasks the artifact replaces, except those a recipe marks *needs the application* — those always run on the target. `govard deploy build --output <dir>` makes the artifact; the deploy job then needs govard, ssh and rsync only.
+**Build modes.** `--build=auto` resolves by presence (an artifact directory means the build already happened); `server` builds on the target; `artifact` skips the five build tasks the artifact replaces, except those a recipe marks *needs the application*, which always run on the target. `govard deploy build --output <dir>` makes the artifact.
 
-**Backups.** `--db-backup` defaults off; when on, the dump lands in `shared/backups/deploy/<n>/` before the first database-mutating task, and `rollback --with-db` restores it. Magento and WordPress have a dump; **Laravel and Symfony do not**, so `--db-backup` on them fails naming the reason.
+**Backups.** `--db-backup` defaults off; when on, the dump lands in `shared/backups/deploy/<n>/` before the first database-mutating task, and `rollback --with-db` restores it. Magento and WordPress have a dump; **Laravel and Symfony do not**, so `--db-backup` on them is refused before the run starts (exit 4), naming the recipe.
 
 ```bash
 # Rehearse the whole thing against a container playing the target
-govard deploy sandbox up --profile full     # basic | php | full
+govard deploy sandbox up --profile full --php 8.3 --docroot symlink   # profile, PHP series, target shape
 govard deploy --remote sandbox --yes
 govard deploy sandbox down --purge          # also removes the image, key and mirror
 ```

@@ -167,8 +167,9 @@ Three steps are **hybrids**: `wp` when the target has wp-cli, a `wp-load.php` PH
 
 - **Seed `shared/wp-config.php` before the first deploy.** `deploy:shared` links a shared entry only when it already exists, so an unseeded `shared/` leaves the release with the repository's `wp-config.php` — the one naming the development database. The `app` check then fails as unreachable.
 - Maintenance writes `time() + 86400`, not WordPress's own `time()`: a flag older than ten minutes expires, so a longer window would silently reopen the site mid-migration. The drop-in carries a marker, so a project's own maintenance page is kept.
+- `--db-backup` needs **wp-cli on the target**: unlike the three hybrids, `wp db export`/`wp db import` have no `wp-load.php` fallback.
 - **In artifact mode** the only build step is the guarded `composer install`, so the artifact carries `vendor/` when the project has a `composer.json`; the database steps still run on the target.
-- Shared: `wp-config.php` (file), `wp-content/uploads` (dir); writable: `wp-content/{uploads,cache,upgrade,languages}`. Sandbox adds `wp-cli`, `default-mysql-client` and `mariadb` + `redis-server` — `wp db export` shells out to `mysqldump`.
+- Shared: `wp-config.php` (file), `wp-content/uploads` (dir); writable: `wp-content/{uploads,cache,upgrade,languages}`. Sandbox adds `wp-cli`, `default-mysql-client`, extensions `mysqli curl gd intl mbstring xml zip`, and `mariadb` + `redis-server`.
 
 > **On DSH:** `govard_deploy_plan {remote:"production"}` prints this pipeline without connecting; `govard_deploy_check` runs the preflight. Running it stays in the terminal.
 

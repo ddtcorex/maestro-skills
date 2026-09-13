@@ -207,7 +207,8 @@ govard deploy production --yes
 
 `.env` is a shared **file** and `storage` a shared **directory** (the maintenance flag lives at `storage/framework/down`); `sync_paths` is `vendor` and `public/build` for an in-place docroot. Settings: `frontend_dir`, `frontend_command`, `worker_control`, `runtime_reload_command`.
 
-- The caches are built **on the target**: `artisan optimize` writes `bootstrap/cache/config.php`, and once that file exists the process environment no longer overrides `.env` — a cache built elsewhere carries another machine's configuration.
+- The caches are built **on the target**: `artisan optimize` writes `bootstrap/cache/config.php`, and once that file exists the process environment no longer overrides `.env`.
+- Maintenance is guarded on `artisan` **and** `vendor/autoload.php` in the served path: on a first in-place deploy onto a fresh docroot both are absent, both steps exit 0, and **no window opens** — silently.
 - `queue:restart` exits 0 whatever the cache store is, so `worker_control: true` only means something with a persistent store (Redis).
 - **First deploy:** seed the target's `.env` first, or the release keeps the repository's copy, which names the local database.
 - **In artifact mode** no Laravel step stays on the target — nothing is marked *needs the application* — so the artifact must carry `vendor/` and `public/build`; `app:cache:flush` still runs on the target.
