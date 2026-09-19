@@ -63,4 +63,12 @@ describe('govard command truth', () => {
       expect(text.includes('setup:db:status'), `probe leaked into ${skill}`).toBe(false)
     }
   })
+  it('sandbox has a dedicated reference and wired pointers', () => {
+    const box = readSkill('govard-toolbox', 'references', 'SANDBOX.md')
+    expect(box.includes('synthetic remote'), 'missing synthetic-remote semantics').toBe(true)
+    expect(box.includes('seed-once') || box.includes('Seed-once'), 'missing seed-once gate').toBe(true)
+    expect(box.includes('--no-seed'), 'missing --no-seed flag').toBe(true)
+    const skill = readSkill('govard-toolbox', 'SKILL.md')
+    expect(skill).toContain('SANDBOX.md')
+  })
 })

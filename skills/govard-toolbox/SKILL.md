@@ -334,6 +334,7 @@ On DSH: call `govard_audit_lint {worktreePath?, scope?: "diff"|"project", base?:
 
 See bundled documents:
 - [COMMANDS.md](COMMANDS.md) - Exhaustive command reference
+- [SANDBOX.md](SANDBOX.md) - Sandbox rehearsal target (lifecycle, synthetic remote, seed-once, traps)
 - [GUIDES.md](GUIDES.md) - Case studies and patterns
 - [FAQ.md](FAQ.md) - Troubleshooting
 

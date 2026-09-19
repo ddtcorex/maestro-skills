@@ -53,6 +53,8 @@ Full canonical reference for all Govard subcommands.
 | `remote copy-id` | Copy SSH key | `--no-noise` | Skip cache, logs, tags |
 | - | - | `--no-pii` | Skip customer/order PII |
 
+The name `sandbox` is a synthetic remote (no config block) — see [SANDBOX.md](SANDBOX.md).
+
 ## 5. Snapshots (`govard snapshot`)
 
 - `snapshot create`: Capture local state or remote `-e <env>`

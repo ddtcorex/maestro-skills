@@ -60,6 +60,8 @@ This shows exactly what files and database tables will be affected.
 
 ## 3. Remote Operations & Optimization
 
+Rehearse against a container playing the target first — see [SANDBOX.md](SANDBOX.md).
+
 ### Secure Remote Dump
 
 Capture a remote database securely to your local `var/` directory without saving it on the remote server.
