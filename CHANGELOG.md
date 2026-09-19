@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [2.14.0] - 2026-09-19
 
 ### Changed
 
@@ -14,6 +14,17 @@
   additions (`dsh-tools.md`, the fork-provenance note in
   `using-superpowers/SKILL.md`) are preserved. Total: 32 skills
   (17 domain + 15 process).
+- **`diagram-studio` covers all 52 upstream ordinals** (`cathrynlavery/diagram-design`
+  v2.6.32): 34 mapped to the 5 Mermaid grammars (6 verified, 28 unverified),
+  18 in an Out-of-scope table with reasons, plus a behavior-first selection
+  table and a sixth learning on semantic patterns.
+- **Govard skills refreshed from the 09-13/19 govard delta.** Corrected
+  stale spellings (`govard sandbox *`, `project orphans`, `varnish ban`,
+  audit `lint/profiler/integrity`); documented `deploy plan --json`, the
+  nested-only `remotes.<name>.deploy:` topology, the Magento
+  `setup:db:status` migrate gate with resume verdicts, and `--remote` on
+  `status|releases|unlock`; new `SANDBOX.md` rehearsal reference; new
+  gateway, RabbitMQ UI (`:15672`), and remote-DB blocks with FAQ entries.
 
 ## [2.13.0] - 2026-09-14
 
