@@ -2,13 +2,14 @@
 
 This repository bundles third-party open-source software.
 
-## Superpowers (14 process skills)
+## Superpowers (15 process skills)
 
 The following skills are forked verbatim from
-[obra/superpowers](https://github.com/obra/superpowers) **v6.3.0**
-(release 2026-08-12):
+[obra/superpowers](https://github.com/obra/superpowers) **v6.4.1**
+(release 2026-09-19):
 
 - brainstorming
+- diagnosing-superpowers
 - dispatching-parallel-agents
 - executing-plans
 - finishing-a-development-branch
@@ -57,5 +58,7 @@ SOFTWARE.
 ```
 
 Sync policy: refresh the forked skills with `scripts/sync-superpowers.sh`
-(pulls upstream and preserves the local additions above). Do not hand-edit the
+(pulls upstream and preserves `dsh-tools.md`; the fork-provenance note in
+`using-superpowers/SKILL.md` is re-applied by hand during review because the
+script only snapshots the files in its `PRESERVE` list). Do not hand-edit the
 forked skill bodies; upstream is their single source of truth.

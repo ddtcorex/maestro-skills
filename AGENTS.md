@@ -32,9 +32,9 @@ description instead of committing dated process files.
 ## What this repo is
 
 A dual-ecosystem plugin (`maestro-skills`, npm `@ddtcorex/maestro-skills`)
-bundling 31 skills in two halves: 17 Magento 2 / Govard domain skills written
-here, plus the 14-skill **superpowers process library forked verbatim from
-[obra/superpowers](https://github.com/obra/superpowers) v6.3.0** (MIT — see
+bundling 32 skills in two halves: 17 Magento 2 / Govard domain skills written
+here, plus the 15-skill **superpowers process library forked verbatim from
+[obra/superpowers](https://github.com/obra/superpowers) v6.4.1** (MIT — see
 `THIRD-PARTY-NOTICES.md`). Distributed via self-listing marketplaces for both
 Claude Code and Codex CLI, and as a DeepSeek Harness Cordis plugin that also
 installs its own DSH agent preset at startup. There is no test suite and no
@@ -75,7 +75,7 @@ both point at the *same* `skills/` directory so neither duplicates content:
   `.agents/plugins/marketplace.json` that self-lists this repo the same way
   (`"source": {"source": "local", "path": "./"}`). Verified end-to-end
   against the real `codex` binary: `codex plugin marketplace add .` then
-  `codex plugin add maestro-skills@ddtcorex` resolves all 31 skills
+  `codex plugin add maestro-skills@ddtcorex` resolves all 32 skills
   with zero copying.
 
 The marketplace top-level `name` is `ddtcorex` and the plugin's `name` is `maestro-skills`,
@@ -88,7 +88,7 @@ its own) — nothing enforces they match automatically.
 
 ### One SKILL.md format, four incompatible project-level paths, two plugin loaders
 
-All 31 skills follow the [Agent Skills standard](https://agentskills.io) (a
+All 32 skills follow the [Agent Skills standard](https://agentskills.io) (a
 `SKILL.md` file with `name`/`description` YAML frontmatter) — a format Claude
 Code, OpenCode, Codex CLI, and GitHub Copilot all read identically. What
 differs is which directory name each tool scans in a *consuming project* for
@@ -164,12 +164,13 @@ check whether the change invalidates guidance in the skills that depend on it.
 
 ### Superpowers fork governance
 
-The 14 process skills under `skills/` (brainstorming, dispatching-parallel-
+The 15 process skills under `skills/` (brainstorming,
+diagnosing-superpowers, dispatching-parallel-
 agents, executing-plans, finishing-a-development-branch, receiving-code-review,
 requesting-code-review, subagent-driven-development, systematic-debugging,
 test-driven-development, using-git-worktrees, using-superpowers,
 verification-before-completion, writing-plans, writing-skills) are **not
-hand-maintained** — they are a verbatim fork of obra/superpowers v6.3.0:
+hand-maintained** — they are a verbatim fork of obra/superpowers v6.4.1:
 
 - **Do not edit forked skill bodies.** Upstream is their single source of
   truth. This is a deliberate exception to the "single source of truth"
@@ -178,8 +179,9 @@ hand-maintained** — they are a verbatim fork of obra/superpowers v6.3.0:
 - The only sanctioned local additions are `skills/using-superpowers/references/
 dsh-tools.md` (the DSH tool map) and the fork-provenance/un-namespaced-
 invocation notes in `using-superpowers/SKILL.md`.
-- Refresh via `scripts/sync-superpowers.sh [ref]`; it preserves the local
-  additions and prints a diff. Update the fork version in
+- Refresh via `scripts/sync-superpowers.sh [ref]`; it preserves `dsh-tools.md`
+  and prints a diff (the fork-provenance note in `using-superpowers/SKILL.md`
+  is re-applied by hand during review). Update the fork version in
   `THIRD-PARTY-NOTICES.md` after a sync. Attribution is an MIT license
   requirement — never drop `THIRD-PARTY-NOTICES.md`.
 - Skill **name collisions** would shadow across providers: never name a new
@@ -261,7 +263,7 @@ export CODEX_HOME=$(mktemp -d)
 codex plugin marketplace add .
 codex plugin list --available --json   # confirm maestro-skills@ddtcorex is listed
 codex plugin add maestro-skills@ddtcorex
-codex plugin list --json               # confirm it installed and all 31 skills resolved
+codex plugin list --json               # confirm it installed and all 32 skills resolved
 unset CODEX_HOME                       # the temp dir is disposable -- nothing else to clean up
 
 # install.sh: syntax check and dry test in an isolated scratch dir (never
@@ -277,7 +279,7 @@ bash install.sh --help
 ```bash
 # Superpowers fork sync (see "Superpowers fork governance" above)
 scripts/sync-superpowers.sh            # to upstream HEAD
-scripts/sync-superpowers.sh v6.4.0     # or a specific tag; review the diff it prints
+scripts/sync-superpowers.sh v6.4.1     # or a specific tag; review the diff it prints
 ```
 
 ## Release checklist
