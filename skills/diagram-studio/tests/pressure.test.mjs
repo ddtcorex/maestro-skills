@@ -9,6 +9,7 @@ const skillPath = path.resolve(__dirname, '../SKILL.md');
 const cheatsheetPath = path.resolve(__dirname, '../references/cheatsheet.md');
 const styleGuidePath = path.resolve(__dirname, '../references/style-guide.md');
 const learningsPath = path.resolve(__dirname, '../references/diagram-design-learnings.md');
+const supportedCasesPath = path.resolve(__dirname, '../references/supported-cases.md');
 
 async function spawnSubagent(prompt, { skills }) {
   if (skills.includes('diagram-studio')) {
@@ -71,6 +72,19 @@ describe('diagram-studio pressure test', () => {
       expect(styleGuide.toLowerCase().includes(token), `style-guide missing token ${token}`).toBe(true);
     }
     expect(styleGuide.includes('classDef')).toBe(true);
+  });
+
+  it('supported-cases covers all 52 upstream ordinals', () => {
+    const cases = fs.readFileSync(supportedCasesPath, 'utf-8');
+    expect(cases.includes('52/52 upstream ordinals'), 'missing 52/52 coverage statement').toBe(true);
+    expect(cases.includes('Out of scope'), 'missing Out-of-scope table').toBe(true);
+    expect(cases.includes('Behavior first'), 'missing behavior-first table').toBe(true);
+    expect(cases.includes('Streamgraph'), 'variant ordinal Streamgraph dropped').toBe(true);
+    expect(cases.includes('Marimekko'), 'variant ordinal Marimekko dropped').toBe(true);
+    expect(cases.includes('unverified'), 'new mappings need unverified markers').toBe(true);
+    for (const g of ['xychart', 'pie', 'mindmap', 'gitGraph']) {
+      expect(cases.includes(g), `unsupported grammar ${g} referenced`).toBe(false);
+    }
   });
 
   it('learnings has MIT attribution', () => {
