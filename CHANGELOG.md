@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Superpowers fork v6.3.0 → v6.4.1.** New `diagnosing-superpowers` skill
+  (diagnose what went wrong in a session); `executing-plans` rebuilt with a
+  Native inline-execution mode plus `task-start`/`task-done` helpers;
+  `writing-plans` gains a Review Focus section; `brainstorming`,
+  code-review, TDD and `subagent-driven-development` guidance updates;
+  bundled scripts are now invoked through their interpreter; new upstream
+  tool maps (`claude-code-tools.md`, `muse-tools.md`). The fork's local
+  additions (`dsh-tools.md`, the fork-provenance note in
+  `using-superpowers/SKILL.md`) are preserved. Total: 32 skills
+  (17 domain + 15 process).
+
 ## [2.13.0] - 2026-09-14
 
 ### Added

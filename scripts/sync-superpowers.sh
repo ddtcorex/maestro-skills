@@ -2,7 +2,7 @@
 # Sync the forked superpowers skills in skills/ against upstream obra/superpowers.
 #
 #   scripts/sync-superpowers.sh            # sync to upstream dev HEAD (or existing clone)
-#   scripts/sync-superpowers.sh v6.4.0     # sync to a tag/branch/commit
+#   scripts/sync-superpowers.sh v6.4.1     # sync to a tag/branch/commit
 #
 # What it does:
 #   1. Ensures a clone of upstream exists at $SYNC_DIR (default /tmp/superpowers-sync).
@@ -11,7 +11,7 @@
 #      preserving this fork's local additions (see PRESERVE below).
 #   4. Prints a diff summary for manual review — always review before committing.
 #
-# The 14 forked skill names live in FORKED; domain skills (magento2-*, govard-*)
+# The forked skill names live in FORKED; domain skills (magento2-*, govard-*)
 # are never touched.
 set -euo pipefail
 
@@ -26,7 +26,8 @@ PRESERVE=(
 )
 
 FORKED=(
-  brainstorming dispatching-parallel-agents executing-plans
+  brainstorming diagnosing-superpowers dispatching-parallel-agents
+  executing-plans
   finishing-a-development-branch receiving-code-review requesting-code-review
   subagent-driven-development systematic-debugging test-driven-development
   using-git-worktrees using-superpowers verification-before-completion
@@ -62,7 +63,8 @@ done
 
 rsync -a --delete \
   --include='*/' \
-  --include='brainstorming/**' --include='dispatching-parallel-agents/**' \
+  --include='brainstorming/**' --include='diagnosing-superpowers/**' \
+  --include='dispatching-parallel-agents/**' \
   --include='executing-plans/**' --include='finishing-a-development-branch/**' \
   --include='receiving-code-review/**' --include='requesting-code-review/**' \
   --include='subagent-driven-development/**' --include='systematic-debugging/**' \

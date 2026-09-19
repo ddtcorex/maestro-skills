@@ -33,7 +33,7 @@ When multiple skills apply, process skills come first — they set the approach,
 > Fork note (maestro-skills): upstream prefixes skills as `superpowers:<name>`.
 > In this bundle the process skills ship un-namespaced alongside the domain
 > skills (magento2-*, govard-*), so invoke them by their bare names. This file
-> and its references are forked from obra/superpowers v6.3.0 (MIT); body edits
+> and its references are forked from obra/superpowers v6.4.1 (MIT); body edits
 > beyond tool mapping should go through upstream — see THIRD-PARTY-NOTICES.md.
 
 ## Red Flags
@@ -59,10 +59,12 @@ These thoughts mean STOP—you're rationalizing:
 
 If your harness appears here, read its reference file for special instructions:
 
+- Claude Code: `references/claude-code-tools.md`
 - Codex: `references/codex-tools.md`
 - Pi: `references/pi-tools.md`
 - Antigravity: `references/antigravity-tools.md`
 - Hermes Agent: `references/hermes-tools.md`
+- Muse: `references/muse-tools.md`
 - DeepSeek Harness (DSH): `references/dsh-tools.md`
 
 ## User Instructions

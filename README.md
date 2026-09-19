@@ -3,7 +3,7 @@
 A unified skills library for AI coding agents, packaged as a universal plugin for **DeepSeek Harness (DSH)**, **Claude Code**, **Codex CLI**, **OpenCode**, and **GitHub Copilot** — two halves in one bundle:
 
 - **Domain skills (17)** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel, Symfony, WordPress, generic PHP): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs, plus `php-dev-core` and `diagram-studio`.
-- **Process skills (14)** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v6.3.0 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
+- **Process skills (15)** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v6.4.1 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, session diagnosis, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
 
 Every skill follows the open [Agent Skills standard](https://agentskills.io) (a `SKILL.md` file with `name`/`description` frontmatter), which all major AI Agent tools understand.
 
@@ -33,9 +33,10 @@ maestro-skills/
 ├── .codex-plugin/                   # Codex CLI plugin manifest
 ├── .agents/plugins/                 # Codex marketplace manifest
 │
-└── skills/                          # 31 skills total
-    ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v6.3.0)
+└── skills/                          # 32 skills total
+    ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v6.4.1)
     │   ├── brainstorming/              # Socratic design refinement with approval gates
+    │   ├── diagnosing-superpowers/     # Diagnose what went wrong in a session
     │   ├── test-driven-development/    # RED-GREEN-REFACTOR iron law
     │   ├── systematic-debugging/       # 4-phase root-cause process
     │   ├── verification-before-completion/  # Evidence before success claims
@@ -68,11 +69,11 @@ maestro-skills/
 
 ## 🤖 Skill Compatibility Matrix
 
-All 31 skills work identically on every listed tool.
+All 32 skills work identically on every listed tool.
 
 | Group | Skills | Claude Code | Codex CLI | OpenCode | GitHub Copilot | DeepSeek Harness |
 |---|---|---|---|---|---|---|
-| Process (superpowers fork) | brainstorming, dispatching-parallel-agents, executing-plans, finishing-a-development-branch, receiving-code-review, requesting-code-review, subagent-driven-development, systematic-debugging, test-driven-development, using-git-worktrees, using-superpowers, verification-before-completion, writing-plans, writing-skills | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Process (superpowers fork) | brainstorming, diagnosing-superpowers, dispatching-parallel-agents, executing-plans, finishing-a-development-branch, receiving-code-review, requesting-code-review, subagent-driven-development, systematic-debugging, test-driven-development, using-git-worktrees, using-superpowers, verification-before-completion, writing-plans, writing-skills | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Core & Standards | [magento2-dev-core](skills/magento2-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Linting & Auditing | [magento2-linter](skills/magento2-linter/SKILL.md), [magento2-performance-audit](skills/magento2-performance-audit/SKILL.md), [magento2-security-scan](skills/magento2-security-scan/SKILL.md), [magento2-code-review](skills/magento2-code-review/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Frameworks | [magento2-hyva-dev](skills/magento2-hyva-dev/SKILL.md), [magento2-frontend-dev](skills/magento2-frontend-dev/SKILL.md), [magento2-backend-dev](skills/magento2-backend-dev/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -89,7 +90,7 @@ All 31 skills work identically on every listed tool.
 
 ### 1. DeepSeek Harness (DSH) — as a plugin (recommended)
 
-One command is a complete install — the plugin serves all 31 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
+One command is a complete install — the plugin serves all 32 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
 
 ```bash
 dsh plugin --profile web add github:ddtcorex/maestro-skills
@@ -158,14 +159,14 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/inst
 
 ## 🔄 Superpowers fork maintenance
 
-The 14 process skills are an upstream fork, not hand-maintained copies:
+The 15 process skills are an upstream fork, not hand-maintained copies:
 
 ```bash
 scripts/sync-superpowers.sh            # latest upstream HEAD
-scripts/sync-superpowers.sh v6.4.0     # a specific tag
+scripts/sync-superpowers.sh v6.4.1     # a specific tag
 ```
 
-The script preserves this repo's local additions (`skills/using-superpowers/references/dsh-tools.md`, the fork-provenance note in `using-superpowers/SKILL.md`) and prints a diff for review. Do not edit forked skill bodies by hand — see `THIRD-PARTY-NOTICES.md`.
+The script preserves this repo's local addition (`skills/using-superpowers/references/dsh-tools.md`) and prints a diff for review; the fork-provenance note in `using-superpowers/SKILL.md` is re-applied by hand during review. Do not edit forked skill bodies by hand — see `THIRD-PARTY-NOTICES.md`.
 
 ## ⚡ Extension Guide: Adding New Domain Skills
 
@@ -211,4 +212,4 @@ branches only; never commit to `master` directly.
 ## Credits & Attribution
 
 - **Domain skills**: © DDTCoreX, MIT License (see `LICENSE`).
-- **Process skills**: forked from [obra/superpowers](https://github.com/obra/superpowers) v6.3.0 by Jesse Vincent / Prime Radiant, MIT License — full notice in `THIRD-PARTY-NOTICES.md`. The DSH tool mapping (`references/dsh-tools.md`) is a local addition, not upstream content.
+- **Process skills**: forked from [obra/superpowers](https://github.com/obra/superpowers) v6.4.1 by Jesse Vincent / Prime Radiant, MIT License — full notice in `THIRD-PARTY-NOTICES.md`. The DSH tool mapping (`references/dsh-tools.md`) is a local addition, not upstream content.
