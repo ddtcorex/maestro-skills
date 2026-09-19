@@ -82,7 +82,7 @@ govard sync -s staging --full --no-compress --no-noise
 ### Q: Docker storage is full
 
 **A**:
-1. `govard project list --orphans` to find stale projects
+1. `govard project orphans` to find stale projects
 2. `govard project delete <name>` for unused projects
 3. `govard env cleanup` to prune compose files
 

@@ -65,8 +65,8 @@ Full canonical reference for all Govard subcommands.
 
 - **`govard svc`**: `up`, `restart`, `logs`, `sleep`, `wake`
 - **`govard redis`**: `flush`, `cli`, `info`
-- **`govard varnish`**: `purge`, `status`
-- **`govard open`**: `app`, `admin`, `mail`, `db`, `db --pma`
+- **`govard varnish`**: `ban <pattern>`, `ps`, `stats`, `log` (no `purge`/`status` subcommands)
+- **`govard open`**: `admin`, `mail`, `db`, `db --pma`, `db --client`, `shell`, `sftp`, `portainer`, `mftf`, `elasticsearch`/`opensearch` (no `app` target)
 - **`govard debug`**: `on`, `off`, `status`, `shell`
 - **`govard doctor`**: `trust` (Root CA), `--fix`, `--pack`
 - **`govard config`**: `get`, `set`, `profile`, `auto`
@@ -82,12 +82,14 @@ Full canonical reference for all Govard subcommands.
 
 - **`govard project list`**: List all projects
 - **`govard project delete <name>`**: Remove project completely
-- **`govard project clean`**: Clean up resources
+- **`govard project orphans`**: List stale projects (`list --orphans` was removed)
+- **`govard env cleanup`**: Clean up resources
 
 ## 9. Auditing (`govard audit`)
 
-Persistent, framework-declared project audits — lint is the only check
-implemented so far. For Magento 2, this is the native, authoritative lint
+Persistent, framework-declared project audits — checks are `lint`
+(PHPCS/PHPStan), `profiler`, and `integrity` (container-free). For
+Magento 2, this is the native, authoritative lint
 gate; the full decision tree (target-mode resolution, PHP matrix, provider
 rules, caching/rerun identity) lives in the `magento2-linter` skill's
 "Govard-Native Lint Audit Is the Real Gate" section — this table is

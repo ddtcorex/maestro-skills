@@ -5,7 +5,7 @@ description: |
   "govard down", "run commands in container", "govard sh", "do database operations", "db dump",
   "db import", "sync with remote", "bootstrap from staging", "debug configuration", "set up
   Xdebug", "govard verify", "checklist", "QA harness", "deploy to a remote", "govard deploy", "deploy plan", "deploy check",
-  "rollback a deploy", "deploy sandbox", or "rehearse a deploy". Provides high-level shortcuts and references for the Govard development environment
+  "rollback a deploy", "sandbox rehearsal", or "rehearse a deploy". Provides high-level shortcuts and references for the Govard development environment
   orchestrator. This is the BASE skill — for framework-specific shortcuts, also load
   govard-magento or govard-laravel.
 compatibility: claude, codex, opencode, copilot, dsh
@@ -119,7 +119,7 @@ govard deploy production --resume      # continue a half-published release (or -
 govard deploy unlock production [--force]       # lock left by an interrupted run
 ```
 
-Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `deploy sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over.
+Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over.
 
 What the target runs comes from the framework **recipe** — Magento 2, Mage-OS (inherits it), Laravel, Symfony and WordPress ship one; any other framework gets the neutral pipeline with the application steps empty, filled by `deploy.hooks`.
 
@@ -129,9 +129,9 @@ What the target runs comes from the framework **recipe** — Magento 2, Mage-OS 
 
 ```bash
 # Rehearse the whole thing against a container playing the target
-govard deploy sandbox up --profile full --php 8.3 --docroot symlink   # profile, PHP series, target shape
+govard sandbox up --profile full --php 8.3 --docroot symlink   # profile, PHP series, target shape
 govard deploy --remote sandbox --yes
-govard deploy sandbox down --purge          # also removes the image, key and mirror
+govard sandbox down --purge          # also removes the image, key and mirror
 ```
 
 Sandbox lists come from the recipe; `deploy.settings.sandbox_{packages,extensions,services,tools}` **replace** them. `sandbox reset` also wipes `shared/`, so re-seed shared files.
@@ -188,13 +188,14 @@ govard redis flush
 govard redis cli
 
 # Varnish
-govard varnish purge
+govard varnish ban /.*   # purge URL pattern (no purge subcommand)
+govard varnish ps        # container status (or `stats` for varnishstat)
 
 # Open URLs
-govard open app      # Main site
 govard open admin    # Admin panel
 govard open db       # PHPMyAdmin
 govard open mail     # Mailhog
+govard open shell    # project shell (also: sftp, portainer, mftf, elasticsearch/opensearch, db --client)
 ```
 
 ## Debugging
