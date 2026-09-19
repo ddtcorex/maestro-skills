@@ -87,6 +87,14 @@ describe('diagram-studio pressure test', () => {
     }
   });
 
+  it('learnings track the 52-type sync', () => {
+    const learnings = fs.readFileSync(learningsPath, 'utf-8');
+    expect(learnings.includes('52 editorial types'), 'learnings still say 39').toBe(true);
+    expect(learnings.includes('v2.6.32'), 'learnings do not pin upstream version').toBe(true);
+    expect(learnings.includes('2026-09-19'), 'learnings lack sync date').toBe(true);
+    expect(learnings.includes('Semantic patterns'), 'missing semantic-patterns learning').toBe(true);
+  });
+
   it('learnings has MIT attribution', () => {
     const learnings = fs.readFileSync(learningsPath, 'utf-8');
     expect(learnings.includes('cathrynlavery/diagram-design')).toBe(true);
