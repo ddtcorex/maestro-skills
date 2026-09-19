@@ -56,9 +56,11 @@ This shows exactly what files and database tables will be affected.
 1. Open environment: `govard up`
 2. Run migrations: `govard tool artisan migrate`
 3. Generate key: `govard tool artisan key:generate`
-4. Open app: `govard open app`
+4. Open admin: `govard open admin`
 
 ## 3. Remote Operations & Optimization
+
+Rehearse against a container playing the target first — see [SANDBOX.md](SANDBOX.md).
 
 ### Secure Remote Dump
 

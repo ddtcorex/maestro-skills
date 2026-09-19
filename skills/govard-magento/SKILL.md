@@ -283,13 +283,13 @@ govard redis info
 
 ```bash
 # Purge all
-govard varnish purge
+govard varnish ban /.*
 
 # Purge by tag
 govard tool magento cache:clean cache_tag_frontend
 
 # Varnish status
-govard varnish status
+govard varnish ps
 ```
 
 ## Logging
@@ -307,8 +307,8 @@ govard sh -c "tail -n 50 var/log/my-module.log"
 
 | Symptom | Fix |
 |---|---|
-| "There are no commands defined" after pulling code | `govard tool magento setup:di:compile"` |
-| Static assets not updating | `govard tool magento setup:static-content:deploy -f"` + `cache:flush`, then hard-refresh the browser |
+| "There are no commands defined" after pulling code | `govard tool magento setup:di:compile` |
+| Static assets not updating | `govard tool magento setup:static-content:deploy -f` + `cache:flush`, then hard-refresh the browser |
 | Database connection refused | `govard ps` (is the DB container up?), `govard logs db`, then `govard down && govard up` if needed |
 | Container won't start | `govard doctor`, then `govard logs` |
 | Xdebug not connecting | `govard debug on`, confirm the IDE is listening on port 9003, check the `XDEBUG_SESSION` cookie matches `.govard.yml` — see `govard-toolbox` for the full IDE setup |
@@ -342,3 +342,7 @@ govard tool magento setup:static-content:deploy -f --theme=Vendor/Theme
 govard tool magento cache:flush
 govard tool magento maintenance:disable
 ```
+
+### Govard Deploy (conditional migrate)
+
+`govard deploy` probes `setup:db:status` before the downtime block: exit 0 skips maintenance/workers/config-import/migrate, 1–2 runs them — see `govard-toolbox` Deployment for the full gate, verdict, and resume semantics.

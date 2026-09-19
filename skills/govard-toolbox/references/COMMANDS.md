@@ -53,6 +53,8 @@ Full canonical reference for all Govard subcommands.
 | `remote copy-id` | Copy SSH key | `--no-noise` | Skip cache, logs, tags |
 | - | - | `--no-pii` | Skip customer/order PII |
 
+The name `sandbox` is a synthetic remote (no config block) — see [SANDBOX.md](SANDBOX.md).
+
 ## 5. Snapshots (`govard snapshot`)
 
 - `snapshot create`: Capture local state or remote `-e <env>`
@@ -65,8 +67,8 @@ Full canonical reference for all Govard subcommands.
 
 - **`govard svc`**: `up`, `restart`, `logs`, `sleep`, `wake`
 - **`govard redis`**: `flush`, `cli`, `info`
-- **`govard varnish`**: `purge`, `status`
-- **`govard open`**: `app`, `admin`, `mail`, `db`, `db --pma`
+- **`govard varnish`**: `ban <pattern>`, `ps`, `stats`, `log` (no `purge`/`status` subcommands)
+- **`govard open`**: `admin`, `mail`, `db`, `db --pma`, `db --client`, `shell`, `sftp`, `portainer`, `mftf`, `elasticsearch`/`opensearch` (no `app` target)
 - **`govard debug`**: `on`, `off`, `status`, `shell`
 - **`govard doctor`**: `trust` (Root CA), `--fix`, `--pack`
 - **`govard config`**: `get`, `set`, `profile`, `auto`
@@ -82,12 +84,14 @@ Full canonical reference for all Govard subcommands.
 
 - **`govard project list`**: List all projects
 - **`govard project delete <name>`**: Remove project completely
-- **`govard project clean`**: Clean up resources
+- **`govard project orphans`**: List stale projects (`list --orphans` was removed)
+- **`govard env cleanup`**: Clean up resources
 
 ## 9. Auditing (`govard audit`)
 
-Persistent, framework-declared project audits — lint is the only check
-implemented so far. For Magento 2, this is the native, authoritative lint
+Persistent, framework-declared project audits — checks are `lint`
+(PHPCS/PHPStan), `profiler`, and `integrity` (container-free). For
+Magento 2, this is the native, authoritative lint
 gate; the full decision tree (target-mode resolution, PHP matrix, provider
 rules, caching/rerun identity) lives in the `magento2-linter` skill's
 "Govard-Native Lint Audit Is the Real Gate" section — this table is
@@ -97,9 +101,9 @@ commands only, not policy.
 | :--- | :--- | :--- |
 | `run` | Run an audit against the resolved target | `govard audit run --checks lint` |
 | `run --mode standalone --php <list>` | Narrow the PHP matrix (standalone; see `magento2-linter` for `project`/`module_in_project`) | `govard audit run --mode standalone --php 8.1,8.5` |
-| `diff --base <ref>` | Record a base ref in the session manifest for a diff-scoped audit — lint still analyzes the full target today, so result evidence reports `effective_scope: project` regardless | `govard audit diff --base origin/master` |
+| `diff --base <ref>` | Record a base ref in the session manifest for a diff-scoped audit — only changed files are linted (empty diff short-circuits `passed`) | `govard audit diff --base origin/master` |
 | `run --allow-lint-ssh-agent` | Forward the host's `SSH_AUTH_SOCK` into the lint container, needed for a `standalone` target with a private Git/Composer dependency; opt-in per run, never forwarded automatically | `govard audit run --mode standalone --allow-lint-ssh-agent` |
-| `run --lint-jobs <n>` | Lint worker count; must be between 1 and the number of PHP versions the framework declares (7 for Magento), not just the ones selected for this run (default 2) | `govard audit run --lint-jobs 1` |
+| `run --lint-jobs <n>` | Lint worker count; must be between 1 and the number of PHP versions the framework declares (7 for Magento), not just the ones selected for this run (default `min(nproc,4)`) | `govard audit run --lint-jobs 1` |
 | `rerun` | Rerun the exact prior session (never guesses "latest") | `govard audit rerun --session SESSION_ID` |
 | `status` | Inspect a session | `govard audit status --session SESSION_ID` |
 | `result` | Show one run's result within a session | `govard audit result --session SESSION_ID --run RUN_ID` |

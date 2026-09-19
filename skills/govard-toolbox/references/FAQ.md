@@ -32,6 +32,10 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/govard/master/install.sh |
 
 **A**: Ensure `dnsmasq` service is running with `govard svc up`. Use `resolvectl query <domain>` for diagnostics.
 
+### Q: RabbitMQ management UI not reachable
+
+**A**: Check `stack.services.queue` is `rabbitmq` (not `none`), re-run `govard env up` once, and use `http://<domain>:15672` (plain HTTP, guest/guest) — never `https://`.
+
 ---
 
 ## 3. Remote & Sync
@@ -47,6 +51,14 @@ govard sync -s staging --full --no-compress --no-noise
 ### Q: Authenticity of host can't be established
 
 **A**: Use `govard remote copy-id <remote>` to add your SSH key to the remote host.
+
+### Q: Gateway SSH refused / sandbox unreachable at :2222
+
+**A**: Check the chain: `govard svc up` (bastion) → `sandbox up` (target) → `gateway allow-key` (key). `gateway status` shows target/allowlist counts and warns if port 2222 is held by another process. Log in as the slugged name (`Foo_Bar` → `foo-bar`); pass the key as one quoted shell argument.
+
+### Q: Remote dump fails after an update that used to succeed
+
+**A**: Dumps fail loudly now instead of writing an empty file — read the credential warning first. Point the remote at the layout root is fine (Govard probes `<path>`, `public_html`, `current`); "no database configuration at …" lists every path tried.
 
 ---
 
@@ -82,7 +94,7 @@ govard sync -s staging --full --no-compress --no-noise
 ### Q: Docker storage is full
 
 **A**:
-1. `govard project list --orphans` to find stale projects
+1. `govard project orphans` to find stale projects
 2. `govard project delete <name>` for unused projects
 3. `govard env cleanup` to prune compose files
 

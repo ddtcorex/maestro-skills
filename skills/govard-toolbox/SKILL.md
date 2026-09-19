@@ -5,7 +5,7 @@ description: |
   "govard down", "run commands in container", "govard sh", "do database operations", "db dump",
   "db import", "sync with remote", "bootstrap from staging", "debug configuration", "set up
   Xdebug", "govard verify", "checklist", "QA harness", "deploy to a remote", "govard deploy", "deploy plan", "deploy check",
-  "rollback a deploy", "deploy sandbox", or "rehearse a deploy". Provides high-level shortcuts and references for the Govard development environment
+  "rollback a deploy", "sandbox rehearsal", or "rehearse a deploy". Provides high-level shortcuts and references for the Govard development environment
   orchestrator. This is the BASE skill — for framework-specific shortcuts, also load
   govard-magento or govard-laravel.
 compatibility: claude, codex, opencode, copilot, dsh
@@ -71,6 +71,8 @@ govard db import --file backup.sql --drop
 # Export database
 govard db dump --no-noise -e staging
 
+Remote path may point at the layout root — Govard probes `<path>`, `<path>/public_html`, `<path>/current` over SSH ("no database configuration at …" lists what was tried; check the path, don't retry blindly). Dumps fail loudly now (no more empty-file SUCCESS), and fresh-DB `env up` waits for readiness — slightly longer on fresh volumes is normal, not a hang.
+
 # Direct sync from remote
 govard db import --stream-db -e staging --drop
 ```
@@ -110,16 +112,21 @@ Ships a git revision to a remote from `.govard.yml`. Read-only first, always:
 
 ```bash
 govard deploy plan production          # every task with what it runs, or why this mode skips it (no ssh, no rsync, no Docker)
+govard deploy plan production --json   # same plan machine-readable: kind:"plan", schema_version 1, build.mode, publish.strategy + decided_by, per-step implementation(engine|command|none), skipped/skip_reason, run_on, needs_migration — timestamp-free, diff two runs in CI (check has no --json)
 govard deploy check production         # connectivity, permissions, layout, and the strategy that layout implies (ssh)
-govard deploy releases production      # what the target has
-govard deploy status production        # what it serves, and whether a release is half-published
+govard deploy releases production      # what the target has (or --remote production)
+govard deploy status production        # what it serves, and whether a release is half-published (or --remote production)
 govard deploy production --yes         # run it
 govard deploy rollback production [--with-db]   # previous release; --with-db also restores its dump
 govard deploy production --resume      # continue a half-published release (or --from <task>)
-govard deploy unlock production [--force]       # lock left by an interrupted run
+govard deploy unlock production [--force]       # lock left by an interrupted run (or --remote production)
 ```
 
-Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `deploy sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over.
+Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over. Resume adopts a recorded *migrate* verdict without re-probing; a recorded *skip* is discarded and re-probed; prior-`ok` steps are not repeated.
+
+**Topology.** Project-wide defaults live in a `deploy:` block (`repository`, `branch`, `publish`, `deploy_path`); per-remote overrides live ONLY under `remotes.<name>.deploy:` — the flat keys (`remotes.<name>.branch|repository|publish|deploy_path`) were removed and the loader rejects them (exit 4, e.g. `remotes.staging: "branch" was removed; move it under remotes.staging.deploy.branch`). Unset `deploy_path` probes the target, adopted only when exactly one layout candidate matches.
+
+**Conditional migrate (Magento only).** Before the downtime block the recipe probes `cd {{release_path}} && {{php_bin}} bin/magento setup:db:status`: exit 0 skips `maintenance:enable`, `app:workers:pause`, `app:config:import`, `db:migrate`, `app:workers:resume`, `maintenance:disable` (`db up-to-date (probe exit 0)`); 1/2 runs them; any other exit fails the deploy. Always-run: `build:compile`, `app:cache:flush`, `db:backup`. Laravel/Symfony/WordPress have no probe — their migrate steps always run.
 
 What the target runs comes from the framework **recipe** — Magento 2, Mage-OS (inherits it), Laravel, Symfony and WordPress ship one; any other framework gets the neutral pipeline with the application steps empty, filled by `deploy.hooks`.
 
@@ -129,9 +136,9 @@ What the target runs comes from the framework **recipe** — Magento 2, Mage-OS 
 
 ```bash
 # Rehearse the whole thing against a container playing the target
-govard deploy sandbox up --profile full --php 8.3 --docroot symlink   # profile, PHP series, target shape
+govard sandbox up --profile full --php 8.3 --docroot symlink   # profile, PHP series, target shape
 govard deploy --remote sandbox --yes
-govard deploy sandbox down --purge          # also removes the image, key and mirror
+govard sandbox down --purge          # also removes the image, key and mirror
 ```
 
 Sandbox lists come from the recipe; `deploy.settings.sandbox_{packages,extensions,services,tools}` **replace** them. `sandbox reset` also wipes `shared/`, so re-seed shared files.
@@ -188,14 +195,31 @@ govard redis flush
 govard redis cli
 
 # Varnish
-govard varnish purge
+govard varnish ban /.*   # purge URL pattern (no purge subcommand)
+govard varnish ps        # container status (or `stats` for varnishstat)
 
 # Open URLs
-govard open app      # Main site
 govard open admin    # Admin panel
 govard open db       # PHPMyAdmin
 govard open mail     # Mailhog
+govard open shell    # project shell (also: sftp, portainer, mftf, elasticsearch/opensearch, db --client)
+
+# RabbitMQ management UI (when stack.services.queue is rabbitmq)
+open http://<your-domain>:15672    # guest/guest, local-only no-TLS; re-run `govard env up` once on pre-existing projects
 ```
+
+## Sandbox SSH gateway
+
+Bastion `govard-proxy-sshd` at `127.0.0.1:2222` — start it with `govard svc up`.
+
+```bash
+govard gateway allow-key "$(cat ~/.ssh/id_ed25519.pub)"   # one quoted key line; updates known fingerprints in place
+ssh -p 2222 <project-slug>@127.0.0.1                       # stable address (vs the ephemeral sandbox port); sftp -P 2222 likewise
+govard gateway status    # bastion running? targets N / allowlist N (needs Docker); warns if port 2222 is held by another process
+govard gateway revoke-key <exact-fingerprint-or-comment>   # exact match only, no substring
+```
+
+Prerequisites in order: `govard svc up` (bastion) → `sandbox up` (registers the slug; `Foo_Bar` logs in as `foo-bar`) → `allow-key`. Registration is best-effort and no deploy path goes through the gateway, so gateway breakage never blocks a real deploy.
 
 ## Debugging
 
@@ -328,6 +352,7 @@ On DSH: call `govard_audit_lint {worktreePath?, scope?: "diff"|"project", base?:
 
 See bundled documents:
 - [COMMANDS.md](COMMANDS.md) - Exhaustive command reference
+- [SANDBOX.md](SANDBOX.md) - Sandbox rehearsal target (lifecycle, synthetic remote, seed-once, traps)
 - [GUIDES.md](GUIDES.md) - Case studies and patterns
 - [FAQ.md](FAQ.md) - Troubleshooting
 

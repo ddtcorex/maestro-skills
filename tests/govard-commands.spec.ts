@@ -1,0 +1,83 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+
+const SKILLS = join(__dirname, '..', 'skills')
+function readSkill(...segs: string[]) {
+  return readFileSync(join(SKILLS, ...segs), 'utf-8')
+}
+function allGovardMd(): string[] {
+  const out: string[] = []
+  for (const skill of readdirSync(SKILLS).filter(d => d.startsWith('govard-'))) {
+    out.push(readSkill(skill, 'SKILL.md'))
+    try {
+      for (const f of readdirSync(join(SKILLS, skill, 'references')))
+        if (f.endsWith('.md')) out.push(readSkill(skill, 'references', f))
+    } catch { /* no references dir */ }
+  }
+  return out
+}
+
+describe('govard command truth', () => {
+  it('sandbox is top-level, never under deploy', () => {
+    expect(readSkill('govard-toolbox', 'SKILL.md')).toContain('govard sandbox up')
+    for (const text of allGovardMd())
+      expect(text.includes('deploy sandbox'), 'stale deploy sandbox spelling').toBe(false)
+  })
+  it('govard open lists real targets only', () => {
+    for (const text of allGovardMd())
+      expect(text.includes('govard open app'), 'open app does not exist').toBe(false)
+  })
+  it('varnish uses ban/ps/stats, never purge/status', () => {
+    for (const text of allGovardMd()) {
+      expect(text.includes('varnish purge'), 'unknown varnish subcommand').toBe(false)
+      expect(text.includes('varnish status'), 'unknown varnish subcommand').toBe(false)
+    }
+  })
+  it('project orphans is a subcommand, not a flag', () => {
+    for (const text of allGovardMd())
+      expect(text.includes('project list --orphans'), 'moved to project orphans').toBe(false)
+  })
+  it('no project clean subcommand', () => {
+    for (const text of allGovardMd())
+      expect(text.includes('project clean'), 'use env cleanup').toBe(false)
+  })
+  it('audit documents all three checks', () => {
+    const cmds = readSkill('govard-toolbox', 'references', 'COMMANDS.md')
+    expect(cmds).toContain('integrity')
+    expect(cmds.includes('lint is the only check'), 'stale single-check claim').toBe(false)
+  })
+  it('deploy documents plan --json, nested topology, and migrate gate', () => {
+    const toolbox = readSkill('govard-toolbox', 'SKILL.md')
+    expect(toolbox).toContain('--json')
+    expect(toolbox).toContain('needs_migration')
+    expect(toolbox).toContain('remotes.<name>.deploy:')
+    expect(toolbox).toContain('setup:db:status')
+    expect(toolbox.includes('remotes.staging.branch'), 'flat deploy keys were removed').toBe(false)
+    const magento = readSkill('govard-magento', 'SKILL.md')
+    expect(magento).toContain('setup:db:status')
+  })
+  it('migrate probe stays Magento-only', () => {
+    for (const skill of ['govard-laravel', 'govard-symfony', 'govard-wordpress']) {
+      const text = readSkill(skill, 'SKILL.md')
+      expect(text.includes('setup:db:status'), `probe leaked into ${skill}`).toBe(false)
+    }
+  })
+  it('sandbox has a dedicated reference and wired pointers', () => {
+    const box = readSkill('govard-toolbox', 'references', 'SANDBOX.md')
+    expect(box.includes('synthetic remote'), 'missing synthetic-remote semantics').toBe(true)
+    expect(box.includes('seed-once') || box.includes('Seed-once'), 'missing seed-once gate').toBe(true)
+    expect(box.includes('--no-seed'), 'missing --no-seed flag').toBe(true)
+    const skill = readSkill('govard-toolbox', 'SKILL.md')
+    expect(skill).toContain('SANDBOX.md')
+  })
+  it('gateway, rabbitmq, and remote-db are documented', () => {
+    const skill = readSkill('govard-toolbox', 'SKILL.md')
+    expect(skill).toContain('gateway allow-key')
+    expect(skill).toContain('127.0.0.1:2222')
+    expect(skill).toContain('15672')
+    expect(skill).toContain('public_html')
+    const cmds = readSkill('govard-toolbox', 'references', 'COMMANDS.md')
+    expect(cmds.includes('min(nproc,4)') || cmds.includes('nproc'), 'lint-jobs default stale').toBe(true)
+  })
+})
