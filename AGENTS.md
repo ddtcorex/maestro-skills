@@ -348,9 +348,10 @@ manual release step in the GitHub UI.
   way when writing new command examples.
 - **Do not claim Govard-native coverage the audit subsystem lacks.**
   `govard audit` implements the `lint` check (PHPCS + PHPStan + the pub/media
-  PHP guard) and, since v1.64.0, the `profiler` check; any other `--checks`
-  value is rejected. QA-trio skills must state that boundary instead of
-  implying native security/performance gates exist.
+  PHP guard), the `profiler` check (since v1.64.0), and the container-free
+  `integrity` check; any other `--checks` value is rejected. QA-trio skills
+  must state that boundary instead of implying native security/performance
+  gates exist.
 - **Forked superpowers skills stay verbatim.** Never edit their prose or
   frontmatter locally (not even to add `compatibility`); local additions live
   in separate files listed in `PRESERVE` in `scripts/sync-superpowers.sh`,

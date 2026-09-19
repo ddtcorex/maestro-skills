@@ -101,9 +101,9 @@ commands only, not policy.
 | :--- | :--- | :--- |
 | `run` | Run an audit against the resolved target | `govard audit run --checks lint` |
 | `run --mode standalone --php <list>` | Narrow the PHP matrix (standalone; see `magento2-linter` for `project`/`module_in_project`) | `govard audit run --mode standalone --php 8.1,8.5` |
-| `diff --base <ref>` | Record a base ref in the session manifest for a diff-scoped audit — lint still analyzes the full target today, so result evidence reports `effective_scope: project` regardless | `govard audit diff --base origin/master` |
+| `diff --base <ref>` | Record a base ref in the session manifest for a diff-scoped audit — only changed files are linted (empty diff short-circuits `passed`) | `govard audit diff --base origin/master` |
 | `run --allow-lint-ssh-agent` | Forward the host's `SSH_AUTH_SOCK` into the lint container, needed for a `standalone` target with a private Git/Composer dependency; opt-in per run, never forwarded automatically | `govard audit run --mode standalone --allow-lint-ssh-agent` |
-| `run --lint-jobs <n>` | Lint worker count; must be between 1 and the number of PHP versions the framework declares (7 for Magento), not just the ones selected for this run (default 2) | `govard audit run --lint-jobs 1` |
+| `run --lint-jobs <n>` | Lint worker count; must be between 1 and the number of PHP versions the framework declares (7 for Magento), not just the ones selected for this run (default `min(nproc,4)`) | `govard audit run --lint-jobs 1` |
 | `rerun` | Rerun the exact prior session (never guesses "latest") | `govard audit rerun --session SESSION_ID` |
 | `status` | Inspect a session | `govard audit status --session SESSION_ID` |
 | `result` | Show one run's result within a session | `govard audit result --session SESSION_ID --run RUN_ID` |

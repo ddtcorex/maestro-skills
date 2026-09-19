@@ -71,6 +71,8 @@ govard db import --file backup.sql --drop
 # Export database
 govard db dump --no-noise -e staging
 
+Remote path may point at the layout root — Govard probes `<path>`, `<path>/public_html`, `<path>/current` over SSH ("no database configuration at …" lists what was tried; check the path, don't retry blindly). Dumps fail loudly now (no more empty-file SUCCESS), and fresh-DB `env up` waits for readiness — slightly longer on fresh volumes is normal, not a hang.
+
 # Direct sync from remote
 govard db import --stream-db -e staging --drop
 ```
@@ -201,7 +203,23 @@ govard open admin    # Admin panel
 govard open db       # PHPMyAdmin
 govard open mail     # Mailhog
 govard open shell    # project shell (also: sftp, portainer, mftf, elasticsearch/opensearch, db --client)
+
+# RabbitMQ management UI (when stack.services.queue is rabbitmq)
+open http://<your-domain>:15672    # guest/guest, local-only no-TLS; re-run `govard env up` once on pre-existing projects
 ```
+
+## Sandbox SSH gateway
+
+Bastion `govard-proxy-sshd` at `127.0.0.1:2222` — start it with `govard svc up`.
+
+```bash
+govard gateway allow-key "$(cat ~/.ssh/id_ed25519.pub)"   # one quoted key line; updates known fingerprints in place
+ssh -p 2222 <project-slug>@127.0.0.1                       # stable address (vs the ephemeral sandbox port); sftp -P 2222 likewise
+govard gateway status    # bastion running? targets N / allowlist N (needs Docker); warns if port 2222 is held by another process
+govard gateway revoke-key <exact-fingerprint-or-comment>   # exact match only, no substring
+```
+
+Prerequisites in order: `govard svc up` (bastion) → `sandbox up` (registers the slug; `Foo_Bar` logs in as `foo-bar`) → `allow-key`. Registration is best-effort and no deploy path goes through the gateway, so gateway breakage never blocks a real deploy.
 
 ## Debugging
 

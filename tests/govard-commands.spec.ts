@@ -71,4 +71,13 @@ describe('govard command truth', () => {
     const skill = readSkill('govard-toolbox', 'SKILL.md')
     expect(skill).toContain('SANDBOX.md')
   })
+  it('gateway, rabbitmq, and remote-db are documented', () => {
+    const skill = readSkill('govard-toolbox', 'SKILL.md')
+    expect(skill).toContain('gateway allow-key')
+    expect(skill).toContain('127.0.0.1:2222')
+    expect(skill).toContain('15672')
+    expect(skill).toContain('public_html')
+    const cmds = readSkill('govard-toolbox', 'references', 'COMMANDS.md')
+    expect(cmds.includes('min(nproc,4)') || cmds.includes('nproc'), 'lint-jobs default stale').toBe(true)
+  })
 })
