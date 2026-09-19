@@ -342,3 +342,7 @@ govard tool magento setup:static-content:deploy -f --theme=Vendor/Theme
 govard tool magento cache:flush
 govard tool magento maintenance:disable
 ```
+
+### Govard Deploy (conditional migrate)
+
+`govard deploy` probes `setup:db:status` before the downtime block: exit 0 skips maintenance/workers/config-import/migrate, 1–2 runs them — see `govard-toolbox` Deployment for the full gate, verdict, and resume semantics.

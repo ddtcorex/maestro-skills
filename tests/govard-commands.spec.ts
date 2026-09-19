@@ -47,4 +47,20 @@ describe('govard command truth', () => {
     expect(cmds).toContain('integrity')
     expect(cmds.includes('lint is the only check'), 'stale single-check claim').toBe(false)
   })
+  it('deploy documents plan --json, nested topology, and migrate gate', () => {
+    const toolbox = readSkill('govard-toolbox', 'SKILL.md')
+    expect(toolbox).toContain('--json')
+    expect(toolbox).toContain('needs_migration')
+    expect(toolbox).toContain('remotes.<name>.deploy:')
+    expect(toolbox).toContain('setup:db:status')
+    expect(toolbox.includes('remotes.staging.branch'), 'flat deploy keys were removed').toBe(false)
+    const magento = readSkill('govard-magento', 'SKILL.md')
+    expect(magento).toContain('setup:db:status')
+  })
+  it('migrate probe stays Magento-only', () => {
+    for (const skill of ['govard-laravel', 'govard-symfony', 'govard-wordpress']) {
+      const text = readSkill(skill, 'SKILL.md')
+      expect(text.includes('setup:db:status'), `probe leaked into ${skill}`).toBe(false)
+    }
+  })
 })

@@ -110,16 +110,21 @@ Ships a git revision to a remote from `.govard.yml`. Read-only first, always:
 
 ```bash
 govard deploy plan production          # every task with what it runs, or why this mode skips it (no ssh, no rsync, no Docker)
+govard deploy plan production --json   # same plan machine-readable: kind:"plan", schema_version 1, build.mode, publish.strategy + decided_by, per-step implementation(engine|command|none), skipped/skip_reason, run_on, needs_migration — timestamp-free, diff two runs in CI (check has no --json)
 govard deploy check production         # connectivity, permissions, layout, and the strategy that layout implies (ssh)
-govard deploy releases production      # what the target has
-govard deploy status production        # what it serves, and whether a release is half-published
+govard deploy releases production      # what the target has (or --remote production)
+govard deploy status production        # what it serves, and whether a release is half-published (or --remote production)
 govard deploy production --yes         # run it
 govard deploy rollback production [--with-db]   # previous release; --with-db also restores its dump
 govard deploy production --resume      # continue a half-published release (or --from <task>)
-govard deploy unlock production [--force]       # lock left by an interrupted run
+govard deploy unlock production [--force]       # lock left by an interrupted run (or --remote production)
 ```
 
-Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over.
+Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over. Resume adopts a recorded *migrate* verdict without re-probing; a recorded *skip* is discarded and re-probed; prior-`ok` steps are not repeated.
+
+**Topology.** Project-wide defaults live in a `deploy:` block (`repository`, `branch`, `publish`, `deploy_path`); per-remote overrides live ONLY under `remotes.<name>.deploy:` — the flat keys (`remotes.<name>.branch|repository|publish|deploy_path`) were removed and the loader rejects them (exit 4, e.g. `remotes.staging: "branch" was removed; move it under remotes.staging.deploy.branch`). Unset `deploy_path` probes the target, adopted only when exactly one layout candidate matches.
+
+**Conditional migrate (Magento only).** Before the downtime block the recipe probes `cd {{release_path}} && {{php_bin}} bin/magento setup:db:status`: exit 0 skips `maintenance:enable`, `app:workers:pause`, `app:config:import`, `db:migrate`, `app:workers:resume`, `maintenance:disable` (`db up-to-date (probe exit 0)`); 1/2 runs them; any other exit fails the deploy. Always-run: `build:compile`, `app:cache:flush`, `db:backup`. Laravel/Symfony/WordPress have no probe — their migrate steps always run.
 
 What the target runs comes from the framework **recipe** — Magento 2, Mage-OS (inherits it), Laravel, Symfony and WordPress ship one; any other framework gets the neutral pipeline with the application steps empty, filled by `deploy.hooks`.
 
