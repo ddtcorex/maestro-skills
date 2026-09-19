@@ -9,7 +9,7 @@ const DOMAIN_PATTERN = /^(dsh|magento2|govard)-/
 // Forked-from-upstream skills must stay verbatim; only domain skills carry
 // fork-local frontmatter additions such as `compatibility`.
 const FORKED = [
-  'brainstorming', 'dispatching-parallel-agents', 'executing-plans',
+  'brainstorming', 'diagnosing-superpowers', 'dispatching-parallel-agents', 'executing-plans',
   'finishing-a-development-branch', 'receiving-code-review', 'requesting-code-review',
   'subagent-driven-development', 'systematic-debugging', 'test-driven-development',
   'using-git-worktrees', 'using-superpowers', 'verification-before-completion',
