@@ -1,6 +1,6 @@
 # Diagram Design Learnings
 
-5 editorial learnings distilled from [`cathrynlavery/diagram-design`](https://github.com/cathrynlavery/diagram-design) (MIT, 39 editorial types). That repo's tokens, density scale, and confirm-before-drawing discipline inform `diagram-studio`'s `SKILL.md` → `style-guide.md` → `cheatsheet.md` chain.
+6 editorial learnings distilled from [`cathrynlavery/diagram-design`](https://github.com/cathrynlavery/diagram-design) (MIT, 52 editorial types at v2.6.32, synced 2026-09-19). That repo's tokens, density scale, and confirm-before-drawing discipline inform `diagram-studio`'s `SKILL.md` → `style-guide.md` → `cheatsheet.md` chain.
 
 > License: MIT — see https://github.com/cathrynlavery/diagram-design/blob/main/LICENSE
 
@@ -34,9 +34,15 @@ Source: `diagram-design` § Brief — "confirm the cut before you draw."
 
 Default output is diffable Mermaid in `docs/` (`docs/architecture.md §1.1`, `docs/specs/*-design.md`) so review lives in git history. Editorial HTML+SVG (`docs/diagrams/<slug>.html`, self-contained, inline CSS, no JS) is an explicit `export: html` step only when `audience: client`. No Figma dependency, no drag UI.
 
-Source: `diagram-design` § Output — 39 editorial types mapped to 5 Mermaid grammars (`flowchart`, `sequenceDiagram`, `classDiagram`, `erDiagram`, `stateDiagram`) in `cheatsheet.md`.
+Source: `diagram-design` § Output — 52 editorial types mapped to 5 Mermaid grammars (`flowchart`, `sequenceDiagram`, `classDiagram`, `erDiagram`, `stateDiagram`) in `cheatsheet.md`; the 18 unmappable ordinals live in the Out-of-scope table in `supported-cases.md`.
 
 ---
 
-Attribution: learnings and tokens adapted from [`cathrynlavery/diagram-design`](https://github.com/cathrynlavery/diagram-design) under MIT. Original repo holds the 39-type taxonomy and full editorial theory; this skill trims it to 5 GitHub-native Mermaid types + 1 HTML template for day-one SA use.
+Attribution: learnings and tokens adapted from [`cathrynlavery/diagram-design`](https://github.com/cathrynlavery/diagram-design) under MIT. Original repo holds the 52-type taxonomy and full editorial theory; this skill trims it to 5 GitHub-native Mermaid types + 1 HTML template for day-one SA use.
+
+## 6. Semantic patterns beat taxonomy growth
+
+Describe the behavior with a pattern first, then reuse the nearest of the 5 grammars — fan-in queue, paired policy traces, and paved road are stories, not new types. New upstream types that fit no grammar go to the Out-of-scope table with a reason instead of stretching a grammar past what it can honestly draw.
+
+Source: `diagram-design` ADR 0002 — semantic patterns do not expand the taxonomy.
 

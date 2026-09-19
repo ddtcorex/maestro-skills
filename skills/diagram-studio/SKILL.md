@@ -25,7 +25,7 @@ Choose the Mermaid type by the semantic pattern, not by habit. See `references/c
 | Entities + fields | erDiagram | cheatsheet.md#er |
 | Classes + ops | classDiagram | cheatsheet.md#class |
 
-Full 39-type editorial taxonomy from `cathrynlavery/diagram-design` is mapped to these 5 Mermaid types — start with the table above before inventing a new form.
+Full 52-ordinal editorial taxonomy from `cathrynlavery/diagram-design` v2.6.32 is mapped to these 5 Mermaid types in `references/supported-cases.md` (mapped or explicitly out of scope) — start with the table above before inventing a new form.
 
 GitHub-compatible Mermaid style: use `flowchart TB` or `flowchart LR` (never legacy `graph`), add `classDef` tokens from `references/style-guide.md`, and use `linkStyle`/`style` sparingly for the focal path.
 
