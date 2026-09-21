@@ -28,3 +28,13 @@ describe('perf-audit feedback P3', () => {
     expect(toolbox).toContain('|| true')
   })
 })
+
+describe('perf-audit feedback P4', () => {
+  it('pins the audit-data.json sidecar schema', () => {
+    const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+    const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
+    expect(template).toContain('audit-data.json')
+    expect(template).toContain('distinctShapes')
+    expect(template).toContain('"uri"')
+  })
+})

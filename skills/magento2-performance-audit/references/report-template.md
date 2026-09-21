@@ -4,6 +4,12 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 
 > **Scope gate:** every report starts with a `Scope: quick` or `Scope: deep` header (see Quick vs Deep in `references/per-page-type-audit.md`: quick 3 pages call-stack false threshold 1 batch govard sh + `maestro_perf_log_stats` streaming trap single; deep 7 pages call-stack true threshold 0 two-pass + Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease `artifacts/profiler/profile.csv` SHA). Workflow step 10 is not done until every checkbox below is either checked with evidence or `Skipped: <reason>` — the Skipped Matrix at the end of the template enforces this, no silent omission.
 
+> **Machine-readable sidecar:** every audit writes `audit-data.json` next to `report.md`/`report.html` with this fixed schema — `report.md`/`report.html` render from it, never the other way around (no regex-scraping rendered markdown to recover data):
+> `{scope, generatedAt, pages[{label, url, uri, totalQueries, distinctShapes, shapes[{sql, count}]}]}` (`url` = absolute, `uri` = path + query). Minimal example:
+> ```json
+> {"scope":"deep","generatedAt":"2026-09-21T00:00:00Z","pages":[{"label":"home","url":"https://store.test/","uri":"/","totalQueries":363,"distinctShapes":42,"shapes":[{"sql":"SELECT ... FROM catalog_product_entity WHERE entity_id IN (...)","count":42},{"sql":"SELECT ... FROM cms_block WHERE block_id=?","count":1}]}]}
+> ```
+
 > **If the environment supports publishing a rendered page (e.g. Claude Code's `Artifact` tool), publish the report that way instead of — or alongside — raw markdown.** Severity reads as a color-coded chip/pill at a glance instead of a flat checklist, and a published link is easier to share with a team than pasted text. This is optional and environment-dependent (not available in Codex CLI/OpenCode/Copilot) — the markdown template below is the portable baseline every environment can produce, and if you do publish a rendered page, still include everything the template covers (URLs audited, all findings, severities) rather than a lighter summary.
 >
 > **A PDF copy can be produced from that same rendered HTML** — either the person viewing a published artifact link uses the browser's own Print → Save as PDF, or, from the CLI, headless Chrome renders it identically since the page is self-contained (inline CSS, no external fonts/CDN calls to fail mid-render):
