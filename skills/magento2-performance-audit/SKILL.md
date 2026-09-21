@@ -29,7 +29,7 @@ As of Govard v1.64.0 no `performance` audit check exists:
 implemented". Govard v1.64.0 does add a native `profiler` check
 (`--checks lint,profiler --url <url>`) that machine-captures the stock profiler CSV for one
 URL — a quick complement to this skill's manual per-page audit, not a replacement: it ships
-no query log, no cross-page matrix, and no threshold analysis. The profiler requires a project target (not standalone), an absolute http(s) URL (the request carries `Accept: text/html` so stock Magento enables the CSV), and is guarded by a per-project `diagnostics` lease; the CSV lands as `artifacts/profiler/profile.csv` with its SHA in `audit-result.json` — open it as spreadsheet to read per-timer costs. Manual per-page captures (7 pages) cost ~2.5-3 min on reference project (50k queries/page with call-stack, 16-26s each) — keep all 7, run with 300s timeout or background polling and trap restore, not by sampling fewer categories (that hides per-item N+1s). Keep running this checklist
+no query log, no cross-page matrix, and no threshold analysis. The profiler requires a project target (not standalone), an absolute http(s) URL (the request carries `Accept: text/html` so stock Magento enables the CSV), and is guarded by a per-project `diagnostics` lease; the CSV lands as `artifacts/profiler/profile.csv` with its SHA in `audit-result.json` — open it as spreadsheet to read per-timer costs. Manual per-page captures (7 pages) cost ~2.5-3 min **on their own** (50k queries/page with call-stack, 16-26s each) — the full deep audit around them takes far longer, ~22m observed, see the observed floor above. Keep all 7, run with 300s timeout or background polling and trap restore, not by sampling fewer categories (that hides per-item N+1s). Keep running this checklist
 yourself and treat `govard audit run --checks lint` as the shared lint gate. Never present a
 lint-only pass as a performance verdict.
 
@@ -81,7 +81,7 @@ Nine categories, each with full commands/thresholds/edge-cases in its own refere
 
 This skill accepts a `scope` param: `quick` (PR check, cap 5–10m) or `deep` (release audit, 20–30m). The value `quick.*deep` on one line is intentional for tooling checks — keep the param name `scope` with those two literal values. Default to `deep` when the caller does not specify; callers that need a fast PR signal pass `scope=quick`.
 
-Observed floor (reference large-project audit, verified 2026-09-21, deep scope): ~22m / 144 tool calls / ~332k tokens — use for the foreground/background + budget decision, not a commitment.
+Observed floor (reference large-project audit, verified 2026-09-21, deep scope): ~22m / 144 tool calls / ~332k tokens for the **whole audit** — setup, 7 captures, both passes, analysis, and report writing. Captures alone are only ~2.5–3 min of that (see `references/per-page-type-audit.md`); the rest is reading, cross-page analysis and the report. Use the total for the foreground/background + budget decision; it is an observation, not a commitment.
 
 > **Report header (mandatory):** every report starts with `Scope: quick` or `Scope: deep` on its first line (see `references/report-template.md`). Quick uses `Scope: quick — 3 pages (1 home + 1 category + 1 product)`, Deep uses `Scope: deep — 7 pages (1 home + 3 category small/medium/large + 3 product)`. Do not start a report without that line — it is how a reader tells PR vs release coverage at a glance.
 
@@ -98,7 +98,7 @@ Key verbatim mapping for quick 3 pages small/medium/large call-stack false thres
 
 > **Prefer a native tool when the runtime provides one.** If the runtime provides a native query-log stats tool, prefer it over hand-grep of 16–50k lines; otherwise use the recipes below. Never attempt a tool to discover its absence — check the session's tool list first.
 
-> **Batch govard sh + trap single:** collapse multi-step container setup (`mkdir .performance-audit.lock`, `dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup) into one `govard sh -c "..."` round-trip where sequencing allows; captures themselves stay sequential under the same lock. Always install a single `trap 'govard sh -c "bin/magento cache:enable ... && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && rm -rf var/debug/.performance-audit.lock"' EXIT` — one trap for the entire audit, not per page — so a timeout restores caches/log/lock.
+> **Batch govard sh + trap single:** collapse multi-step container setup (`mkdir .performance-audit.lock`, `dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup) into one `govard sh -c '...'` round-trip where sequencing allows — single-quoted outer, `;`-sequenced (never `&&` around `grep`), see `govard-toolbox` § *govard sh -c quoting*; captures themselves stay sequential under the same lock. Always install a single `trap 'govard sh -c '\''bin/magento cache:enable; bin/magento cache:flush; bin/magento dev:profiler:disable; bin/magento dev:query-log:disable; rm -rf var/debug/.performance-audit.lock'\''' EXIT` — one trap for the entire audit, not per page — so a timeout restores caches/log/lock.
 
 ## Workflow
 

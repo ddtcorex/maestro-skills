@@ -61,13 +61,13 @@ Every diagram has two audiences. The skill MUST decide on `audience` before writ
 | Element | Team / Internal (`audience: team|internal|engineering|review` or prompt has "cho team / keep source / để team xem") | Client / External (`audience: client|pitch|deck|external` or prompt has "cho khách / clean deck / bản đẹp cho khách") |
 |---|---|---|
 | **Rendered diagram** (inline SVG, self-contained, no JS) | Yes — always | Yes — always |
-| **Mermaid source** ```mermaid | Yes — inside `<details><summary>Mermaid source</summary><pre class="mermaid">…</pre></details>` collapsed by default (so `mermaid_verify` can re-check, GitHub diff preserved) | **No** — remove `<pre>` and `<details>` entirely |
+| **Mermaid source** ```mermaid | Yes — inside `<details><summary>Mermaid source</summary><pre class="mermaid">…</pre></details>` collapsed by default (so the verifier can re-check, GitHub diff preserved) | **No** — remove `<pre>` and `<details>` entirely |
 | **Editorial tokens card** (paper/ink/accent swatches, hex) | Yes — keep the "Editorial tokens" card (so team knows palette to maintain) | **No** — remove the whole card (client only needs the diagram, not the design system) |
-| **Technical footer** (file path, `verify {"ok":true}`, `drift missingInCode 0`, generation note) | Yes — keep the "About this export" card with `Source: docs/...`, verify/drift line, `mermaid_verify`/`mermaid_drift` mention | **No** — remove or reduce to 1 line: `Generated via diagram-studio — 2026-08-27` (no file paths, no verify/drift) |
+| **Technical footer** (file path, `verify {"ok":true}`, `drift missingInCode 0`, generation note) | Yes — keep the "About this export" card with `Source: docs/...`, verify/drift line, verifier/drift tool mention | **No** — remove or reduce to 1 line: `Generated via diagram-studio — 2026-08-27` (no file paths, no verify/drift) |
 | **Styling** | Full tokens `paper/ink/accent/muted/link` as in `references/style-guide.md` | Same tokens (visual stays identical) — only the meta cards differ |
 
 Rules for other locations (not audience-driven):
-- `docs/architecture.md` and `docs/specs/*-design.md` — **always show source** as ```mermaid block (GitHub renders it, diffable, single source of truth, `mermaid_verify` checks it) — audience rule does not apply here.
+- `docs/architecture.md` and `docs/specs/*-design.md` — **always show source** as ```mermaid block (GitHub renders it, diffable, single source of truth, verification checks it) — audience rule does not apply here.
 - `docs/diagrams/*.pdf` deck — **always client rules** (hide source, hide tokens card, hide technical footer, use PNG only) — PDF is for distribution.
 
 When `audience` is ambiguous, **default to Team** (show everything collapsed) and add a 1-line note: "Hiding source/tokens for client — say 'clean for client' to hide."
@@ -84,13 +84,13 @@ This skill is **case-complete** — 5 diagram types × 2 audiences × 3 outputs 
 | 4 | `erDiagram` | Entities + fields | Team/Client | `cheatsheet.md#er` |
 | 5 | `stateDiagram` | States + guards | Team/Client | `cheatsheet.md#state` |
 
-All 5 share tokens `paper/ink/accent/muted/link` (no shadow, rx:6, accent 1-2). Verification: `mermaid_verify` 5/5 PASS, `mermaid_drift` missingInCode 0, `strict` warns on `shadow:true`. Details and live case studies in `references/supported-cases.md`.
+All 5 share tokens `paper/ink/accent/muted/link` (no shadow, rx:6, accent 1-2). Verification: parse 5/5 PASS, drift missingInCode 0, `strict` warns on `shadow:true`. Details and live case studies in `references/supported-cases.md`.
 
 ## Verify & Drift
 
-Always call `mermaid_verify` before commit — it runs `mermaid.parse()` + optional `mermaid-cli` validate and returns `{ok, errors, warnings}`. Never commit a diagram that fails parse. Anti-patterns (e.g. `shadow`, `graph` legacy) are reported as warnings in strict mode.
+Always verify before commit — a diagram that fails parse must never ship. Where the runtime provides a native Mermaid verification tool, call it: it runs `mermaid.parse()` + optional `mermaid-cli` validate and returns `{ok, errors, warnings}`. Otherwise use the CLI fallback below. Anti-patterns (e.g. `shadow`, `graph` legacy) are reported as warnings in strict mode.
 
-Run drift check before PR: `mermaid_drift --diagram docs/architecture.md --roots packages/*,govard/internal/*,maestro-skills/skills` to flag `missingInCode / staleEdges / missingInDiagram` against the codebase (inspired by `diagram-drift`). Fix drift by patching the doc or the code reference.
+Before a PR, run a drift check — a native drift tool where provided, else the CLI fallback — against the codebase to flag `missingInCode / staleEdges / missingInDiagram` (inspired by `diagram-drift`). Fix drift by patching the doc or the code reference.
 
 CLI fallback when the plugin is not installed: `node maestro-skills/skills/diagram-studio/scripts/verify-mermaid.mjs docs/architecture.md` or `node scripts/verify-mermaid.mjs <file|->`.
 

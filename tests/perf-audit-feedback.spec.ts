@@ -8,9 +8,9 @@ function skill() { return readFileSync(SKILL, 'utf-8') }
 describe('perf-audit feedback P1', () => {
   it('states the native-tool preference as a capability conditional', () => {
     expect(skill()).toContain('If the runtime provides a native query-log stats tool')
+    // The tool name must not come back: the capability phrasing is the contract.
     expect(skill()).not.toContain('maestro_perf_log_stats')
   })
-  // not.toContain added in Task 2 once this file was scrubbed.
 })
 
 describe('perf-audit feedback P2', () => {
@@ -76,5 +76,41 @@ describe('perf-audit feedback P6', () => {
     expect(template).toContain('path + query')
     expect(theme).toContain('overflow-wrap:anywhere')
     expect(theme).toContain('class="url"')
+  })
+})
+
+describe('review fix pass', () => {
+  const read = (rel: string) => readFileSync(join(__dirname, '..', 'skills', rel), 'utf-8')
+
+  it('labels the 22m floor as whole-audit time, distinct from capture time', () => {
+    // The reviewer caught "~22m observed floor" sitting next to a "20–30m" deep cap
+    // while the reference file said captures cost ~2.5-3 min. Both numbers are real
+    // but measure different scopes; the text must say so.
+    expect(skill()).toContain('for the **whole audit**')
+    expect(skill()).toContain('Captures alone are only ~2.5–3 min')
+    expect(skill()).toContain('~2.5-3 min **on their own**')
+    expect(read('magento2-performance-audit/references/per-page-type-audit.md')).toContain('**for the captures only**')
+  })
+
+  it('keeps diagram-studio tool-neutral for verify and drift', () => {
+    const ds = read('diagram-studio/SKILL.md')
+    expect(ds).not.toContain('mermaid_verify')
+    expect(ds).not.toContain('mermaid_drift')
+    // The capability phrasing plus a working fallback must remain.
+    expect(ds).toMatch(/native Mermaid verification tool/)
+    expect(ds).toContain('verify-mermaid.mjs')
+  })
+
+  it('quotes govard sh -c correctly in the perf-audit trap', () => {
+    // The new quoting lesson forbids nested double quotes; this skill's own trap
+    // contradicted it.
+    expect(skill()).not.toMatch(/govard sh -c "[^"]*"/)
+    expect(skill()).toContain("govard sh -c '")
+  })
+
+  it('leaves no dangling DSH tool map pointer in README', () => {
+    const readme = readFileSync(join(__dirname, '..', 'README.md'), 'utf-8')
+    // CHANGELOG legitimately keeps history; README must describe current state.
+    expect(readme).not.toContain('DSH tool map')
   })
 })

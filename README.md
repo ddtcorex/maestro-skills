@@ -45,7 +45,7 @@ maestro-skills/
     │   ├── requesting/receiving-code-review/
     │   ├── using-git-worktrees/ + finishing-a-development-branch/
     │   ├── writing-skills/             # How to author new skills
-    │   └── using-superpowers/          # Skill-system introduction (+ DSH tool map)
+    │   └── using-superpowers/          # Skill-system introduction
     │
     ├── 📦 CORE STANDARDS & ARCHITECTURES
     │   └── magento2-dev-core/           # Magento 2 core guidelines (DI, Repositories, Security)
