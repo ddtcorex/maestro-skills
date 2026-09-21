@@ -10,3 +10,13 @@ describe('perf-audit feedback P1', () => {
     expect(skill()).toContain('deferred tools list')
   })
 })
+
+describe('perf-audit feedback P2', () => {
+  it('states realistic quick/deep ranges with the observed floor', () => {
+    const dir = join(__dirname, '..', 'skills', 'magento2-performance-audit')
+    const perPage = readFileSync(join(dir, 'references', 'per-page-type-audit.md'), 'utf-8')
+    expect(skill()).toContain('20–30m')
+    expect(skill()).toContain('144 tool calls')
+    expect(perPage).toContain('20–30 min')
+  })
+})

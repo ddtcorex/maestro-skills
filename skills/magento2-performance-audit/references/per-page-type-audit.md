@@ -10,7 +10,7 @@ A single-page spot check isn't representative — different page types have very
 
 ## Quick vs Deep — pages, instrumentation, and transport
 
-This reference supports both **quick** (3–5 min PR check) and **deep** (8–12 min release audit) modes. Pick the mode before starting and keep every parameter in the same row — do not mix quick pages with deep call-stack settings.
+This reference supports both **quick** (5–10 min PR check) and **deep** (20–30 min release audit) modes. Pick the mode before starting and keep every parameter in the same row — do not mix quick pages with deep call-stack settings.
 
 | Mode | Pages | Query-log call-stack | Query-time threshold | govard sh transport | Stats | Restore trap | Govard-native profiler lease |
 |------|-------|----------------------|----------------------|---------------------|-------|--------------|------------------------------|
