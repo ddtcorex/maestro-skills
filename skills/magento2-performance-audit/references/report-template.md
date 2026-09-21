@@ -23,6 +23,8 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 ```markdown
 # Performance Audit Report
 
+Audience: dev — use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (neutral defaults, inject org branding at render time — never hard-code a client name in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`.
+
 Scope: quick — 3 pages (quick PR, ~3–5m), call-stack false, threshold 1, batch govard sh, `maestro_perf_log_stats` streaming, trap single
 <!-- For a release audit use: Scope: deep — 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->
 <!-- The Scope line above is mandatory — every report must start with either `Scope: quick` or `Scope: deep` so a reader can tell PR vs release coverage at a glance. Keep the rest of the template unchanged; do not silently mix quick pages with deep thresholds. -->

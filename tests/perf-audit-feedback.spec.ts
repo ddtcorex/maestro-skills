@@ -38,3 +38,14 @@ describe('perf-audit feedback P4', () => {
     expect(template).toContain('"uri"')
   })
 })
+
+describe('perf-audit feedback P5', () => {
+  it('adds a generic client-facing variant without private branding', () => {
+    const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+    const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
+    const theme = readFileSync(join(base, 'report-theme.md'), 'utf-8')
+    expect(template).toContain('audience: dev | client')
+    expect(template).toContain('{{brand_logo}}')
+    expect(theme).toContain('brand-fixed surfaces')
+  })
+})
