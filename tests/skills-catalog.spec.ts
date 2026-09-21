@@ -81,4 +81,14 @@ describe('skills catalog', () => {
     expect(database).not.toContain('govard db query "SET GLOBAL slow_query_log')
     expect(perPage).toMatch(/test .*\$lock\/owner.*audit_token.*bin\/magento cache:enable/)
   })
+
+  it('keeps public skill content runtime-neutral', async () => {
+    const entries = await readdir(SKILLS_DIR)
+    const FORBIDDEN = /maestro_[a-z_]+|govard_audit_lint|\bDSH\b|DeepSeek Harness/
+    for (const entry of entries) {
+      const raw = await readFile(join(SKILLS_DIR, entry, 'SKILL.md'), 'utf-8')
+      const body = raw.replace(/^---\n[\s\S]*?\n---\n/, '')
+      expect(body, entry).not.toMatch(FORBIDDEN)
+    }
+  })
 })

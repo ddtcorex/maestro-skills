@@ -6,9 +6,10 @@ const SKILL = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'SKI
 function skill() { return readFileSync(SKILL, 'utf-8') }
 
 describe('perf-audit feedback P1', () => {
-  it('defines On DSH via the deferred tools list', () => {
-    expect(skill()).toContain('deferred tools list')
+  it('states the native-tool preference as a capability conditional', () => {
+    expect(skill()).toContain('If the runtime provides a native query-log stats tool')
   })
+  // Task 2 adds: expect(skill()).not.toContain('maestro_perf_log_stats') — once this file is scrubbed.
 })
 
 describe('perf-audit feedback P2', () => {
