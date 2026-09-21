@@ -40,6 +40,8 @@ Scope: deep — use for release: 7 pages (1 home + 3 category small/medium/large
 - Category (small/medium/large): <3 actual URLs with their product counts> (note why each is representative — spanning the catalog's real size range, not 3 edge cases)
 - Product ×3: <3 actual URLs> (note if any candidate 301-redirected and which URL actually resolved 200)
 
+URL form by audience — never truncate with `…` in either: dev (`audience: dev`) shows the full absolute URL (scheme + host + path + query); client (`audience: client`) shows the full URI (path + query, no scheme/host required) — enough to identify the page without leaking hostnames. No bare `[link](…)` that hides the target. The same rule applies to Per-Page Detail summaries and `audit-data.json` (`url` + `uri` keys).
+
 Always state the exact URLs tested, not just "homepage/category/product" — without them the report isn't reproducible or independently verifiable later. Testing 3 samples per type (not 1) is what lets a finding be reported as "confirmed across all samples of this type" rather than "seen on the one page tested."
 
 ## Infrastructure

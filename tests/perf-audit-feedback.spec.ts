@@ -49,3 +49,14 @@ describe('perf-audit feedback P5', () => {
     expect(theme).toContain('brand-fixed surfaces')
   })
 })
+
+describe('perf-audit feedback P6', () => {
+  it('requires full URL for dev and full URI for client', () => {
+    const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+    const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
+    const theme = readFileSync(join(base, 'report-theme.md'), 'utf-8')
+    expect(template).toContain('never truncate')
+    expect(template).toContain('path + query')
+    expect(theme).toContain('overflow-wrap:anywhere')
+  })
+})

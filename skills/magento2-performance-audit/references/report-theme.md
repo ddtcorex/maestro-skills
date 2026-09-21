@@ -30,6 +30,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
 th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
 th{background:#f8fafc;font-weight:600;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted)}
 td code, li code{background:#f1f5f9;padding:1px 6px;border-radius:6px;font-size:12px}
+.url,td.url{overflow-wrap:anywhere;word-break:break-all}
 .check{margin:6px 0;display:flex;gap:8px;align-items:flex-start;font-size:13px}
 .check .icon{width:18px;height:18px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
 .icon-ok{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
