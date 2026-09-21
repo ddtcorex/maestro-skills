@@ -94,6 +94,8 @@ Key verbatim mapping for quick 3 pages small/medium/large call-stack false thres
 
 > On DSH: call maestro_perf_log_stats / Otherwise: grep — DSH prefers tools (skills vs plugins separate).
 
+> **On DSH = `maestro_perf_log_stats` present in the session's deferred tools list** (`govard_audit_lint` is a secondary signal for the lint split only). Check the list at step 0 before any capture: present → On DSH branch, absent → Otherwise branch. Never attempt the tool to discover its absence.
+
 > **Batch govard sh + trap single:** collapse multi-step container setup (`mkdir .performance-audit.lock`, `dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup) into one `govard sh -c "..."` round-trip where sequencing allows; captures themselves stay sequential under the same lock. Always install a single `trap 'govard sh -c "bin/magento cache:enable ... && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && rm -rf var/debug/.performance-audit.lock"' EXIT` — one trap for the entire audit, not per page — so a timeout restores caches/log/lock.
 
 ## Workflow
