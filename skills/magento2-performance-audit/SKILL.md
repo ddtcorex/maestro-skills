@@ -81,7 +81,7 @@ Nine categories, each with full commands/thresholds/edge-cases in its own refere
 
 This skill accepts a `scope` param: `quick` (PR check, cap 5–10m) or `deep` (release audit, 20–30m). The value `quick.*deep` on one line is intentional for tooling checks — keep the param name `scope` with those two literal values. Default to `deep` when the caller does not specify; callers that need a fast PR signal pass `scope=quick`.
 
-Observed floor (reference large-project audit): ~22m / 144 tool calls / ~332k tokens — use for the foreground/background + budget decision, not a commitment.
+Observed floor (reference large-project audit, verified 2026-09-21, deep scope): ~22m / 144 tool calls / ~332k tokens — use for the foreground/background + budget decision, not a commitment.
 
 > **Report header (mandatory):** every report starts with `Scope: quick` or `Scope: deep` on its first line (see `references/report-template.md`). Quick uses `Scope: quick — 3 pages (1 home + 1 category + 1 product)`, Deep uses `Scope: deep — 7 pages (1 home + 3 category small/medium/large + 3 product)`. Do not start a report without that line — it is how a reader tells PR vs release coverage at a glance.
 

@@ -24,6 +24,18 @@ describe('perf-audit feedback P2', () => {
     expect(template).toContain('5–10m')
     expect(template).not.toContain('3–5m')
   })
+
+  it('stamps the observed floor so the number cannot rot silently', () => {
+    // House rule: a prose table of environment facts must carry a verified-on date.
+    expect(skill()).toMatch(/Observed floor \(reference large-project audit, verified \d{4}-\d{2}-\d{2}/)
+  })
+
+  it('labels the Per-Page Detail URL example for both audiences', () => {
+    const template = readFileSync(join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references', 'report-template.md'), 'utf-8')
+    // The example must not show a bare absolute URL: dev gets scheme+host, client gets the URI.
+    expect(template).toContain('dev: `https://example.test/')
+    expect(template).toContain('client: `/')
+  })
 })
 
 describe('perf-audit feedback P3', () => {

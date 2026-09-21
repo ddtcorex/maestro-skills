@@ -162,7 +162,7 @@ Shapes table above: an empty table with no comment reads as "not checked."
 | 18 | `SELECT ... FROM catalog_category_product_index WHERE ...` |
 
 </details>
-<details><summary>category small — 221 queries, 31 shapes — `https://example.test/eveil/livres/livre-sonore.html`</summary>
+<details><summary>category small — 221 queries, 31 shapes — dev: `https://example.test/eveil/livres/livre-sonore.html` / client: `/eveil/livres/livre-sonore.html`</summary>
 
 | Count | SQL (normalized) |
 |-------|------------------|

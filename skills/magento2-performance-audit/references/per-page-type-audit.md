@@ -89,7 +89,7 @@ done
 # quick must finish host discovery in ≤15s (3 URLs × 5s), deep in ≤30s (6 URLs × 5s); abort early on quota.
 
 # Fallback — container curl (same 5s budget, same sequential quota):
-govard sh -c 'for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN ("category","product") LIMIT 20" | tail -n +2); do curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} %{redirect_url}\n" "https://store.test/$path"; done'
+govard sh -c 'for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN (\"category\",\"product\") LIMIT 20" | tail -n +2); do curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} %{redirect_url}\n" "https://store.test/$path"; done'
 
 # Product redirect guard — follow redirects manually first, don't blindly -L into production:
 curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} -> %{redirect_url}\n" https://store.test/<product-url>.html
