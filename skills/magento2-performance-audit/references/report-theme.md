@@ -70,6 +70,6 @@ ul{margin:8px 0;padding-left:18px}
 
 - Copy `report.html.template` and replace `{{title}}`, `{{date}}`, `{{meta}}`, `{{kpi}}`, `{{urls}}`, `{{sections}}`, `{{host}}`, `{{session}}` from the same data that populates `report.md`.
 - Brand slots `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}` default to the neutral theme below; an org theme overrides only these slots.
-- Brand-fixed surfaces (header/footer brand background) never invert with dark/light theme — only data tokens do. A brand color used as a header/footer background stays fixed in both modes; inverting it (light header in dark mode) reads as a bug, not theming.
+- Theme rule: brand-fixed surfaces (header/footer brand background) never invert with dark/light theme — only data tokens do. A brand color used as a header/footer background stays fixed in both modes; inverting it (light header in dark mode) reads as a bug, not theming.
 - Keep `Per-Page Query Detail` for deep as 7 `<details><summary>home — 363 queries, 42 shapes</summary><table>…</table></details>` blocks (see `report-template.md`); quick may use `Skipped: quick — 3 pages only, Per-Page Detail deferred to deep`.
 - PDF via `google-chrome --headless --no-pdf-header-footer --print-to-pdf="report.pdf" "file://$(pwd)/report.html"` — verify with `pdftotext`.
