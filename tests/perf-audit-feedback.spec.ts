@@ -20,3 +20,11 @@ describe('perf-audit feedback P2', () => {
     expect(perPage).toContain('20–30 min')
   })
 })
+
+describe('perf-audit feedback P3', () => {
+  it('teaches sh -c quoting once in govard-toolbox', () => {
+    const toolbox = readFileSync(join(__dirname, '..', 'skills', 'govard-toolbox', 'SKILL.md'), 'utf-8')
+    expect(toolbox).toContain('never join `grep` with `&&`')
+    expect(toolbox).toContain('|| true')
+  })
+})

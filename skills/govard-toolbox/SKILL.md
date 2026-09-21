@@ -348,6 +348,19 @@ On DSH: call `govard_audit_lint {worktreePath?, scope?: "diff"|"project", base?:
 
 > **Toolchain & image — verify after build:** after `make build` (which embeds `ContextDigest` SHA256 of `docker/audit/Dockerfile+bin+toolchains+tests`), run `govard audit toolchain build` then `govard audit toolchain status` must show `Present: yes` and same `Context digest`. Runner is `bin/glint` (`/usr/local/bin/glint`). Since `v1.67.0` the toolchain natively bundles `WPCS 3.4.1` + `Symfony CS 3.16.0` via `composer global config allow-plugins` then `installed_paths` fallback, and `RestrictedCodeSniff.php` is patched `file_exists ? include : []` (commit `2011f24`) because `magento-coding-standard 40` (used on php 8.1+) may ship without `_files/restricted_classes.php` per-toolchain. Quick check: `docker run --rm govard-local/glint:… /opt/govard/toolchains/php-8.3/vendor/bin/phpcs -i` must list `WordPress, Symfony, Magento2`. Wrong `ENTRYPOINT` on `docker commit` gives `sh: Illegal option --` — always `commit --change='ENTRYPOINT ["/usr/local/bin/glint"]'`. Lock `audit lock ... already held (waited 30s)` → `rm -f ~/.govard/audit/<projectId>/lock` + `docker rm -f govard-audit-*` if holder crashed (since `v1.68.0` stale lock auto-removed if mtime>10m or holder PID dead). Global `govard 1.65.0 != bin 1.67.0` → manual `sudo cp govard/bin/govard /usr/local/bin/govard` (approval prompts disabled, TTY required).
 
+## govard sh -c quoting
+
+`govard sh -c` takes one shell string that is parsed twice — once by the host shell, once inside the container. Quote for the inner parse first: wrap the whole command in host-side single quotes and never nest double quotes inside double quotes. When a value itself needs quoting, close the outer quote, add an escaped quote, and reopen (`'...'\''...'`) or split the work into two sequential `govard sh` calls instead of one clever one.
+
+Join steps with `;`, and never join `grep` with `&&`: a grep that matches nothing exits 1, which fails the whole chain and swallows every earlier output silently — the run looks empty rather than wrong. Sequence independent steps with `;` and guard match-dependent steps with `|| true` so an empty match reads as empty, not as failure. The same rule covers any probe used as a condition (`cron_schedule` counts, lock-owner reads): read first, branch on the captured value in the next command.
+
+For file-scoped searches the container grep is BusyBox (no `--include`): `find app/code -name '*.php' -exec grep -Hn <pattern> {} +` is the supported form — see the recipes linked from `magento2-performance-audit`.
+
+```bash
+# safe shape: single-quoted outer, ;-sequenced, match guarded
+govard sh -c 'bin/magento cache:status; grep -c "## QUERY" var/debug/db.log || true'
+```
+
 ## Detailed References
 
 See bundled documents:
