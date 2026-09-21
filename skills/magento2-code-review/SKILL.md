@@ -48,9 +48,9 @@ skills expected to run before a release.
 | Full path | "review this module/project" | module/theme/`app/code` path, as today |
 | Explicit file list | caller already knows which files | passed straight through |
 | Local git diff | "review this PR", branch already checked out | `git diff` against a base ref |
-| Remote fetch | "review MR !123 before I check it out" | On DSH: `gitlab_get_mr_diff` (+ `gitlab_list_own_review_threads`, `gitlab_post_inline_comment`) in one call. Elsewhere: GitHub MCP (`pull_request_read`, preferred for GitHub) / `glab mr diff` / `gh pr diff` — **text-pattern checks only**, see below |
+| Remote fetch | "review MR !123 before I check it out" | Native MR tool where provided: diff + own review threads + inline comments in one call. Elsewhere: GitHub MCP (`pull_request_read`, preferred for GitHub) / `glab mr diff` / `gh pr diff` — **text-pattern checks only**, see below |
 
-> **On DSH:** call `maestro_review_scope_split {diffStats:{files,addedLinesPerFile}, mode}` → {split:{quick,deep},reason,estimatedSavingsTokens}. Run quick checks only on quick files, full deep only on deep; inject reason into prompt.
+> **Native review scope split when provided:** call it with `{diffStats:{files,addedLinesPerFile}, mode}` → {split:{quick,deep},reason,estimatedSavingsTokens}. Run quick checks only on quick files, full deep only on deep; inject reason into prompt.
 > **Otherwise:** apply same extension/path table by hand and note split in review header.
 
 Full mechanics, exact commands, and the remote-fetch limitation:

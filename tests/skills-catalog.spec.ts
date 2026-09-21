@@ -81,4 +81,40 @@ describe('skills catalog', () => {
     expect(database).not.toContain('govard db query "SET GLOBAL slow_query_log')
     expect(perPage).toMatch(/test .*\$lock\/owner.*audit_token.*bin\/magento cache:enable/)
   })
+
+  it('keeps public skill content runtime-neutral', async () => {
+    const entries = await readdir(SKILLS_DIR)
+    // Native-tool proper nouns and harness names. Shapes are deliberately broad
+    // so a NEW skill cannot reintroduce one and stay green:
+    //  - `maestro` + underscore OR a bare CamelCase-free `maestroX` name
+    //  - the govard tool family (govard_audit_lint, govard_deploy_plan/check,
+    //    govard_env_up/down, govard_shell) while NOT matching legit env vars
+    //    like `GOVARD_FRONTEND_SYNC_TARGET` or the `govard-toolbox` skill
+    //  - `DSH`/`dsh` as a standalone word: the lookbehind/lookahead keep the
+    //    legitimate `dsh-maestro-diagram`, `compatibility: dsh` and
+    //    `dsh-safe-restart` references matching nothing.
+    const FORBIDDEN = new RegExp([
+      'maestro_[a-z_]+',                 // snake_case tool names
+      'maestro[A-Z][A-Za-z]*',           // CamelCase tool names
+      'govard_(?:audit_lint|deploy_(?:plan|check)|env_(?:up|down)|shell)', // govard tool family
+      'mermaid_(?:verify|drift)',        // diagram plugin tool names
+      '(?<![\\w-])dsh(?![\\w-])',        // bare DSH / dsh word
+      'DeepSeek Harness',
+      'ask_user_question', 'run_code', 'todo_write', 'subagent_fork',
+    ].join('|'), 'i')
+    for (const entry of entries) {
+      const files = [join(entry, 'SKILL.md')]
+      try {
+        for (const ref of await readdir(join(SKILLS_DIR, entry, 'references')))
+          if (ref.endsWith('.md')) files.push(join(entry, 'references', ref))
+      } catch { /* no references dir */ }
+      for (const file of files) {
+        const raw = await readFile(join(SKILLS_DIR, file), 'utf-8')
+        // Use the real parser: an ad-hoc `/^---\n[\s\S]*?\n---\n/` strip also
+        // matches an opening `---` inside the body and would hide text after it.
+        const body = parseFrontmatter(raw).body
+        expect(body, file).not.toMatch(FORBIDDEN)
+      }
+    }
+  })
 })

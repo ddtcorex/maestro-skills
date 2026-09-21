@@ -2,7 +2,13 @@
 
 Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification gate).
 
-> **Scope gate:** every report starts with a `Scope: quick` or `Scope: deep` header (see Quick vs Deep in `references/per-page-type-audit.md`: quick 3 pages call-stack false threshold 1 batch govard sh + `maestro_perf_log_stats` streaming trap single; deep 7 pages call-stack true threshold 0 two-pass + Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease `artifacts/profiler/profile.csv` SHA). Workflow step 10 is not done until every checkbox below is either checked with evidence or `Skipped: <reason>` — the Skipped Matrix at the end of the template enforces this, no silent omission.
+> **Scope gate:** every report starts with a `Scope: quick` or `Scope: deep` header (see Quick vs Deep in `references/per-page-type-audit.md`: quick 3 pages call-stack false threshold 1 batch govard sh + native stats streaming where provided, trap single; deep 7 pages call-stack true threshold 0 two-pass + Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease `artifacts/profiler/profile.csv` SHA). Workflow step 10 is not done until every checkbox below is either checked with evidence or `Skipped: <reason>` — the Skipped Matrix at the end of the template enforces this, no silent omission.
+
+> **Machine-readable sidecar:** every audit writes `audit-data.json` next to `report.md`/`report.html` with this fixed schema — `report.md`/`report.html` render from it, never the other way around (no regex-scraping rendered markdown to recover data):
+> `{scope, generatedAt, pages[{label, url, uri, totalQueries, distinctShapes, shapes[{sql, count}]}]}` (`url` = absolute, `uri` = path + query). Minimal example:
+> ```json
+> {"scope":"deep","generatedAt":"2026-09-21T00:00:00Z","pages":[{"label":"home","url":"https://store.test/","uri":"/","totalQueries":363,"distinctShapes":42,"shapes":[{"sql":"SELECT ... FROM catalog_product_entity WHERE entity_id IN (...)","count":42},{"sql":"SELECT ... FROM cms_block WHERE block_id=?","count":1}]}]}
+> ```
 
 > **If the environment supports publishing a rendered page (e.g. Claude Code's `Artifact` tool), publish the report that way instead of — or alongside — raw markdown.** Severity reads as a color-coded chip/pill at a glance instead of a flat checklist, and a published link is easier to share with a team than pasted text. This is optional and environment-dependent (not available in Codex CLI/OpenCode/Copilot) — the markdown template below is the portable baseline every environment can produce, and if you do publish a rendered page, still include everything the template covers (URLs audited, all findings, severities) rather than a lighter summary.
 >
@@ -17,13 +23,15 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 ```markdown
 # Performance Audit Report
 
-Scope: quick — 3 pages (quick PR, ~3–5m), call-stack false, threshold 1, batch govard sh, `maestro_perf_log_stats` streaming, trap single
+Audience: dev — use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (neutral defaults, inject org branding at render time — never hard-code a client name in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`.
+
+Scope: quick — 3 pages (quick PR, ~5–10m), call-stack false, threshold 1, batch govard sh, native stats streaming where provided, trap single
 <!-- For a release audit use: Scope: deep — 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->
 <!-- The Scope line above is mandatory — every report must start with either `Scope: quick` or `Scope: deep` so a reader can tell PR vs release coverage at a glance. Keep the rest of the template unchanged; do not silently mix quick pages with deep thresholds. -->
 
 ## Scope Detail
 
-Scope: quick — use for PRs: 3 pages (1 home + 1 category + 1 product), `--include-call-stack=false` `--query-time-threshold=1`, single batch `govard sh` setup, `maestro_perf_log_stats` streaming (bounded 2 MiB), Govard-native `govard audit run --checks lint,profiler --url https://example.test/<path>.html` single-URL profiler lease where needed. Every checkbox below either `checked` with evidence or `Skipped: <reason>` — no silent omission.
+Scope: quick — use for PRs: 3 pages (1 home + 1 category + 1 product), `--include-call-stack=false` `--query-time-threshold=1`, single batch `govard sh` setup, native stats streaming (bounded where provided), Govard-native `govard audit run --checks lint,profiler --url https://example.test/<path>.html` single-URL profiler lease where needed. Every checkbox below either `checked` with evidence or `Skipped: <reason>` — no silent omission.
 
 Scope: deep — use for release: 7 pages (1 home + 3 category small/medium/large + 3 product), `--include-call-stack=true` `--query-time-threshold=0`, two-pass call-stack (pass 1 false for counts, pass 2 true for 1–2 N+1 traces), same batch `govard sh` + `trap single`, same streaming, plus `EXPLAIN` on prod-sized tables (200k+ rows) and `pt-query-digest` when available. Same gate: every checkbox checked or explicitly Skipped.
 
@@ -31,6 +39,8 @@ Scope: deep — use for release: 7 pages (1 home + 3 category small/medium/large
 - Homepage: <actual URL> (usually one; list more only if the store has multiple storefront views)
 - Category (small/medium/large): <3 actual URLs with their product counts> (note why each is representative — spanning the catalog's real size range, not 3 edge cases)
 - Product ×3: <3 actual URLs> (note if any candidate 301-redirected and which URL actually resolved 200)
+
+URL form by audience — never truncate with `…` in either: dev (`audience: dev`) shows the full absolute URL (scheme + host + path + query); client (`audience: client`) shows the full URI (path + query, no scheme/host required) — enough to identify the page without leaking hostnames. No bare `[link](…)` that hides the target. The same rule applies to Per-Page Detail summaries and `audit-data.json` (`url` + `uri` keys).
 
 Always state the exact URLs tested, not just "homepage/category/product" — without them the report isn't reproducible or independently verifiable later. Testing 3 samples per type (not 1) is what lets a finding be reported as "confirmed across all samples of this type" rather than "seen on the one page tested."
 
@@ -142,7 +152,7 @@ Shapes table above: an empty table with no comment reads as "not checked."
 
 ## Per-Page Query Detail — deep mandatory gate
 
-> **Deep (`Scope: deep`) must populate this section for all 7 pages.** Each page gets one `<details>` (HTML) / collapsed block (markdown) with: page label + URL + total queries (pass1/pass2) + distinct-shape count + unfiltered table `Count | SQL normalized` (via `maestro_perf_log_stats` streaming bounded 2MiB, not hand-grep). Quick (`Scope: quick`) may use the Skipped row below, but must state `Skipped: quick — 3 pages only, Per-Page Detail deferred to deep` and remains in the Skipped Matrix. A deep report that omits this section or shows only the summary `363/221/611...` without the 7 tables fails the step 10 gate.
+> **Deep (`Scope: deep`) must populate this section for all 7 pages.** Each page gets one `<details>` (HTML) / collapsed block (markdown) with: page label + URL + total queries (pass1/pass2) + distinct-shape count + unfiltered table `Count | SQL normalized` (via native stats streaming where provided, else hand-grep). Quick (`Scope: quick`) may use the Skipped row below, but must state `Skipped: quick — 3 pages only, Per-Page Detail deferred to deep` and remains in the Skipped Matrix. A deep report that omits this section or shows only the summary `363/221/611...` without the 7 tables fails the step 10 gate.
 
 <details><summary>home — 363 queries, 42 shapes</summary>
 
@@ -152,7 +162,7 @@ Shapes table above: an empty table with no comment reads as "not checked."
 | 18 | `SELECT ... FROM catalog_category_product_index WHERE ...` |
 
 </details>
-<details><summary>category small — 221 queries, 31 shapes — `https://example.test/eveil/livres/livre-sonore.html`</summary>
+<details><summary>category small — 221 queries, 31 shapes — dev: `https://example.test/eveil/livres/livre-sonore.html` / client: `/eveil/livres/livre-sonore.html`</summary>
 
 | Count | SQL (normalized) |
 |-------|------------------|
@@ -179,7 +189,7 @@ Every checkbox in the report must be either `[x]` with evidence visible above, o
 | Cache Invalidation | No unexplained flushes / targeted tag / ban.list | [ ] | `varnishadm ban.list` / `grep -rn "clean()" app/code` → ... / Skipped: <reason> |
 | Client-Side AJAX | Baseline XHR / sections.xml / reload storms | [ ] | Network tab XHR count + `grep -rn "sections.xml"` → ... / Skipped: <reason> |
 | Indexer/Cron | Update by Schedule / cron draining | [ ] | `bin/magento indexer:status` + `cron_schedule` → ... / Skipped: <reason> |
-| Database | Query count / Repeated Shapes / Per-Page Detail / Slow Query EXPLAIN | [ ] | `maestro_perf_log_stats` streaming / `grep -c '## QUERY'` / `pt-query-digest` / `EXPLAIN` prod 200k → ... / Skipped: quick — 3 pages only, Per-Page Detail deferred to deep |
+| Database | Query count / Repeated Shapes / Per-Page Detail / Slow Query EXPLAIN | [ ] | native stats streaming / `grep -c '## QUERY'` / `pt-query-digest` / `EXPLAIN` prod 200k → ... / Skipped: quick — 3 pages only, Per-Page Detail deferred to deep |
 | Per-Page Query Detail | 7 pages unfiltered tables (deep) | [ ] | 7 × `<details>` Count|SQL tables above — see Per-Page Query Detail section / Skipped: quick — 3 pages only, Per-Page Detail deferred to deep |
 | Block/Template | Slowest Blocks/Templates (>5% or Cnt≥10) | [ ] | `artifacts/profiler/profile.csv` SHA + HTML profiler table → ... / Skipped: DB user lacks SUPER / profiler lease `is already held` / host cannot reach URL |
 | Core Web Vitals | LCP/INP/CLS | [ ] | Chrome DevTools MCP trace / Lighthouse → ... / Skipped: no Chrome MCP this session |

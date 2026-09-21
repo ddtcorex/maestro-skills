@@ -45,7 +45,7 @@ maestro-skills/
     │   ├── requesting/receiving-code-review/
     │   ├── using-git-worktrees/ + finishing-a-development-branch/
     │   ├── writing-skills/             # How to author new skills
-    │   └── using-superpowers/          # Skill-system introduction (+ DSH tool map)
+    │   └── using-superpowers/          # Skill-system introduction
     │
     ├── 📦 CORE STANDARDS & ARCHITECTURES
     │   └── magento2-dev-core/           # Magento 2 core guidelines (DI, Repositories, Security)
@@ -166,7 +166,7 @@ scripts/sync-superpowers.sh            # latest upstream HEAD
 scripts/sync-superpowers.sh v6.4.1     # a specific tag
 ```
 
-The script preserves this repo's local addition (`skills/using-superpowers/references/dsh-tools.md`) and prints a diff for review; the fork-provenance note in `using-superpowers/SKILL.md` is re-applied by hand during review. Do not edit forked skill bodies by hand — see `THIRD-PARTY-NOTICES.md`.
+The script prints a diff for review; the fork carries no content additions (its `PRESERVE` list is intentionally empty), and the fork-provenance note in `using-superpowers/SKILL.md` is re-applied by hand during review. Do not edit forked skill bodies by hand — see `THIRD-PARTY-NOTICES.md`.
 
 ## ⚡ Extension Guide: Adding New Domain Skills
 
@@ -212,4 +212,4 @@ branches only; never commit to `master` directly.
 ## Credits & Attribution
 
 - **Domain skills**: © DDTCoreX, MIT License (see `LICENSE`).
-- **Process skills**: forked from [obra/superpowers](https://github.com/obra/superpowers) v6.4.1 by Jesse Vincent / Prime Radiant, MIT License — full notice in `THIRD-PARTY-NOTICES.md`. The DSH tool mapping (`references/dsh-tools.md`) is a local addition, not upstream content.
+- **Process skills**: forked from [obra/superpowers](https://github.com/obra/superpowers) v6.4.1 by Jesse Vincent / Prime Radiant, MIT License — full notice in `THIRD-PARTY-NOTICES.md`. The fork carries no local content additions.

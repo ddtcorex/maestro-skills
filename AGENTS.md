@@ -176,12 +176,12 @@ hand-maintained** — they are a verbatim fork of obra/superpowers v6.4.1:
   truth. This is a deliberate exception to the "single source of truth"
   rule above: the fork *is* the one location for this content, and its
   authority lives upstream.
-- The only sanctioned local additions are `skills/using-superpowers/references/
-dsh-tools.md` (the DSH tool map) and the fork-provenance/un-namespaced-
-invocation notes in `using-superpowers/SKILL.md`.
-- Refresh via `scripts/sync-superpowers.sh [ref]`; it preserves `dsh-tools.md`
-  and prints a diff (the fork-provenance note in `using-superpowers/SKILL.md`
-  is re-applied by hand during review). Update the fork version in
+- The fork carries no content additions. The only sanctioned local touch is the
+  fork-provenance/un-namespaced-invocation note in `using-superpowers/SKILL.md`.
+- Refresh via `scripts/sync-superpowers.sh [ref]`; it prints a diff and the
+  `PRESERVE` list is intentionally empty (the fork-provenance note in
+  `using-superpowers/SKILL.md` is re-applied by hand during review). Update the
+  fork version in
   `THIRD-PARTY-NOTICES.md` after a sync. Attribution is an MIT license
   requirement — never drop `THIRD-PARTY-NOTICES.md`.
 - Skill **name collisions** would shadow across providers: never name a new
@@ -353,8 +353,8 @@ manual release step in the GitHub UI.
   must state that boundary instead of implying native security/performance
   gates exist.
 - **Forked superpowers skills stay verbatim.** Never edit their prose or
-  frontmatter locally (not even to add `compatibility`); local additions live
-  in separate files listed in `PRESERVE` in `scripts/sync-superpowers.sh`,
+  frontmatter locally (not even to add `compatibility`); the fork carries no
+  content additions (`PRESERVE` in `scripts/sync-superpowers.sh` is empty),
   and the catalog spec asserts forked frontmatter shape stays upstream-clean.
 - **Skill counts are duplicated across README, AGENTS.md, and manifests.**
   When adding or removing a skill, update every count and the compatibility

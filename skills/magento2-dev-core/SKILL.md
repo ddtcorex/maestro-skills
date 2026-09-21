@@ -249,7 +249,7 @@ bin/magento cache:flush
 
 ### Creating a Module
 
-> **On DSH:** call `magento_module_check {modulePath:"app/code/Vendor/Module"}` — validates registration↔module.xml, sequence, db_schema/acl/routes/events, PSR-4, Hyvä compat, returns issues[{severity,rule,file,line}] with null when absent.
+> **Native module check when provided:** call it with `{modulePath:"app/code/Vendor/Module"}` — validates registration↔module.xml, sequence, db_schema/acl/routes/events, PSR-4, Hyvä compat, returns issues[{severity,rule,file,line}] with null when absent.
 > **Otherwise:** manually verify registration.php, etc/module.xml sequence, and each etc/*.xml parses.
 
 1. Create registration file: `app/code/Vendor/Module/registration.php`

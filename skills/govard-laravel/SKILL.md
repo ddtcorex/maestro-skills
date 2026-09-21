@@ -214,7 +214,7 @@ govard deploy production --yes
 - **In artifact mode** no Laravel step stays on the target — nothing is marked *needs the application* — so the artifact must carry `vendor/` and `public/build`; `app:cache:flush` still runs on the target.
 - Sandbox: `default-mysql-client`, extensions `bcmath curl gd intl mbstring mysql sqlite3 xml zip`, services `mariadb` + `redis-server`.
 
-> **On DSH:** `govard_deploy_plan {remote:"production"}` prints this pipeline without connecting; `govard_deploy_check` runs the preflight. Running it stays in the terminal.
+> **Deploy preflight where provided:** a native deploy-plan tool prints this pipeline without connecting; a native deploy-check runs the preflight. Running it stays in the terminal. Otherwise: `govard deploy plan` / `govard deploy check`.
 
 Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> · worked config: <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-9-laravel>.
 

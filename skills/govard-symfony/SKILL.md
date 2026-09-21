@@ -167,7 +167,7 @@ govard deploy production --yes
 - **There is no maintenance window.** `db:migrate` runs against a live site; a project that needs a window anchors two `deploy.hooks` on `maintenance:enable` / `maintenance:disable`.
 - Sandbox: `default-mysql-client`, extensions `intl mysql mbstring xml curl zip`, services `mariadb` + `redis-server`.
 
-> **On DSH:** `govard_deploy_plan {remote:"production"}` prints this pipeline without connecting; `govard_deploy_check` runs the preflight. Running it stays in the terminal.
+> **Deploy preflight where provided:** a native deploy-plan tool prints this pipeline without connecting; a native deploy-check runs the preflight. Running it stays in the terminal. Otherwise: `govard deploy plan` / `govard deploy check`.
 
 Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> · worked config: <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-10-symfony>.
 

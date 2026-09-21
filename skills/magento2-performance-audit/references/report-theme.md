@@ -30,6 +30,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
 th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
 th{background:#f8fafc;font-weight:600;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted)}
 td code, li code{background:#f1f5f9;padding:1px 6px;border-radius:6px;font-size:12px}
+.url,td.url{overflow-wrap:anywhere;word-break:break-all}
 .check{margin:6px 0;display:flex;gap:8px;align-items:flex-start;font-size:13px}
 .check .icon{width:18px;height:18px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
 .icon-ok{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
@@ -69,5 +70,8 @@ ul{margin:8px 0;padding-left:18px}
 ## Usage
 
 - Copy `report.html.template` and replace `{{title}}`, `{{date}}`, `{{meta}}`, `{{kpi}}`, `{{urls}}`, `{{sections}}`, `{{host}}`, `{{session}}` from the same data that populates `report.md`.
+- Render every audited URL as `<td class="url"><code>…</code></td>` (bare `<td>` does not pick up the wrapping rule below); long URLs wrap via `.url,td.url{overflow-wrap:anywhere;word-break:break-all}` instead of overflowing.
+- Brand slots `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}` default to the neutral theme below; an org theme overrides only these slots.
+- Theme rule: brand-fixed surfaces (header/footer brand background) never invert with dark/light theme — only data tokens do. A brand color used as a header/footer background stays fixed in both modes; inverting it (light header in dark mode) reads as a bug, not theming.
 - Keep `Per-Page Query Detail` for deep as 7 `<details><summary>home — 363 queries, 42 shapes</summary><table>…</table></details>` blocks (see `report-template.md`); quick may use `Skipped: quick — 3 pages only, Per-Page Detail deferred to deep`.
 - PDF via `google-chrome --headless --no-pdf-header-footer --print-to-pdf="report.pdf" "file://$(pwd)/report.html"` — verify with `pdftotext`.

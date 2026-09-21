@@ -24,7 +24,7 @@ Messages over time.
 ```mermaid
 sequenceDiagram
   participant U as User
-  participant W as DSH Web
+  participant W as Web Host
   participant C as Cordis
   participant A as Agent
   U->>W: POST /chat
