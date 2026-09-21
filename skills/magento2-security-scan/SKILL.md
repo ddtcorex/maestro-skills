@@ -205,14 +205,14 @@ From April 2025, payment pages require:
 
 ## Quick Security Scan
 
-> **On DSH:** call `phtml_escape_scan {scope:"diff", paths:<changed phtml>}` → {findings[],scannedFiles} with confidence + M2-SEC-xxx, capped 200 (no head -20 truncation). Address high first.
+> **Native escape scan when provided:** call it with `{scope:"diff", paths:<changed phtml>}` → {findings[],scannedFiles} with confidence + M2-SEC-xxx, capped 200 (no head -20 truncation). Address high first.
 > **Otherwise:** grep -R "\$_GET|\$_POST|ObjectManager::getInstance" --include="*.phtml" (same patterns the tool uses).
 
-Run this for a rapid security assessment. **On DSH**, prefer the bounded workspace search tool
+Run this for a rapid security assessment. Where provided, prefer the runtime's bounded workspace search tool
 over shell loops — one call per pattern, no silent truncation:
 
 ```
-maestro_search_files { pattern: "execute|fetchAll|->select\\(|insertOnDuplicate", glob: "*.php", path: "app/code/Vendor/Module" }
+<search tool> { pattern: "execute|fetchAll|->select\\(|insertOnDuplicate", glob: "*.php", path: "app/code/Vendor/Module" }
 ```
 
 (Exclude ORM-layer hits — Collection/Repository/ResourceModel class files — when judging results;

@@ -106,7 +106,7 @@ Steps:
 2. Run `npx shadcn@latest add` for required primitives (Button, Card, Input, etc.).
 3. Write `tailwind.config.ts` with tokens from `references/tokens.md` (colors, fontFamily, borderRadius, boxShadow).
 4. Write `app/globals.css` CSS variables (`--background`, `--foreground`, `--primary`, `--radius`).
-5. Write `components/ui/*` primitives and `design-system/MASTER.md` via `maestro_write_file`.
+5. Write `components/ui/*` primitives and `design-system/MASTER.md` via the runtime's file-write tool.
 6. Optionally scaffold `stories/` for Storybook.
 
 ```ts
@@ -144,7 +144,7 @@ design-system/
 ```
 
 Workflow:
-1. First generation in a project writes `design-system/MASTER.md` via `maestro_write_file` after Box approval.
+1. First generation in a project writes `design-system/MASTER.md` via the runtime's file-write tool after Box approval.
 2. Per-page generation reads `MASTER.md` plus `pages/<page>.md` if it exists; page rules override master.
 3. The hierarchical retrieval prompt above governs every Generate turn. The directory is git-ignored by default unless the team commits it.
 

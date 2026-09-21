@@ -171,7 +171,7 @@ Three steps are **hybrids**: `wp` when the target has wp-cli, a `wp-load.php` PH
 - **In artifact mode** the only build step is the guarded `composer install`, so the artifact carries `vendor/` when the project has a `composer.json`; the database steps still run on the target.
 - Shared: `wp-config.php` (file), `wp-content/uploads` (dir); writable: `wp-content/{uploads,cache,upgrade,languages}`. Sandbox adds `wp-cli`, `default-mysql-client`, extensions `mysqli curl gd intl mbstring xml zip`, and `mariadb` + `redis-server`.
 
-> **On DSH:** `govard_deploy_plan {remote:"production"}` prints this pipeline without connecting; `govard_deploy_check` runs the preflight. Running it stays in the terminal.
+> **Deploy preflight where provided:** a native deploy-plan tool prints this pipeline without connecting; a native deploy-check runs the preflight. Running it stays in the terminal. Otherwise: `govard deploy plan` / `govard deploy check`.
 
 Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> · worked config: <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-11-wordpress>.
 
