@@ -86,9 +86,16 @@ describe('skills catalog', () => {
     const entries = await readdir(SKILLS_DIR)
     const FORBIDDEN = /maestro_[a-z_]+|govard_audit_lint|\bDSH\b|DeepSeek Harness/
     for (const entry of entries) {
-      const raw = await readFile(join(SKILLS_DIR, entry, 'SKILL.md'), 'utf-8')
-      const body = raw.replace(/^---\n[\s\S]*?\n---\n/, '')
-      expect(body, entry).not.toMatch(FORBIDDEN)
+      const files = [join(entry, 'SKILL.md')]
+      try {
+        for (const ref of await readdir(join(SKILLS_DIR, entry, 'references')))
+          if (ref.endsWith('.md')) files.push(join(entry, 'references', ref))
+      } catch { /* no references dir */ }
+      for (const file of files) {
+        const raw = await readFile(join(SKILLS_DIR, file), 'utf-8')
+        const body = raw.replace(/^---\n[\s\S]*?\n---\n/, '')
+        expect(body, file).not.toMatch(FORBIDDEN)
+      }
     }
   })
 })

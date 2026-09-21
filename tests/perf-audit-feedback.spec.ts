@@ -8,8 +8,9 @@ function skill() { return readFileSync(SKILL, 'utf-8') }
 describe('perf-audit feedback P1', () => {
   it('states the native-tool preference as a capability conditional', () => {
     expect(skill()).toContain('If the runtime provides a native query-log stats tool')
+    expect(skill()).not.toContain('maestro_perf_log_stats')
   })
-  // Task 2 adds: expect(skill()).not.toContain('maestro_perf_log_stats') — once this file is scrubbed.
+  // not.toContain added in Task 2 once this file was scrubbed.
 })
 
 describe('perf-audit feedback P2', () => {

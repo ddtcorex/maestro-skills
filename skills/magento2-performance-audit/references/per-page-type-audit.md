@@ -14,11 +14,11 @@ This reference supports both **quick** (5–10 min PR check) and **deep** (20–
 
 | Mode | Pages | Query-log call-stack | Query-time threshold | govard sh transport | Stats | Restore trap | Govard-native profiler lease |
 |------|-------|----------------------|----------------------|---------------------|-------|--------------|------------------------------|
-| quick | 3 pages (1 home + 1 category + 1 product) | `--include-call-stack=false` | `--query-time-threshold=1` (1s, only slow queries) | batch govard sh — setup + warmup + 3 captures in **1 cmd** where possible | `maestro_perf_log_stats` streaming (bounded 2 MiB, server-side `cat var/debug/db.log`) | trap single — one `trap '... restore ...' EXIT` for the entire session | `govard audit run --checks lint,profiler --url <absolute http(s) url>` quick single-URL lease (`artifacts/profiler/profile.csv` SHA) as complement, not replacement |
-| deep | 7 pages (1 home + 3 category small/medium/large + 3 product) | `--include-call-stack=true` | `--query-time-threshold=0` (all queries) | batch govard sh where possible, but per-page captures stay sequential under single lock | `maestro_perf_log_stats` streaming same bounded path, then two-pass re-capture for 1–2 N+1 candidates with call-stack=true | trap single — same one trap, covers both passes | same Govard-native profiler lease for all 7 pages when `--url` is provided; captures `artifacts/profiler/profile.csv` per URL with `Accept: text/html` so stock Magento enables the CSV |
+| quick | 3 pages (1 home + 1 category + 1 product) | `--include-call-stack=false` | `--query-time-threshold=1` (1s, only slow queries) | batch govard sh — setup + warmup + 3 captures in **1 cmd** where possible | native stats streaming (bounded where provided) | trap single — one `trap '... restore ...' EXIT` for the entire session | `govard audit run --checks lint,profiler --url <absolute http(s) url>` quick single-URL lease (`artifacts/profiler/profile.csv` SHA) as complement, not replacement |
+| deep | 7 pages (1 home + 3 category small/medium/large + 3 product) | `--include-call-stack=true` | `--query-time-threshold=0` (all queries) | batch govard sh where possible, but per-page captures stay sequential under single lock | native stats streaming same bounded path, then two-pass re-capture for 1–2 N+1 candidates with call-stack=true | trap single — same one trap, covers both passes | same Govard-native profiler lease for all 7 pages when `--url` is provided; captures `artifacts/profiler/profile.csv` per URL with `Accept: text/html` so stock Magento enables the CSV |
 
 Notes:
-- **On DSH:** call `maestro_perf_log_stats` (streaming, bounded) instead of hand-grep of 16–50k line `var/debug/db.log`. Otherwise: local `grep -c '## QUERY'` recipes in `references/database-query-profiling.md`.
+- **Runtime-provided stats:** if the runtime provides a native stats tool (streaming, bounded), prefer it over hand-grep of 16–50k line `var/debug/db.log`. Otherwise: local `grep -c '## QUERY'` recipes in `references/database-query-profiling.md`.
 - **Batch govard sh** means collapsing multiple container-local setup lines (`mkdir lock`, `bin/magento dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup discard) into a single `govard sh -c "..."` where sequencing allows — one round-trip instead of five. Captures themselves stay sequential (one `curl` + `cat var/debug/db.log` per page) under the same lock.
 - **Govard-native profiler lease** (`govard audit run --checks lint,profiler --url https://example.test/<path>.html --format json`) is a quick complement — machine-captured single URL into `artifacts/profiler/profile.csv` with SHA in `audit-result.json`. It ships no query log and no cross-page matrix — keep the manual per-page query-log captures above as the primary evidence.
 
@@ -77,10 +77,10 @@ govard db query "SELECT * FROM <prefix>catalog_product_website WHERE product_id=
 # 2. Host-first reachability — 5s max per URL, --connect-timeout 3, sequential, stop when quota met.
 #    Quick: stop when 1 category + 1 product reach 200 (≤15s total, 3 pages: 1 home + 1 cat + 1 product).
 #    Deep:  stop when 3 category + 3 product reach 200 (≤30s total, 7 pages: 1 home + 3 cat + 3 product).
-#    Dual-audience: On DSH host curl / Otherwise container curl (govard sh curl).
+#    Transports: host curl where reachable (primary), container curl as fallback.
 #    Do NOT blindly -L through 301/302 — check for redirects to live production domains first.
 
-# On DSH — host curl (primary):
+# Host curl where reachable (primary):
 for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN ('category','product') LIMIT 20" | tail -n +2); do
   code=$(curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code}" "https://store.test/$path")
   echo "$path -> $code"
@@ -88,7 +88,7 @@ for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHER
 done
 # quick must finish host discovery in ≤15s (3 URLs × 5s), deep in ≤30s (6 URLs × 5s); abort early on quota.
 
-# Otherwise (non-DSH) — container curl (same 5s budget, same sequential quota):
+# Fallback — container curl (same 5s budget, same sequential quota):
 govard sh -c 'for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN ("category","product") LIMIT 20" | tail -n +2); do curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} %{redirect_url}\n" "https://store.test/$path"; done'
 
 # Product redirect guard — follow redirects manually first, don't blindly -L into production:
@@ -102,7 +102,7 @@ curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} -> %{red
 
 Pick 3 categories spanning small/medium/large product counts (quick: 1 category; deep: 3 categories) — not the single largest root category, not an edge case, confirmed `is_active` only when `information_schema` confirms the column exists — and products that each resolve 200 directly (quick: 1 product; deep: 3 products) — varying product type (simple/configurable) if the catalog has both. Quick 3 pages vs deep 7 pages preserved; 7 details gate unchanged (deep: 7 `<details>` mandatory, quick: `Skipped: quick — 3 pages only`).
 
-> **Dual-audience transport:** On DSH host curl / Otherwise container curl. If the container cannot resolve `*.test` (proxy/DNS), log `Skipped: container cannot resolve *.test proxy — use host curl` and retry on the host; do not move captures into the container to work around a host routing problem.
+> **Transport:** host curl where reachable, container curl as fallback. If the container cannot resolve `*.test` (proxy/DNS), log `Skipped: container cannot resolve *.test proxy — use host curl` and retry on the host; do not move captures into the container to work around a host routing problem.
 
 ## 1. Set up the uncached measurement environment
 
@@ -182,7 +182,7 @@ If the harness kills the script mid-capture (timeout, Ctrl+C), caches and `dev:p
 trap 'govard sh -c "bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && rm -rf var/debug/.performance-audit.lock"' EXIT
 ```
 
-This single trap covers setup + all captures + both passes. Do not add a second trap inside the loop — the last trap wins and would drop the restore. For Govard-native `audit --checks profiler`, clean a stale `diagnostics` lease with `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `rm .govard/apache/custom/govard-audit-profiler-*.conf` if `is already held` appears. On DSH, prefer `maestro_perf_log_stats` streaming for post-capture analysis (bounded 2 MiB, no spreadsheet open of 50k lines).
+This single trap covers setup + all captures + both passes. Do not add a second trap inside the loop — the last trap wins and would drop the restore. For Govard-native `audit --checks profiler`, clean a stale `diagnostics` lease with `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `rm .govard/apache/custom/govard-audit-profiler-*.conf` if `is already held` appears. Where provided, prefer a native stats tool for post-capture analysis (bounded, no spreadsheet open of 50k lines).
 
 Don't leave a target environment with caches disabled and full query logging on — this is a diagnostic state, not a normal running state, and matters especially if the target is shared with other developers or is staging rather than a disposable local box.
 
