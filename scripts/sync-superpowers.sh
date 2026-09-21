@@ -8,7 +8,8 @@
 #   1. Ensures a clone of upstream exists at $SYNC_DIR (default /tmp/superpowers-sync).
 #   2. Checks out the requested ref (default: whatever the clone has).
 #   3. rsyncs upstream skills/ into this repo, DELETING removed skills, while
-#      preserving this fork's local additions (see PRESERVE below).
+#      preserving any files listed in PRESERVE below (currently none — the fork
+#      carries no local content additions).
 #   4. Prints a diff summary for manual review — always review before committing.
 #
 # The forked skill names live in FORKED; domain skills (magento2-*, govard-*)
@@ -21,8 +22,9 @@ SYNC_DIR="${SUPERPOWERS_SYNC_DIR:-/tmp/superpowers-sync}"
 REF="${1:-}"
 
 # Files this fork adds/overrides inside forked skill dirs — restored after rsync.
+# (Empty: the fork carries no content additions; only the provenance note in
+# using-superpowers/SKILL.md is re-applied by hand during review.)
 PRESERVE=(
-  "skills/using-superpowers/references/dsh-tools.md"
 )
 
 FORKED=(

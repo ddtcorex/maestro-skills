@@ -26,10 +26,9 @@ The following skills are forked verbatim from
 
 Local additions on top of the fork (not upstream content):
 
-- `skills/using-superpowers/references/dsh-tools.md` — DeepSeek Harness tool
-  mapping.
 - A short fork-provenance note and an un-namespaced invocation note in
-  `skills/using-superpowers/SKILL.md`.
+  `skills/using-superpowers/SKILL.md`. Nothing else: the fork carries no
+  content additions of its own.
 
 Upstream is licensed MIT:
 
@@ -58,7 +57,8 @@ SOFTWARE.
 ```
 
 Sync policy: refresh the forked skills with `scripts/sync-superpowers.sh`
-(pulls upstream and preserves `dsh-tools.md`; the fork-provenance note in
-`using-superpowers/SKILL.md` is re-applied by hand during review because the
-script only snapshots the files in its `PRESERVE` list). Do not hand-edit the
+(pulls upstream; its `PRESERVE` list is intentionally empty, and the
+fork-provenance note in `using-superpowers/SKILL.md` is re-applied by hand
+during review because the script only snapshots the files in its `PRESERVE`
+list). Do not hand-edit the
 forked skill bodies; upstream is their single source of truth.
