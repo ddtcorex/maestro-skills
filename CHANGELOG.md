@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.15.0] - 2026-09-22
+
+### Fixed
+
+- **A preset persona no longer interpolates `{{model}}`** — the DSH
+  `0.1.7` legacy-preset compat layer validates the persona without a model
+  in scope, so the token resolved empty and failed the whole preset mount.
+  Replaced with a literal; the `{{cwd}}` suffix is unaffected. Pinned by a
+  regression test in `preset-persona-row.spec.ts` (#79).
+
+### Changed
+
+- **Performance-audit skill feedback P1–P6** — define On DSH through the
+  deferred tools list, use observed effort ranges, teach the `govard sh -c`
+  quoting rule once in the toolbox skill, pin the `audit-data.json` sidecar
+  schema, add a generic client-facing report variant, fix the brand-fixed
+  lesson casing, require the full URL for dev and the full URI for clients,
+  state native-tool preference as a capability, and neutralize the
+  perf-audit skill content (#78).
+
 ## [2.14.0] - 2026-09-19
 
 ### Changed
