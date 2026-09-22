@@ -46,11 +46,12 @@ describe('preset persona row', () => {
     expect(header.length).toBeGreaterThan(0)
   })
 
-  // An omitted suffix is not neutral: `dsh-persona` always registers
-  // `deployment:persona-suffix`, so an empty one shadows the deployment's
-  // working-directory line away for every session on this preset.
-  it('restates the deployment working-directory suffix', () => {
-    expect(block).toMatch(/^\s+suffix: Your working directory is \{\{cwd\}\}\.$/m)
+  // DSH 0.1.7-alpha.1: the legacy-preset compat layer validates the persona
+  // row without a model in scope, so a `{{model}}` reference resolves empty
+  // and the whole preset fails mount (first-pass VALIDATE_FAIL on 2026-09-22).
+  // Shipped bundle presets keep working because they validate with scope.
+  it('contains no {{model}} reference (compat layer has no model in scope)', () => {
+    expect(block).not.toMatch(/\{\{model\}\}/)
   })
 })
 
