@@ -1,2 +1,7 @@
 allowBuilds:
   esbuild: true
+
+# DSH/cordis day-zero prereleases: pnpm's 24h age gate rejects a release
+# published hours ago (2026-09-22: dsh 0.1.7-alpha.2, cordis 4.0.4), and the
+# gate is re-checked on every pnpm command, not just install.
+minimumReleaseAge: 0
