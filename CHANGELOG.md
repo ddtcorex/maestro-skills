@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **Superpowers fork v6.4.1 → v6.4.2.** `writing-plans` now records the
+  decisions an implementer cannot make alone — exact signatures, test names
+  and assertions, the spec's values — instead of transcribing the code.
+  "No Placeholders" becomes "What a Step Contains", step granularity is "one
+  action with a checkable result" rather than "2-5 minutes", and self-review
+  gains a proportion check that compares the plan's length to the spec's.
+  Upstream deleted `writing-plans/plan-document-reviewer-prompt.md` (nothing
+  referenced it). The fork's only local addition (the fork-provenance note in
+  `using-superpowers/SKILL.md`) is preserved. Total: 32 skills (17 domain +
+  15 process).
+
 ## [2.15.0] - 2026-09-22
 
 ### Fixed

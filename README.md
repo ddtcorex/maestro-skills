@@ -3,7 +3,7 @@
 A unified skills library for AI coding agents, packaged as a universal plugin for **DeepSeek Harness (DSH)**, **Claude Code**, **Codex CLI**, **OpenCode**, and **GitHub Copilot** — two halves in one bundle:
 
 - **Domain skills (17)** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel, Symfony, WordPress, generic PHP): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs, plus `php-dev-core` and `diagram-studio`.
-- **Process skills (15)** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v6.4.1 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, session diagnosis, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
+- **Process skills (15)** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v6.4.2 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, session diagnosis, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
 
 Every skill follows the open [Agent Skills standard](https://agentskills.io) (a `SKILL.md` file with `name`/`description` frontmatter), which all major AI Agent tools understand.
 
@@ -34,7 +34,7 @@ maestro-skills/
 ├── .agents/plugins/                 # Codex marketplace manifest
 │
 └── skills/                          # 32 skills total
-    ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v6.4.1)
+    ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v6.4.2)
     │   ├── brainstorming/              # Socratic design refinement with approval gates
     │   ├── diagnosing-superpowers/     # Diagnose what went wrong in a session
     │   ├── test-driven-development/    # RED-GREEN-REFACTOR iron law
@@ -163,7 +163,7 @@ The 15 process skills are an upstream fork, not hand-maintained copies:
 
 ```bash
 scripts/sync-superpowers.sh            # latest upstream HEAD
-scripts/sync-superpowers.sh v6.4.1     # a specific tag
+scripts/sync-superpowers.sh v6.4.2     # a specific tag
 ```
 
 The script prints a diff for review; the fork carries no content additions (its `PRESERVE` list is intentionally empty), and the fork-provenance note in `using-superpowers/SKILL.md` is re-applied by hand during review. Do not edit forked skill bodies by hand — see `THIRD-PARTY-NOTICES.md`.
@@ -212,4 +212,4 @@ branches only; never commit to `master` directly.
 ## Credits & Attribution
 
 - **Domain skills**: © DDTCoreX, MIT License (see `LICENSE`).
-- **Process skills**: forked from [obra/superpowers](https://github.com/obra/superpowers) v6.4.1 by Jesse Vincent / Prime Radiant, MIT License — full notice in `THIRD-PARTY-NOTICES.md`. The fork carries no local content additions.
+- **Process skills**: forked from [obra/superpowers](https://github.com/obra/superpowers) v6.4.2 by Jesse Vincent / Prime Radiant, MIT License — full notice in `THIRD-PARTY-NOTICES.md`. The fork carries no local content additions.

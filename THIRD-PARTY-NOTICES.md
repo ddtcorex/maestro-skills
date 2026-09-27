@@ -5,8 +5,8 @@ This repository bundles third-party open-source software.
 ## Superpowers (15 process skills)
 
 The following skills are forked verbatim from
-[obra/superpowers](https://github.com/obra/superpowers) **v6.4.1**
-(release 2026-09-19):
+[obra/superpowers](https://github.com/obra/superpowers) **v6.4.2**
+(release 2026-09-25):
 
 - brainstorming
 - diagnosing-superpowers
