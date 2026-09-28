@@ -364,10 +364,11 @@ govard sh -c 'bin/magento cache:status; grep -c "## QUERY" var/debug/db.log || t
 ## Detailed References
 
 See bundled documents:
-- [COMMANDS.md](COMMANDS.md) - Exhaustive command reference
-- [SANDBOX.md](SANDBOX.md) - Sandbox rehearsal target (lifecycle, synthetic remote, seed-once, traps)
-- [GUIDES.md](GUIDES.md) - Case studies and patterns
-- [FAQ.md](FAQ.md) - Troubleshooting
+- [COMMANDS.md](references/COMMANDS.md) - Exhaustive command reference
+- [SANDBOX.md](references/SANDBOX.md) - Sandbox rehearsal target (lifecycle, synthetic remote, seed-once, traps)
+- [VERIFY.md](references/VERIFY.md) - `govard verify` checklist: output contract, framework coverage, remote coverage
+- [GUIDES.md](references/GUIDES.md) - Case studies and patterns
+- [FAQ.md](references/FAQ.md) - Troubleshooting
 
 For Magento-specific: Load `govard-magento` skill
 For Laravel-specific: Load `govard-laravel` skill
