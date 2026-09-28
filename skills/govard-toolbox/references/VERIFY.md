@@ -1,9 +1,10 @@
 # Govard Verify — 5-Phase Executable Checklist
 
-`govard verify` is the executable form of the old manual checklist: 56 registry
-items across 5 phases, driven by `internal/verify/registry.go`, with one JSON
-artifact per phase. There is no `docs/checklists/govard-checklist-template.md`
-in the repo — this file is the reference for the behaviour that exists.
+`govard verify` is the executable form of the old manual checklist: a base
+registry of 60 items across 5 phases (`internal/verify/registry.go`) plus the
+items each framework definition declares for itself, with one JSON artifact per
+phase. There is no `docs/checklists/govard-checklist-template.md` in the repo —
+this file is the reference for the behaviour that exists.
 
 ## When to use
 
@@ -13,15 +14,21 @@ cover (see "Remote coverage" — it is much narrower than it looks).
 
 ## Phases
 
-P1 Preflight (7) → P2 Bootstrap & Env (14) → P3 Dev Loop (15) → P4 Sync/Safety (12) → P5 Destructive QA (8)
+P1 Preflight (7) → P2 Bootstrap & Env (14) → P3 Dev Loop (15) → P4 Sync/Safety (16) → P5 Destructive QA (8)
 
-Total 56 items. Phase sizes are fixed in the registry; `make generate` does not
-touch them (it regenerates `internal/frameworks/all_generated.go`).
+Total 60 base items. Phase sizes are fixed in the registry, and `govard verify
+--help` is compared against them by a test, so the two cannot drift; `make
+generate` does not touch them (it regenerates
+`internal/frameworks/all_generated.go`).
 
-## Framework coverage — Magento 2 only
+## Framework coverage — one Magento predicate plus per-framework items
 
-`registry.go` defines exactly **one** predicate, `isMagento2`. It gates **10** of
-the 56 items:
+Two mechanisms decide what a run asks for.
+
+**1. `registry.go` gates 10 of the 60 base items on the single `isMagento2`
+predicate.** An unmet `When` is not a reported skip — `RunPhase` filters the item
+out of the run entirely, so the phase's JSON simply carries fewer items and
+nothing records why.
 
 | Gated item | What is lost on the other frameworks |
 |---|---|
@@ -38,27 +45,46 @@ the 56 items:
 
 Consequences to state plainly rather than paper over:
 
-- A **Laravel, Symfony or WordPress** project runs **46** items. Nothing is
-  substituted for the 10 skipped ones: `P3-01` is titled
-  "cache:flush + cache:status **(or framework equiv)**" but its `When: isMagento2`
-  means the framework equivalent never runs, so a non-Magento project gets **no**
-  cache/setup/migration/indexer step at all. P3-07 (`phpstan`/`phpcs --help`),
-  P3-08 (Xdebug), P3-10…P3-12 (audit) and P3-13…P3-15 are framework-neutral.
-- There is **no `isHyva`, `isLaravel`, `isWordPress` or `isSymfony` predicate**.
-  P2-09 is titled "(Hyva only)" but is gated on `isMagento2`, which is how it
-  came to run `npm install` inside a **Luma** project (left a stray
+- A **Laravel, Symfony or WordPress** project executes **50** of the 60 base
+  items. `P3-01` is titled "cache:flush + cache:status **(or framework equiv)**"
+  but its `When: isMagento2` means the framework equivalent never runs there —
+  that dev loop is covered by the declared items in section 2 instead. P3-07
+  (`phpstan`/`phpcs --help`), P3-08 (Xdebug), P3-10…P3-12 (audit) and
+  P3-13…P3-15 are framework-neutral.
+- There is still **no `isHyva`, `isLaravel`, `isWordPress` or `isSymfony`
+  predicate**. P2-09 is titled "(Hyva only)" but is gated on `isMagento2`, which
+  is how it came to run `npm install` inside a **Luma** project (left a stray
   `web/tailwind/package-lock.json`).
 - `P5-03` substitutes `cfg.Framework` for `{{FRAMEWORK}}`, so it does adapt — but
   the title's `--framework-version {{VERSION}}` is never passed.
 
-Treat non-Magento `verify` runs as **P1 + P2 + env/audit only**: they verify the
-Govard environment and the audit pipeline, not the framework's dev loop.
+**2. Every framework declares its own `govard tool` items.** An
+`engine.VerifyToolItem` is data the framework owns — `{ID, Phase, Title, Tool,
+Args}` — and `frameworks.Register` projects it into the engine, so
+`internal/verify` still names no framework. `RegistryFor(cfg)` appends
+`VerifyToolItems(cfg.Framework)` to the base registry, which is why the composed
+size is always `len(Registry) + len(declared)` and why `RunPhase` filters over
+`RegistryFor`, never over `Registry`:
 
-The gap is cheap to close: `govard tool` already ships the per-framework CLIs
-(`artisan`, `wp`, `symfony`, `composer`, `npm`, `php`), so a Laravel
-`artisan migrate` or `artisan cache:clear`, a WordPress `wp cache flush`, and a
-Symfony `cache:clear` are all reachable today — the registry simply never asks
-for them.
+| Framework | Declared items | What they run |
+|---|---|---|
+| `magento2` | `P5-MAG-01` | `magento setup:db:status` after restore |
+| `laravel` | `P3-LAR-01..03`, `P5-LAR-01` | `artisan --version`, `migrate:status`, `cache:clear`, `migrate:status` after restore |
+| `symfony` | `P3-SYM-01..03`, `P5-SYM-01` | `symfony --version`, `cache:clear`, `debug:router`, `cache:clear` after restore |
+| `wordpress` | `P3-WP-01..03`, `P5-WP-01` | `wp core version`, `option get siteurl`, `cache flush`, `db check` after restore |
+
+Executed totals: **Magento 2 = 61** (60 base + `P5-MAG-01`), **Laravel, Symfony
+and WordPress = 54** (50 base + 4). `mageos` inherits magento2's declaration
+through the definition clone, and a framework that declares nothing composes
+exactly the base registry. Framework ids must not collide with a static id — the
+composed list is appended, never de-duplicated — and framework items carry
+`Precond: "P2-01 up"` with no `Guard`.
+
+This is what closed the old "non-Magento runs verify the environment only" gap.
+The per-framework CLIs (`artisan`, `wp`, `symfony`) were always reachable through
+`govard tool`; a framework now asks for them at register time instead of the core
+registry hard-coding a list of frameworks. Adding a fifth framework means adding
+a `VerifyToolItems` entry to its definition — no change under `internal/verify`.
 
 ### Remote hooks per framework
 
@@ -146,9 +172,9 @@ bootstraps). Always pass `--remote` explicitly.
      `--plan` bypasses the gate entirely, so `verify --phase 5 --plan` is green
      with no snapshot.
 - **`READ-ONLY-REMOTE` / `DESTRUCTIVE-LOCAL` are labels, not enforcement.**
-  `Item.Guard` and `Item.Precond` are populated for all 56 items and have **zero
-  non-test readers**: nothing blocks a non-`--plan` run of a remote item, and
-  nothing confines a `DESTRUCTIVE-LOCAL` item to P5. The only guard that is
+  `Item.Guard` and `Item.Precond` are populated for all 60 base items and have
+  **zero non-test readers**: nothing blocks a non-`--plan` run of a remote item,
+  and nothing confines a `DESTRUCTIVE-LOCAL` item to P5. The only guard that is
   enforced is the `--allow-destructive` flag above. Because
   `P5-03` carried `READ-ONLY-REMOTE` with a `--plan` title and still reached a
   working tree, treat every label as documentation of intent.
@@ -170,7 +196,8 @@ Report these as checklist defects, not project drift:
 ## Remote coverage
 
 `govard capabilities --json` reports **18** command rows whose `requires`
-contains `ssh`, `rsync` or `cloudflared`. The checklist covers **4** of them.
+contains `ssh`, `rsync` or `cloudflared`. The checklist covers **8** of them —
+four read-only probe items in phase 4 close the deploy read surface:
 
 | Command | requires | Item | Note |
 |---|---|---|---|
@@ -178,20 +205,23 @@ contains `ssh`, `rsync` or `cloudflared`. The checklist covers **4** of them.
 | `govard remote audit tail` | ssh,rsync | P4-02 | |
 | `govard remote audit stats` | ssh,rsync | P4-02 | |
 | `govard sync` | ssh,rsync | P4-03…P4-07 | `--plan` only; never a real transfer |
-| `govard deploy` | ssh,rsync | — | **none** |
-| `govard deploy check` | ssh | — | **none** |
-| `govard deploy releases` | ssh | — | **none** |
+| `govard deploy` | ssh,rsync | P4-13 | `deploy plan --json` only — renders the task plan without connecting |
+| `govard deploy status` | ssh | P4-14 | human output on purpose: `deploy status --json` exits **0** on an unreachable remote, so the `--json` form is a false green |
+| `govard deploy releases` | ssh | P4-15 | `--json` |
+| `govard remote list` | ssh,rsync | P4-16 | the inventory P4-01 silently assumes |
+| `govard deploy check` | ssh | — | **none** — and it is not read-only (#468) |
 | `govard deploy rollback` | ssh,rsync | — | **none** |
-| `govard deploy status` | ssh | — | **none** |
 | `govard deploy unlock` | ssh | — | **none** |
 | `govard remote add` | ssh,rsync | — | **none** |
 | `govard remote copy-id` | ssh,rsync | — | **none** |
 | `govard remote exec` | ssh,rsync | — | **none** |
-| `govard remote list` | ssh,rsync | — | **none** (P4-01 assumes it) |
 | `govard tunnel`, `tunnel start`, `tunnel status`, `tunnel stop` | cloudflared | — | **none of the four** |
 
-The whole **deploy** and **tunnel** surfaces are absent — 10 of the 18 rows, and
-both are the surfaces where a mistake is expensive.
+The four new items carry `Guard: "READ-ONLY-REMOTE"` like P4-01…P4-07, and that
+label is still documentation only — nothing enforces it (see "Gates"). Deploy
+**writes** (`deploy`, `deploy rollback`, `deploy unlock`) and the whole **tunnel**
+surface stay absent: 10 of the 18 rows, and the surfaces where a mistake is
+expensive.
 
 Six more surfaces reach a remote while declaring only `docker`, so they are
 invisible to the capability table *and* to the checklist:
@@ -209,15 +239,17 @@ invisible to the capability table *and* to the checklist:
 
 Run these by hand (or add them to the registry) before trusting a remote
 workflow. Each maps to a filed defect — read the issue before reporting a
-surprise as a new bug.
+surprise as a new bug. Lines marked `covered by` now run as checklist items, so
+what stays here is the write half and the surfaces the checklist deliberately
+refuses to touch.
 
 ```bash
 # Deploy lifecycle — read the plan first, never write to a shared remote
-govard deploy plan   --remote <r> --build auto     # 25 tasks, no connection
+govard deploy plan   --remote <r> --build auto     # covered by P4-13 (the item adds --json)
 govard deploy check  --remote <r>                  # NOT read-only: creates deploy_path (#468)
-govard deploy status --remote <r>                  # lock holder + live release
+govard deploy status --remote <r>                  # covered by P4-14 (lock holder + live release)
 govard deploy unlock --remote <r> --help           # recovery path exists at all
-govard deploy releases --remote <r>                # what rollback could target
+govard deploy releases --remote <r>                # covered by P4-15 (what rollback could target)
 govard deploy rollback --remote <r> --help         # and what it would restore
 
 # Sandbox rehearsal
@@ -233,6 +265,7 @@ govard snapshot restore <name> -e <r>                    # restore is the risky 
 
 # Remote execution and tunnel
 govard remote list && govard remote test <r> && govard remote exec <r> -- hostname
+# remote list is covered by P4-16; remote test by P4-01; remote exec by nothing
 govard tunnel status && govard tunnel start && govard tunnel stop   # stop pkills every cloudflared (#469)
 
 # Files and framework routes
@@ -318,7 +351,8 @@ envelope so `--json --error-json` still prints a single document.
 ```
 1. govard verify --phase 1 --json → parse JSON, render P1, fix if FAIL
 2. govard verify --phase 2 --plan --json → show the plan, ask confirm, then --phase 2 --remote <r> --json
-3. govard verify --phase 3 --json                     (Magento 2 only for P3-01…P3-06, P3-09)
+3. govard verify --phase 3 --json                     (P3-01…P3-06, P3-09 are Magento 2 only;
+                                                      Laravel/Symfony/WordPress get their own P3-xxx items)
 4. govard verify --phase 4 --json → P4-08 must record a restorable snapshot
 5. gate: no phase-4 artifact (mode run, this project) → block P5
 6. govard verify --phase 5 --allow-destructive --json → destructive last, after the snapshot
@@ -349,6 +383,7 @@ snapshot gate against a flat global `verify-runs/`, and run items through the
 govard capabilities --json | python3 -c 'import json,sys;print(len(json.load(sys.stdin)["commands"]),"command rows")'
 ```
 
-See `govard/internal/verify/registry.go` for the 56 items,
-`govard/internal/verify/runner.go` for the gates and the store, and
-`govard/internal/verify/exec.go` for how items are launched.
+See `govard/internal/verify/registry.go` for the 60 base items and the
+`RegistryFor` composition, `internal/engine/verify_items.go` for the
+framework-declared item shape, `govard/internal/verify/runner.go` for the gates
+and the store, and `govard/internal/verify/exec.go` for how items are launched.
