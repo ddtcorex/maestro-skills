@@ -90,15 +90,47 @@ All 32 skills work identically on every listed tool.
 
 ### 1. DeepSeek Harness (DSH) — as a plugin (recommended)
 
-One command is a complete install — the plugin serves all 32 packaged skills itself **and** materializes the **"Maestro Skills"** agent preset into `~/.dsh/.agent-presets/maestro-skills/` at startup:
+One command is a complete install — the plugin serves all 32 packaged skills itself:
 
 ```bash
 dsh plugin --profile web add github:ddtcorex/maestro-skills
 ```
 
-Then restart `dsh web` and pick **Maestro Skills** in the Web GUI agent picker. No install.sh needed.
+Then restart `dsh web`. No install.sh needed.
 
-**Codex + Claude delegation preset (optional bundles, optional preset):** when the web profile also installs the two optional subagent bundles (`@deepseek-ai/dsh-subagent-codex` and `@deepseek-ai/dsh-subagent-claude-code`), the plugin additionally materializes a **`maestro-skills-subagents`** preset — the same composition with `subagent_codex` and `subagent_claude_code` tool rows enabled, so the model can delegate to those products through their official app-server/SDK result contract instead of whichever CLI happens to be on `PATH`. Sessions pick **"Maestro Skills + Subagents (Codex + Claude)"** in the picker; both providers authenticate via their native subscription login, so quota-limited accounts may see provider-side quota errors until the limit resets.
+**The agent preset is a separate, explicit step.** Skills and presets are two different
+mechanisms: the plugin registers a skill provider, but a preset is an
+`@deepseek-ai/dsh-agent-preset` **declaration row** that some bundle has to carry. To get
+**"Maestro Skills"** in the Web GUI agent picker, copy the two files from this package's
+`.dsh-plugin/` into a `dsh-agent-preset` row in the profile's `cordis.patch.yml`:
+
+```yaml
+- insert:
+    - id: preset-maestro-skills
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: maestro-skills
+        name: "Maestro Skills"
+        description: "AI Agent preset bundling the maestro-skills library"
+        plugins:          # the entry list from .dsh-plugin/agent.cordis.yml
+          - id: …
+```
+
+> This plugin used to copy that directory into `~/.dsh/.agent-presets/maestro-skills/` on
+> every boot and log that the preset was installed. DSH stopped reading that directory when
+> presets became declaration rows (2026-09-22) — the write changed nothing and the log
+> misled. The template still ships in `.dsh-plugin/` because declaration rows are copied
+> from it by hand.
+
+**Codex + Claude delegation preset (optional bundles, optional preset):** when the web
+profile also installs the two optional subagent bundles (`@deepseek-ai/dsh-subagent-codex`
+and `@deepseek-ai/dsh-subagent-claude-code`), add a second declaration row for
+**"Maestro Skills + Subagents (Codex + Claude)"** — the same composition with
+`subagent_codex` and `subagent_claude_code` tool rows enabled, so the model can delegate to
+those products through their official app-server/SDK result contract instead of whichever
+CLI happens to be on `PATH`. `src/subagent-variant.ts` is the executable definition of that
+derivation. Both providers authenticate via their native subscription login, so
+quota-limited accounts may see provider-side quota errors until the limit resets.
 
 The package builds itself on install via its `prepare` script. pnpm ≥ 10 blocks git-dependency build scripts until you allow them — if the first add reports an ignored build, copy the key pnpm prints into the profile's `pnpm-workspace.yaml` and re-run:
 ```yaml
@@ -119,7 +151,8 @@ To reference the plugin from a hand-written patch layer instead, the row must na
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/install.sh | bash -s -- --target dsh
 ```
-Links all skills into `~/.dsh/skills/` and copies the agent preset into `~/.dsh/.agent-presets/maestro-skills/`.
+Links all skills into `~/.dsh/skills/`. It does not install an agent preset — presets are
+declaration rows now (see above).
 </details>
 
 ---

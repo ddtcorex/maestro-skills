@@ -36,11 +36,12 @@ bundling 32 skills in two halves: 17 Magento 2 / Govard domain skills written
 here, plus the 15-skill **superpowers process library forked verbatim from
 [obra/superpowers](https://github.com/obra/superpowers) v6.4.2** (MIT — see
 `THIRD-PARTY-NOTICES.md`). Distributed via self-listing marketplaces for both
-Claude Code and Codex CLI, and as a DeepSeek Harness Cordis plugin that also
-installs its own DSH agent preset at startup. There is no test suite and no
-application code beyond `src/` (the Cordis plugin) — the repository *is* the
-plugin (in every ecosystem at once), and its content is Markdown (`SKILL.md`)
-plus four JSON manifests, one install script, and one sync script.
+Claude Code and Codex CLI, and as a DeepSeek Harness Cordis plugin. There is no
+application code beyond `src/` (the Cordis plugin); `tests/` is a vitest suite
+that guards the packaged skill catalog and the plugin's own contracts, and
+`pnpm verify` + `pnpm test` are the local gate. The repository *is* the plugin
+(in every ecosystem at once), and its content is Markdown (`SKILL.md`) plus
+four JSON manifests, one install script, and one sync script.
 
 ## Architecture
 
@@ -117,34 +118,48 @@ writing. `install.sh` exists to bridge the gap for direct (non-plugin) use on
 any tool — including Claude/Codex users who'd rather symlink skill files than
 install a plugin: it never tries to make one folder satisfy all four tools,
 it links per-tool into whichever directory each one actually scans. On DSH the
-installer is **optional**: the Cordis plugin serves the packaged skills itself
-and materializes the agent preset at startup (installs when missing, upgrades
-only pristine installs, never overwrites a user-modified preset — see
-`docs/specs/2026-09-02-dsh-maestro-preset-materialize-design.md`), so
-`dsh plugin add` alone is a complete install. When `installSubagentPreset`
-is on (default), it additionally materializes **`maestro-skills-subagents`** —
-the same preset with the Codex/Claude delegation tool rows
-(`subagent_codex` / `subagent_claude_code`) enabled — so machines with the
-subagent bundles installed get both delegation tools without copying the
-preset by hand.
+installer is **optional**: the Cordis plugin serves the packaged skills itself,
+so `dsh plugin add` alone is a complete *skill* install. The agent preset is a
+separate step — see the next section.
 
-### Optional subagents-enabled preset variant (2026-09-02)
+### The agent preset is a declaration row, not a directory (2026-09-22)
 
-The same materialize path also generates a **`maestro-skills-subagents`**
-variant preset: the identical `.dsh-plugin/` template with `disabled: true`
-stripped from the `tool-subagent-codex` and `tool-subagent-claude-code` rows
-and a `preset.yml` advertising "Maestro Skills + Subagents (Codex + Claude)".
-The shipped template keeps both rows `disabled` (upstream default); the
-variant is produced at materialize time via per-file `transforms` on
-`MaterializeOptions`, and the `preset.materialize.json` stamp hashes the
-*transformed* bytes so upgrades fire correctly when the template changes.
-Gate: `installSubagentPreset` (default `true`) — harmless when the bundles
-are absent because an enabled tool row only registers when its provider is
-mounted. Machines that installed the optional
-`@deepseek-ai/dsh-subagent-codex` / `@deepseek-ai/dsh-subagent-claude-code`
-bundles get both delegation tools by picking this preset; sessions must be
-started after the preset appears (presets bind at session start). See the
-root spec's "Update 2026-09-02" addendum for the design.
+A DSH agent preset is an `@deepseek-ai/dsh-agent-preset` **declaration row**
+carried by some bundle: row id `preset-<id>`, `config` with `id`, `plugins`,
+and optional `name` / `description` / `order`. Nothing reads
+`$DSH_HOME/.agent-presets/<id>/` any more — upstream states it outright:
+"Before declaration rows, a user preset was a directory … Nothing reads that
+directory any more."
+
+This plugin used to materialize the base preset and the subagents variant into
+that dead directory on every boot and log `DSH agent preset installed at …`.
+The write changed nothing and the log misled, so the path, the
+`installPreset` / `installSubagentPreset` / `presetUpgrade` config fields and
+`src/preset-materialize.ts` were removed on 2026-09-29. The shipped profile
+carries the real rows — `preset-maestro-skills` and
+`preset-maestro-skills-subagents` in `~/.dsh/profiles/web/cordis.patch.yml`.
+
+`.dsh-plugin/` still ships (`package.json#files`) and is the **source the
+declaration rows are hand-copied from**; `tests/preset-persona-row.spec.ts`
+guards the base template. `tests/no-preset-materialization.spec.ts` fails the
+build if the write path or its success log ever comes back.
+
+### Optional subagents-enabled preset variant
+
+`src/subagent-variant.ts` is the executable definition of the
+`maestro-skills-subagents` derivation: the identical `.dsh-plugin/` template
+with `disabled: true` stripped from the `tool-subagent-codex` and
+`tool-subagent-claude-code` rows and a `preset.yml` advertising "Maestro
+Skills + Subagents (Codex + Claude)". The shipped base template keeps both rows
+`disabled` (upstream default). The functions are **not called at runtime** —
+regenerating the declaration row from the template is a manual edit, and these
+are the tested steps for it.
+
+Machines that installed the optional `@deepseek-ai/dsh-subagent-codex` /
+`@deepseek-ai/dsh-subagent-claude-code` bundles get both delegation tools by
+picking that preset; sessions must be started after the preset appears
+(presets bind at session start). Design record:
+`docs/specs/2026-09-02-dsh-maestro-preset-materialize-design.md`.
 
 ### Skill dependency chain
 
@@ -237,9 +252,11 @@ modifying it:
 
 ## Commands
 
-There is no build/lint/test framework — validation is structural (does the
-plugin manifest resolve correctly?) and, for `install.sh`, behavioral (does it
-actually link/unlink files correctly?).
+The DSH plugin half is gated by `pnpm verify` (typecheck) and `pnpm test`
+(vitest: packaged skill catalog, manifests, and the plugin's own contracts).
+Everything else validates structurally (does the plugin manifest resolve
+correctly?) and, for `install.sh`, behaviorally (does it actually link/unlink
+files correctly?).
 
 ```bash
 # Validate plugin + marketplace manifest (must be run from repo root)
