@@ -1,3 +1,22 @@
+/**
+ * Derivation of the `maestro-skills-subagents` preset variant from the base
+ * `.dsh-plugin/` template.
+ *
+ * These are NOT called at runtime. DSH reads presets from
+ * `@deepseek-ai/dsh-agent-preset` declaration rows; `$DSH_HOME/.agent-presets/`
+ * is read by nothing (upstream: "Before declaration rows, a user preset was a
+ * directory … Nothing reads that directory any more"). This plugin used to
+ * materialize the base and the variant into that directory on every boot,
+ * which wrote files no roster could see and logged a success that changed
+ * nothing.
+ *
+ * They stay as the executable definition of how the variant is derived: the
+ * shipped `preset-maestro-skills-subagents` row is regenerated from
+ * `.dsh-plugin/agent.cordis.yml` through these two transforms, and the tests
+ * pin that transformation. `preset-persona-row.spec.ts` guards the base
+ * template both read.
+ */
+
 /** Names of the optional subagent tool rows that the variant enables. */
 const OPTIONAL_SUBAGENT_TOOL_IDS = new Set(['tool-subagent-codex', 'tool-subagent-claude-code'])
 
