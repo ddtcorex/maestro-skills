@@ -26,9 +26,10 @@ generate` does not touch them (it regenerates
 Two mechanisms decide what a run asks for.
 
 **1. `registry.go` gates 10 of the 60 base items on the single `isMagento2`
-predicate.** An unmet `When` is not a reported skip — `RunPhase` filters the item
-out of the run entirely, so the phase's JSON simply carries fewer items and
-nothing records why.
+predicate.** An unmet `When` is a **reported** skip: the row stays in the phase's
+JSON with `skipped: true` and a `skip_reason` naming the framework gate
+(`framework gate: P3-01 is framework-specific and this project is laravel`). A
+missing row is worse than a red, because a red is evidence.
 
 | Gated item | What is lost on the other frameworks |
 |---|---|
@@ -147,18 +148,27 @@ Flags: `--phase 0..5` (0 = all), `--json`, `--plan`, `--allow-destructive`
 
 **Only `--base`, `--allow-xdebug` and `--allow-destructive` change what runs.**
 `--checks`, `--lint-jobs` and `--timeout` are accepted and ignored — `opts.Checks`,
-`opts.LintJobs` and `opts.Timeout` have zero readers, and the items hardcode
-`--checks lint`, `--lint-jobs 4` and `--timeout auto|0` — so `--checks profiler`
-selects nothing (P3-12 is unconditional). An out-of-range `--phase` is an
+`opts.LintJobs` and `opts.Timeout` are threaded into the argv of the items that run
+the lint check (P3-10, P3-11, P3-13, P3-14, P5-04), and each records the resolved
+argv as the first line of its evidence excerpt. Two deliberate details:
+`--lint-jobs` is **not** forwarded at verify's own default (4), so `audit run`
+keeps its host-tuned worker count — the literal `4` is the one inexpressible value;
+and `--timeout` falls back per item (`auto` for the phase-3 lint rows, `0` for
+P5-04's no-deadline re-lint). `--checks lint,profiler,integrity` filters on the
+check an item declares (`Item.Checks`); a row that declares none is not
+check-specific and always runs, and an excluded row stays as a `skipped` row
+naming the selection. An unknown check name is a **usage error (exit 2)**, checked
+against the same list `audit run --checks` accepts. An out-of-range `--phase` is an
 execution error (exit 1); an unknown flag is a usage error (exit 2). `--plan` is
 a true dry run: `RunPhase` never calls an item's `Run` in plan mode and records
-`Evidence{ExitCode: 0, OutputExcerpt: "plan: <title>"}`.
+`Evidence{ExitCode: 0, OutputExcerpt: "plan: <title>"}` — but note that a guarded row
+is marked skipped **before** the plan stub, so plan mode still reports the gate.
 
-`{{REMOTE}}` in an item **defaults to the literal `staging`** when `--remote` is
-not given, and `ResolveAutoRemote` separately prefers `staging` then `dev`. On a
-project with a real company remote, `govard verify --phase 2` without
-`--remote sandbox` will pull a live dump from it (P2-05 / P2-08 are non-plan
-bootstraps). Always pass `--remote` explicitly.
+An item never picks a remote for itself. Every remote-naming item takes the name
+from `--remote` and nothing else, and a run without one **skips** those rows with
+`no --remote named: this item contacts a remote` — there is no `staging` fallback
+left in the registry. Pass `--remote` explicitly to run them; the two rows that
+write through a remote also need `--allow-remote-write`.
 
 ## Gates
 
@@ -171,13 +181,16 @@ bootstraps). Always pass `--remote` explicitly.
      metadata `db: true` *and* a `db.sql.gz` that decompresses to ≥ 1 byte.
      `--plan` bypasses the gate entirely, so `verify --phase 5 --plan` is green
      with no snapshot.
-- **`READ-ONLY-REMOTE` / `DESTRUCTIVE-LOCAL` are labels, not enforcement.**
-  `Item.Guard` and `Item.Precond` are populated for all 60 base items and have
-  **zero non-test readers**: nothing blocks a non-`--plan` run of a remote item,
-  and nothing confines a `DESTRUCTIVE-LOCAL` item to P5. The only guard that is
-  enforced is the `--allow-destructive` flag above. Because
-  `P5-03` carried `READ-ONLY-REMOTE` with a `--plan` title and still reached a
-  working tree, treat every label as documentation of intent.
+- **`Item.Guard` is enforced, in four values.** `RunPhase` acts on the label before
+  the plan stub, so a gated item is one `skipped` row in every mode and its `Run` is
+  never reached. A row that would write through a remote needs
+  `--allow-remote-write`; a remote row without a named remote skips as above.
+  `Item.Precond` is the half that stays documentation — it records what a row
+  assumes and is deliberately **not** the skip reason, because a precondition
+  string reads like a prior step while the gate that fires is a framework
+  predicate. `DESTRUCTIVE-LOCAL` is still confined to phase 5 by the phase gate
+  above rather than by its label. A fence pins every row's label to what every
+  invocation of that row actually does, so a label cannot drift from its argv.
 
 ### Items known to be un-runnable
 
@@ -185,13 +198,23 @@ Report these as checklist defects, not project drift:
 
 | Item | Why it is permanently red |
 |---|---|
-| P2-03 | `govard env up --build` — unknown flag `--build` (exit 2) |
-| P2-09 | titled Hyvä-only, gated `isMagento2`; no `isHyva` predicate exists |
-| P2-13, P4-11 | `govard tool curl …` — `curl` is not a registered `tool` subcommand (the real ones are `artisan`, `composer`, `magento`, `npm`, `php`, `symfony`, `wp`, …) |
-| P3-13, P3-14 | need a custom module / `/tmp/govard-audit-standalone`, no `When` filter |
-| P3-15 | `audit status --session <id>` — the `<id>` placeholder is never substituted |
-| P4-05, P4-06, P4-07 | titles promise 3–4 invocations; each runs exactly 1. P4-07's `{{REMOTE_STAGING}}` title implies a fixed target but the body uses `--remote` like every other item |
 | P5-07 | `deploy:mode:show` + `cache:flush` only — a completed wipe/restore still leaves a schema-current but unreconciled DB; a `setup:upgrade` belongs in this phase |
+
+Rows that used to be here and are not any more, each with the shape of the fix worth
+recognising: a command word the tree does not know (`P4-10` ran `tool redis-cli
+ping`, whose group has no `RunE`, so cobra printed help and exited **0** — a green
+from a page nobody ran); a flag the command does not declare (`P2-03` passed
+`env up --build`); a tool shim that is not registered (`P2-13`/`P4-11` shelled out
+to `tool curl` and now dial the site themselves, reporting the scheme they used);
+a placeholder no item ever substituted (`P3-15` now creates its own container-free
+`--checks integrity` session and decodes both ids); a title promising a fallback
+the argv never performed (`P2-09` titled Hyva-only while gated on `isMagento2` —
+it now gates on the Tailwind manifest, so a Luma project skips and writes nothing);
+and items that needed structure they had no way to find (`P3-13`/`P3-14` now
+discover a module under `app/code` and audit it with `audit run --path`).
+
+`P4-05`, `P4-06` and `P4-07` titled 3–4 invocations while running 1; their titles have
+been corrected since.
 
 ## Remote coverage
 
@@ -218,7 +241,7 @@ four read-only probe items in phase 4 close the deploy read surface:
 | `govard tunnel`, `tunnel start`, `tunnel status`, `tunnel stop` | cloudflared | — | **none of the four** |
 
 The four new items carry `Guard: "READ-ONLY-REMOTE"` like P4-01…P4-07, and that
-label is still documentation only — nothing enforces it (see "Gates"). Deploy
+label is enforced by the runner (see "Gates"). Deploy
 **writes** (`deploy`, `deploy rollback`, `deploy unlock`) and the whole **tunnel**
 surface stay absent: 10 of the 18 rows, and the surfaces where a mistake is
 expensive.
