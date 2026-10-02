@@ -143,7 +143,7 @@ govard sandbox down --purge          # also removes the image, key and mirror
 
 Sandbox lists come from the recipe; `deploy.settings.sandbox_{packages,extensions,services,tools}` **replace** them. `sandbox reset` also wipes `shared/`, so re-seed shared files.
 
-> **Deploy preflight:** a native deploy-plan/check tool where provided (`{remote, build?, artifactDir?}`, both read-only, `remote` required). Running a deploy stays in the terminal; there is no tool for it. Otherwise: `govard deploy plan` / `govard deploy check` on the host.
+> **Deploy preflight:** a native deploy-plan/check tool where provided (`{remote, build?, artifactDir?}`, `remote` required; plan is read-only and never connects, check connects over ssh and leaves nothing behind on the target: its `mv -T` probe creates a `.dep` scratch directory there and removes it again). Running a deploy stays in the terminal; there is no tool for it. Otherwise: `govard deploy plan` / `govard deploy check` on the host.
 
 Per-framework detail: `govard-magento`, `govard-laravel`, `govard-symfony`, `govard-wordpress`. Full reference: <https://govard.ddtcorex.com/workflows/deployment>.
 

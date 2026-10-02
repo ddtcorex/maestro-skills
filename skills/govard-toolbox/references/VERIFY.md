@@ -232,7 +232,7 @@ four read-only probe items in phase 4 close the deploy read surface:
 | `govard deploy status` | ssh | P4-14 | human output on purpose: `deploy status --json` exits **0** on an unreachable remote, so the `--json` form is a false green |
 | `govard deploy releases` | ssh | P4-15 | `--json` |
 | `govard remote list` | ssh,rsync | P4-16 | the inventory P4-01 silently assumes |
-| `govard deploy check` | ssh | — | **none** — and it is not read-only (#468) |
+| `govard deploy check` | ssh | — | **none** — connects, and leaves nothing behind (#468) |
 | `govard deploy rollback` | ssh,rsync | — | **none** |
 | `govard deploy unlock` | ssh | — | **none** |
 | `govard remote add` | ssh,rsync | — | **none** |
@@ -269,7 +269,7 @@ refuses to touch.
 ```bash
 # Deploy lifecycle — read the plan first, never write to a shared remote
 govard deploy plan   --remote <r> --build auto     # covered by P4-13 (the item adds --json)
-govard deploy check  --remote <r>                  # NOT read-only: creates deploy_path (#468)
+govard deploy check  --remote <r>                  # leaves nothing behind: its mv -T probe creates .dep and removes it (#468)
 govard deploy status --remote <r>                  # covered by P4-14 (lock holder + live release)
 govard deploy unlock --remote <r> --help           # recovery path exists at all
 govard deploy releases --remote <r>                # covered by P4-15 (what rollback could target)
