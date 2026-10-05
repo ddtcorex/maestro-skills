@@ -92,13 +92,20 @@ describe('review fix pass', () => {
     expect(read('magento2-performance-audit/references/per-page-type-audit.md')).toContain('**for the captures only**')
   })
 
-  it('keeps diagram-studio tool-neutral for verify and drift', () => {
+  it('keeps diagram-studio on the CLI verifier with manual drift', () => {
     const ds = read('diagram-studio/SKILL.md')
-    expect(ds).not.toContain('mermaid_verify')
-    expect(ds).not.toContain('mermaid_drift')
-    // The capability phrasing plus a working fallback must remain.
-    expect(ds).toMatch(/native Mermaid verification tool/)
+    const cases = read('diagram-studio/references/supported-cases.md')
+    for (const text of [ds, cases]) {
+      expect(text).not.toContain('mermaid_verify')
+      expect(text).not.toContain('mermaid_drift')
+      expect(text).not.toContain('dsh-maestro-diagram')
+      expect(text).not.toContain('maestro-workspace')
+      expect(text).not.toMatch(/native (Mermaid verification|drift) tool/)
+    }
+    // The CLI verifier (parse + --strict) is the only automated check; drift is manual.
     expect(ds).toContain('verify-mermaid.mjs')
+    expect(ds).toContain('--strict')
+    expect(ds).toMatch(/drift[^\n]*(by hand|manual)/i)
   })
 
   it('quotes govard sh -c correctly in the perf-audit trap', () => {

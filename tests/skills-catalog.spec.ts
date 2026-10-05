@@ -91,7 +91,7 @@ describe('skills catalog', () => {
     //    govard_env_up/down, govard_shell) while NOT matching legit env vars
     //    like `GOVARD_FRONTEND_SYNC_TARGET` or the `govard-toolbox` skill
     //  - `DSH`/`dsh` as a standalone word: the lookbehind/lookahead keep the
-    //    legitimate `dsh-maestro-diagram`, `compatibility: dsh` and
+    //    legitimate `compatibility: dsh` and
     //    `dsh-safe-restart` references matching nothing.
     const FORBIDDEN = new RegExp([
       'maestro_[a-z_]+',                 // snake_case tool names
