@@ -1,6 +1,6 @@
 # Supported Cases — Diagram Studio
 
-All cases that `diagram-studio` skill + `dsh-maestro-diagram` plugin handle. Rows marked `verified` are live-verified (see `packages/dsh-maestro-diagram/tests/` 8/8, `/tmp/diagram-studio-coverage.mmd`, `maestro-workspace -r verify` 13 packages Done); rows marked `unverified` are mapped by convention and await plugin coverage.
+All cases the `diagram-studio` skill handles. Rows marked `verified` were parsed with `scripts/verify-mermaid.mjs` (or `mermaid-cli`) when the case was added; rows marked `unverified` are mapped by convention only. Drift against the codebase is checked by hand. Example file names below are historical, from the original harness repo.
 
 ## 1. Diagram Types (5 Mermaid grammars)
 
@@ -8,15 +8,15 @@ Covers 52/52 upstream ordinals from `cathrynlavery/diagram-design` v2.6.32 (gall
 
 | Upstream ordinal(s) | Nearest grammar | Status |
 |---|---|---|
-| 02 Flowchart | `flowchart TB/LR` | `verified` — parse + drift check (missingInCode 0) |
-| 01 Architecture | `flowchart TB/LR` | `verified` — `docs/architecture.md §1.1` (10 plugins + meta, density 4/10) |
+| 02 Flowchart | `flowchart TB/LR` | `verified` — parse check |
+| 01 Architecture | `flowchart TB/LR` | `verified` — architecture diagram (10 plugins + meta, density 4/10) |
 | 06 Timeline, 07 Swimlane, 09 Nested, 10 Tree, 11 Org chart, 12 Layers, 17 Loop, 18 Data lake, 25 High-Level, 26 Process, 27 Data flow, 28 DP integration, 29 High-Level / Parametric, 31 DP security matrix, 32 IT current-state, 34 Fishbone, 36 Kanban, 37 User journey, 38 Deployment, 39 Dependency graph, 41 Story map, 47 Loop terminal, 48 Policy trace, 49 Fan-in queue, 50 Secure paved road, 51 Tree block decomposition | `flowchart TB/LR` | `unverified` — mapped by containment/connection convention |
 | 03 Sequence | `sequenceDiagram` | `verified` — parse + SVG 28K via `mermaid-cli 11.16.0` |
 | 43 Sequence OAuth | `sequenceDiagram` | `unverified` — same participant/message convention as 03 |
-| 40 UML class | `classDiagram` | `verified` — `cheatsheet.md#class` (`ReviewProvider <|-- GitLabProvider`), `verifyMermaid` 5/5 |
-| 05 ER | `erDiagram` | `verified` — `cheatsheet.md#er` (`PROJECT ||--o{ MEMORY`), `verifyMermaid` 5/5 |
+| 40 UML class | `classDiagram` | `verified` — `cheatsheet.md#class` (`ReviewProvider <|-- GitLabProvider`), parse passes |
+| 05 ER | `erDiagram` | `verified` — `cheatsheet.md#er` (`PROJECT ||--o{ MEMORY`), parse passes |
 | 42 Database schema | `erDiagram` | `unverified` — same entity/field convention as 05 |
-| 04 State (incl. lifecycle variant) | `stateDiagram` | `verified` — `cheatsheet.md#state` (`[*] --> queued`), `verifyMermaid` 5/5 |
+| 04 State (incl. lifecycle variant) | `stateDiagram` | `verified` — `cheatsheet.md#state` (`[*] --> queued`), parse passes |
 
 ### 1.1 Behavior first (adapted from upstream semantic-patterns)
 
@@ -56,26 +56,26 @@ See `SKILL.md` § Audience Rules for the exact checklist.
 
 | Audience | Trigger | Mermaid source | Tokens card | Technical footer | Example files |
 |---|---|---|---|---|---|
-| Team / Internal | `team|internal` or "cho team / keep source" | Yes (`<details>` collapsed) | Yes | Yes ("About" with verify/drift) | `harness-architecture.html` 16K (1 svg,1 pre), `harness-turn-flow-sequence.html` 31K |
+| Team / Internal | `team|internal` or "cho team / keep source" | Yes (`<details>` collapsed) | Yes | Yes ("About" with verify/drift note) | `harness-architecture.html` 16K (1 svg,1 pre), `harness-turn-flow-sequence.html` 31K |
 | Client / External | `client|pitch|deck` or "cho khách / clean" | **No** | **No** | **No** (1 line `Generated via diagram-studio — 2026-08-27`) | `...-client.html` 12K/30K (1 svg,0 pre), PNG 124K/65K |
 
 ## 3. Outputs (3)
 
 | Output | Path | Audience rule | Render | Verification |
 |---|---|---|---|---|
-| GitHub-native Mermaid | `docs/architecture.md §1.1`, `docs/specs/*-design.md` | Always show source | GitHub auto-renders ```mermaid | parse + drift check |
+| GitHub-native Mermaid | `docs/architecture.md §1.1`, `docs/specs/*-design.md` | Always show source | GitHub auto-renders ```mermaid | parse (CLI) + manual drift check |
 | Editorial HTML | `docs/diagrams/<slug>.html` (inline SVG/CSS, no JS) | Team vs Client | Chrome `screenshot 980×1100` → PNG | `grep -c "<svg"` + `file` + 0 external deps |
 | Deck PDF | `docs/diagrams/maestro-harness-deck.pdf` (A4 landscape, 3 pages) | Always Client | `chrome --print-to-pdf` (303K) | `pdfinfo Pages:3` |
 
-## 4. Verification Cases (3)
+## 4. Verification Cases
 
 | Case | Tool | Input | Expected |
 |---|---|---|---|
-| Parse ok | verifier | Valid 5 types | `{ok:true}` — 5/5 PASS |
-| Parse fail | verifier | `A-->` or empty | `{ok:false, line:2}` |
-| Anti-pattern (strict) | verifier, strict mode | `shadow:true` | `{warnings:1}` |
-| Drift | drift check | `docs/architecture.md` vs `packages/*` | `{missingInCode:0}` |
-| Missing file | drift check | `docs/nonexistent.md` | throws `ENOENT` |
+| Parse ok | `verify-mermaid.mjs` | Valid 5 types | `{ok:true}`, exit 0 |
+| Parse fail | `verify-mermaid.mjs` | `A-->` or empty | `{ok:false, line:2}`, exit 1 |
+| Anti-pattern | `verify-mermaid.mjs --strict` | `shadow:true` | `{warnings:1}` |
+| Drift | manual | architecture doc vs the packages it names | every node maps to real code, nothing real is missing |
+| Missing file | `verify-mermaid.mjs` | `docs/nonexistent.md` | `{ok:false}` with the read error, exit 1 |
 
 ## 5. Live Case Studies (2) — on this harness
 
