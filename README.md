@@ -2,8 +2,8 @@
 
 A unified skills library for AI coding agents, packaged as a universal plugin for **DeepSeek Harness (DSH)**, **Claude Code**, **Codex CLI**, **OpenCode**, and **GitHub Copilot** — two halves in one bundle:
 
-- **Domain skills (17)** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel, Symfony, WordPress, generic PHP): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs, plus `php-dev-core` and `diagram-studio`.
-- **Process skills (15)** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v6.4.2 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, session diagnosis, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
+- **Domain skills** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel, Symfony, WordPress, generic PHP): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs, plus `php-dev-core` and `diagram-studio`.
+- **Process skills** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v6.4.2 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, session diagnosis, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
 
 Every skill follows the open [Agent Skills standard](https://agentskills.io) (a `SKILL.md` file with `name`/`description` frontmatter), which all major AI Agent tools understand.
 
@@ -24,7 +24,7 @@ maestro-skills/
 │   └── sync-superpowers.sh          # Refresh the superpowers fork from upstream
 ├── tsconfig.json                    # TypeScript compiler configuration
 ├── src/                             # DSH Cordis Plugin source code
-│   ├── index.ts                     # Cordis plugin entrypoint: serves packaged skills + installs the DSH agent preset
+│   ├── index.ts                     # Cordis plugin entrypoint: serves the packaged skills (the agent preset is a declaration row, see Installation)
 │   └── dsh-types.d.ts               # DSH type definitions
 ├── .dsh-plugin/                     # DeepSeek Harness Agent Preset definition
 │   ├── preset.yml                   # Web GUI preset display metadata ("Maestro Skills")
@@ -33,7 +33,7 @@ maestro-skills/
 ├── .codex-plugin/                   # Codex CLI plugin manifest
 ├── .agents/plugins/                 # Codex marketplace manifest
 │
-└── skills/                          # 32 skills total
+└── skills/                          # one folder per skill (`ls skills` is the source of truth)
     ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v6.4.2)
     │   ├── brainstorming/              # Socratic design refinement with approval gates
     │   ├── diagnosing-superpowers/     # Diagnose what went wrong in a session
@@ -57,11 +57,18 @@ maestro-skills/
     ├── 🎨 FRONTEND & BACKEND FRAMEWORKS
     │   ├── magento2-hyva-dev/           # Alpine.js, Tailwind CSS, CSP payment pages
     │   ├── magento2-frontend-dev/       # Luma Knockout.js, LESS, RequireJS
-    │   └── magento2-backend-dev/        # REST, GraphQL resolvers, Cron, Queues
+    │   ├── magento2-backend-dev/        # REST, GraphQL resolvers, Cron, Queues
+    │   └── maestro-design/              # Tailwind + shadcn/ui design systems, a11y, Figma to code
+    ├── 🐘 PHP FOUNDATION
+    │   └── php-dev-core/                # PSR-12, Composer, PHPStan, framework-agnostic PHP
+    ├── 📐 DIAGRAMS
+    │   └── diagram-studio/              # Mermaid + editorial HTML diagrams, CLI verifier
     └── 🔧 DEV ENVIRONMENT & CLI TOOLS (Govard Stack)
         ├── govard-toolbox/              # Base container orchestrator toolbox
         ├── govard-magento/              # Magento-specific dev env commands
         ├── govard-laravel/              # Laravel-specific dev env commands
+        ├── govard-symfony/              # Symfony-specific dev env commands
+        ├── govard-wordpress/            # WordPress-specific dev env commands
         └── review-in-worktree/          # Govard commands in detached review worktrees
 ```
 
@@ -69,20 +76,17 @@ maestro-skills/
 
 ## 🤖 Skill Compatibility Matrix
 
-All 32 skills work identically on every listed tool.
+Every skill works identically on every listed tool.
 
 | Group | Skills | Claude Code | Codex CLI | OpenCode | GitHub Copilot | DeepSeek Harness |
 |---|---|---|---|---|---|---|
 | Process (superpowers fork) | brainstorming, diagnosing-superpowers, dispatching-parallel-agents, executing-plans, finishing-a-development-branch, receiving-code-review, requesting-code-review, subagent-driven-development, systematic-debugging, test-driven-development, using-git-worktrees, using-superpowers, verification-before-completion, writing-plans, writing-skills | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Core & Standards | [magento2-dev-core](skills/magento2-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Linting & Auditing | [magento2-linter](skills/magento2-linter/SKILL.md), [magento2-performance-audit](skills/magento2-performance-audit/SKILL.md), [magento2-security-scan](skills/magento2-security-scan/SKILL.md), [magento2-code-review](skills/magento2-code-review/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Frameworks | [magento2-hyva-dev](skills/magento2-hyva-dev/SKILL.md), [magento2-frontend-dev](skills/magento2-frontend-dev/SKILL.md), [magento2-backend-dev](skills/magento2-backend-dev/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Toolchains (Govard) | [govard-toolbox](skills/govard-toolbox/SKILL.md), [govard-magento](skills/govard-magento/SKILL.md), [govard-laravel](skills/govard-laravel/SKILL.md), [review-in-worktree](skills/review-in-worktree/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Frameworks | [magento2-hyva-dev](skills/magento2-hyva-dev/SKILL.md), [magento2-frontend-dev](skills/magento2-frontend-dev/SKILL.md), [magento2-backend-dev](skills/magento2-backend-dev/SKILL.md), [maestro-design](skills/maestro-design/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Toolchains (Govard) | [govard-toolbox](skills/govard-toolbox/SKILL.md), [govard-magento](skills/govard-magento/SKILL.md), [govard-laravel](skills/govard-laravel/SKILL.md), [govard-symfony](skills/govard-symfony/SKILL.md), [govard-wordpress](skills/govard-wordpress/SKILL.md), [review-in-worktree](skills/review-in-worktree/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | PHP Foundation | [php-dev-core](skills/php-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-
-| Skill | Description |
-|-------|-------------|
-| php-dev-core | Generic PHP foundation (PSR-12/Composer/PHPStan/Security) |
+| Diagrams | [diagram-studio](skills/diagram-studio/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -90,7 +94,7 @@ All 32 skills work identically on every listed tool.
 
 ### 1. DeepSeek Harness (DSH) — as a plugin (recommended)
 
-One command is a complete install — the plugin serves all 32 packaged skills itself:
+One command is a complete install — the plugin serves every packaged skill itself:
 
 ```bash
 dsh plugin --profile web add github:ddtcorex/maestro-skills
@@ -192,7 +196,7 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/inst
 
 ## 🔄 Superpowers fork maintenance
 
-The 15 process skills are an upstream fork, not hand-maintained copies:
+The process skills are an upstream fork, not hand-maintained copies:
 
 ```bash
 scripts/sync-superpowers.sh            # latest upstream HEAD

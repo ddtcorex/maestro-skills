@@ -143,4 +143,29 @@ describe('skills catalog', () => {
       }
     }
   })
+
+  it('README and AGENTS list every shipped skill and its declared dependencies', async () => {
+    const readme = await readFile(new URL('../README.md', import.meta.url), 'utf-8')
+    const agents = await readFile(new URL('../AGENTS.md', import.meta.url), 'utf-8')
+    const entries = (await readdir(SKILLS_DIR)).filter(e => !FORKED.includes(e))
+    for (const entry of entries) {
+      expect(readme, `README.md must mention ${entry}`).toContain(entry)
+      const { raw } = await load(entry)
+      const depends = /^depends:\s*\[(.*?)\]/m.exec(raw)?.[1]
+      if (!depends) continue
+      // AGENTS.md documents the chain as `<skill>` ... `depends: [<dep>]`; require the
+      // dependent skill to be named there so a new dependent cannot go unlisted.
+      expect(agents, `AGENTS.md dependency chain must mention ${entry}`).toContain(entry)
+    }
+  })
+
+  it('README does not claim the plugin entrypoint installs the agent preset', async () => {
+    const readme = await readFile(new URL('../README.md', import.meta.url), 'utf-8')
+    expect(readme).not.toMatch(/index\.ts[^\n]*installs the DSH agent preset/)
+  })
+
+  it('README has no stray single-row skill table', async () => {
+    const readme = await readFile(new URL('../README.md', import.meta.url), 'utf-8')
+    expect(readme).not.toContain('| Skill | Description |')
+  })
 })
