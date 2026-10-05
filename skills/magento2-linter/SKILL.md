@@ -166,7 +166,7 @@ tool.
 
 ## Running the Linter
 
-> **Native lint tool when provided:** `{worktreePath?}` → `{lint:{phpcs,phpstan},pubMediaGuard,rawJson,summary}`. Do not hand-parse text/exit codes.
+> **Lint:** run `govard audit run --checks lint --format json` on the host and read the JSON (phpcs, phpstan, pub/media guard); do not hand-parse text output or exit codes.
 > **Otherwise:** `govard audit run --checks lint --format json` (machine-clean, one JSON on stdout, diagnostics on stderr; text mode capped at 10 and colorized — not for agents).
 
 ## Prerequisites

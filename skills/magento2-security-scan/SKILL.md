@@ -205,20 +205,9 @@ From April 2025, payment pages require:
 
 ## Quick Security Scan
 
-> **Native escape scan when provided:** call it with `{scope:"diff", paths:<changed phtml>}` → {findings[],scannedFiles} with confidence + M2-SEC-xxx, capped 200 (no head -20 truncation). Address high first.
-> **Otherwise:** grep -R "\$_GET|\$_POST|ObjectManager::getInstance" --include="*.phtml" (same patterns the tool uses).
+> **Quick check:** grep -R "\$_GET|\$_POST|ObjectManager::getInstance" --include="*.phtml" over the changed templates. Address high-risk hits first.
 
-Run this for a rapid security assessment. Where provided, prefer the runtime's bounded workspace search tool
-over shell loops — one call per pattern, no silent truncation:
-
-```
-<search tool> { pattern: "execute|fetchAll|->select\\(|insertOnDuplicate", glob: "*.php", path: "app/code/Vendor/Module" }
-```
-
-(Exclude ORM-layer hits — Collection/Repository/ResourceModel class files — when judging results;
-the tool reports path:line:text, capped and flagged when truncated.)
-
-Elsewhere, use the equivalent grep pipelines:
+Run this for a rapid security assessment. Run one grep per pattern and exclude ORM-layer hits (Collection/Repository/ResourceModel class files) when judging results:
 
 ```bash
 # 1. Check for SQL in code

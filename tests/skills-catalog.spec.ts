@@ -82,6 +82,32 @@ describe('skills catalog', () => {
     expect(perPage).toMatch(/test .*\$lock\/owner.*audit_token.*bin\/magento cache:enable/)
   })
 
+  it('domain skills carry no capability conditionals for removed harness tools', async () => {
+    // The harness tool surface for govard (deploy plan/check, lint, query-log stats,
+    // workspace search) was removed; domain skills must name the direct CLI instead of
+    // "a native tool where provided". Forked process skills are excluded (verbatim upstream).
+    const REMOVED_TOOL_PROSE = new RegExp([
+      'native (?:deploy|lint|query-log|stats|workspace search)[\\w\\s/-]*tool',
+      'where provided',
+      'runtime provides a native',
+      'bounded workspace search tool',
+      'native stats (?:tool|streaming)',
+      '<search tool>',
+    ].join('|'), 'i')
+    const entries = (await readdir(SKILLS_DIR)).filter(e => !FORKED.includes(e))
+    for (const entry of entries) {
+      const files = [join(entry, 'SKILL.md')]
+      try {
+        for (const ref of await readdir(join(SKILLS_DIR, entry, 'references')))
+          if (ref.endsWith('.md')) files.push(join(entry, 'references', ref))
+      } catch { /* no references dir */ }
+      for (const file of files) {
+        const raw = await readFile(join(SKILLS_DIR, file), 'utf-8')
+        expect(raw, file).not.toMatch(REMOVED_TOOL_PROSE)
+      }
+    }
+  })
+
   it('keeps public skill content runtime-neutral', async () => {
     const entries = await readdir(SKILLS_DIR)
     // Native-tool proper nouns and harness names. Shapes are deliberately broad
