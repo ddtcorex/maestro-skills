@@ -25,7 +25,7 @@ jobs:
 
   release:
     needs: validate
-    uses: ddtcorex/dsh-maestro-ci/.github/workflows/node-release.yml@22511d64e0dec4e5926388848a347973ec2e3b12
+    uses: ddtcorex/maestro-ci/.github/workflows/node-release.yml@22511d64e0dec4e5926388848a347973ec2e3b12
     with:
       pnpm-version: ""
     secrets:
