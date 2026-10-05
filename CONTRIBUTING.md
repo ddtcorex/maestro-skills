@@ -91,7 +91,7 @@ Do not claim verified/done/clean without having actually run the checks — be r
 1. Push your branch and open a PR into `master`.
 2. Fill out `.github/PULL_REQUEST_TEMPLATE.md` (Summary, Why, Changes, Validation, Linked Issues).
 3. Link the PR to the plan that produced it when the Superpowers workflow was used.
-4. Ensure CI (`pnpm verify` / `pnpm test` / `pnpm build` via `dsh-maestro-ci`) is green.
+4. Ensure CI (`pnpm verify` / `pnpm test` / `pnpm build` via `maestro-ci`) is green.
 
 ## Package Visibility
 
