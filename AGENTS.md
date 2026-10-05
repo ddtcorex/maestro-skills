@@ -17,9 +17,16 @@ Every change to this repository MUST follow the Superpowers skill workflow, in o
 3. **executing-plans** — implement task by task with strict TDD: failing test first,
    verify RED, implement, verify GREEN, then commit that task before starting the next.
 
-Do not skip ahead to implementation or commit while a task's tests are red. Specs and
-plans are working artifacts, not deliverables — describe durable outcomes in the PR
-description instead of committing dated process files.
+Do not skip ahead to implementation or commit while a task's tests are red.
+
+Specs and plans: active work lives at the meta root, in
+`maestro-harness/docs/specs/` and `maestro-harness/docs/plans/`, named
+`YYYY-MM-DD-maestro-skills-<name>.md`. Plans are transient and deleted once the
+batch ships. Once shipped, this repo commits the design record under
+`docs/superpowers/{specs,plans}/`, as the meta-root `AGENTS.md` states. That
+`docs/` directory does not exist in this checkout yet; create it with the first
+record you commit, and never create it for in-progress work. Describe durable
+outcomes in the PR description as well.
 
 ## Git workflow
 
@@ -32,8 +39,8 @@ description instead of committing dated process files.
 ## What this repo is
 
 A dual-ecosystem plugin (`maestro-skills`, npm `@ddtcorex/maestro-skills`)
-bundling 32 skills in two halves: 17 Magento 2 / Govard domain skills written
-here, plus the 15-skill **superpowers process library forked verbatim from
+bundling its skills in two halves: the Magento 2 / Govard domain skills written
+here (`ls skills`, minus the forked names), plus the **superpowers process library forked verbatim from
 [obra/superpowers](https://github.com/obra/superpowers) v6.4.2** (MIT — see
 `THIRD-PARTY-NOTICES.md`). Distributed via self-listing marketplaces for both
 Claude Code and Codex CLI, and as a DeepSeek Harness Cordis plugin. There is no
@@ -76,7 +83,7 @@ both point at the *same* `skills/` directory so neither duplicates content:
   `.agents/plugins/marketplace.json` that self-lists this repo the same way
   (`"source": {"source": "local", "path": "./"}`). Verified end-to-end
   against the real `codex` binary: `codex plugin marketplace add .` then
-  `codex plugin add maestro-skills@ddtcorex` resolves all 32 skills
+  `codex plugin add maestro-skills@ddtcorex` resolves every skill under `skills/`
   with zero copying.
 
 The marketplace top-level `name` is `ddtcorex` and the plugin's `name` is `maestro-skills`,
@@ -89,7 +96,7 @@ its own) — nothing enforces they match automatically.
 
 ### One SKILL.md format, four incompatible project-level paths, two plugin loaders
 
-All 32 skills follow the [Agent Skills standard](https://agentskills.io) (a
+Every skill follows the [Agent Skills standard](https://agentskills.io) (a
 `SKILL.md` file with `name`/`description` YAML frontmatter) — a format Claude
 Code, OpenCode, Codex CLI, and GitHub Copilot all read identically. What
 differs is which directory name each tool scans in a *consuming project* for
@@ -171,15 +178,19 @@ cross-tool-sharing convention along with `compatibility` and `metadata`):
   `magento2-performance-audit`, `magento2-security-scan`,
   `magento2-hyva-dev`, `magento2-frontend-dev`, `magento2-backend-dev`, and
   `magento2-code-review` all declare `depends: [magento2-dev-core]`.
-- `govard-toolbox` is the foundation; `govard-magento` and `govard-laravel`
-  both declare `depends: [govard-toolbox]`.
+- `govard-toolbox` is the foundation; `govard-magento` declares
+  `depends: [govard-toolbox]`, and `govard-laravel`, `govard-symfony` and
+  `govard-wordpress` declare `depends: [govard-toolbox, php-dev-core]`.
+  `php-dev-core` itself declares `depends: [govard-toolbox]`.
+- `maestro-design`, `diagram-studio` and `review-in-worktree` declare no
+  `depends:` field.
 
 When editing a dependency's SKILL.md (`magento2-dev-core`, `govard-toolbox`),
 check whether the change invalidates guidance in the skills that depend on it.
 
 ### Superpowers fork governance
 
-The 15 process skills under `skills/` (brainstorming,
+The process skills under `skills/` (brainstorming,
 diagnosing-superpowers, dispatching-parallel-
 agents, executing-plans, finishing-a-development-branch, receiving-code-review,
 requesting-code-review, subagent-driven-development, systematic-debugging,
@@ -201,7 +212,7 @@ hand-maintained** — they are a verbatim fork of obra/superpowers v6.4.2:
   requirement — never drop `THIRD-PARTY-NOTICES.md`.
 - Skill **name collisions** would shadow across providers: never name a new
   domain skill the same as (or after renaming) a superpowers skill.
-- The ~170–220 words-per-lesson budget below applies to the 17 domain
+- The ~170–220 words-per-lesson budget below applies to the domain
   skills' reference files only, not to forked upstream content.
 
 ### Adding a lesson to a skill reference file
@@ -280,7 +291,7 @@ export CODEX_HOME=$(mktemp -d)
 codex plugin marketplace add .
 codex plugin list --available --json   # confirm maestro-skills@ddtcorex is listed
 codex plugin add maestro-skills@ddtcorex
-codex plugin list --json               # confirm it installed and all 32 skills resolved
+codex plugin list --json               # confirm it installed and every skill resolved
 unset CODEX_HOME                       # the temp dir is disposable -- nothing else to clean up
 
 # install.sh: syntax check and dry test in an isolated scratch dir (never
@@ -373,9 +384,12 @@ manual release step in the GitHub UI.
   frontmatter locally (not even to add `compatibility`); the fork carries no
   content additions (`PRESERVE` in `scripts/sync-superpowers.sh` is empty),
   and the catalog spec asserts forked frontmatter shape stays upstream-clean.
-- **Skill counts are duplicated across README, AGENTS.md, and manifests.**
-  When adding or removing a skill, update every count and the compatibility
-  matrix in the same change — the catalog spec catches frontmatter drift but
-  not prose counts.
+- **Skill lists are duplicated across README and AGENTS.md.** README prose
+  carries no skill counts on purpose (`ls skills` is the truth). When adding or
+  removing a skill, update the README tree and compatibility matrix and the
+  `depends:` chain above in the same change; the catalog spec fails when a
+  shipped domain skill is missing from README or a dependent skill is missing
+  from AGENTS.md. `package.json` and `.dsh-plugin/` descriptions still carry
+  counts and must be kept in step by hand.
 
 - **Always request approval before merge or release:** never merge a PR/MR or publish a release (`git tag`/`pnpm publish`/`gh release`) without an explicit human approval — request review (`gh pr ready` / `gh pr request-review` / ask in chat) and wait for `APPROVED`.
