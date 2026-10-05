@@ -213,7 +213,6 @@ define(['ko'], function () {
 
 ## Layout XML
 
-> **Native layout extraction when provided:** before claiming layout is correct, call it with `{changedFiles:<MR layout files>}` → handles/blocks/moves + templateExists/parseError so you never invent a block name.
 > **Otherwise:** grep -R "referenceBlock|move " --include="*.xml" app/code app/design and tabulate by hand.
 
 ### Reference
