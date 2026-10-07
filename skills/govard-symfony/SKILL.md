@@ -1,7 +1,7 @@
 ---
 name: govard-symfony
 description: |
-  This skill should be used when the user asks to "clear Symfony cache", "run bin/console commands", "run doctrine migrations", "debug Symfony routes", "run Symfony CLI", "govard symfony", "symfony cache:clear", "lint Symfony project", "audit Symfony", "govard audit", "deploy Symfony", or "govard deploy". Provides Symfony-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
+  This skill should be used when the user asks to "clear Symfony cache", "run bin/console commands", "run doctrine migrations", "debug Symfony routes", "run Symfony CLI", "govard tool symfony", "symfony cache:clear", "lint Symfony project", "audit Symfony", "govard audit", "deploy Symfony", or "govard deploy". Provides Symfony-specific Govard shortcuts. DEPENDENT on govard-toolbox for base commands.
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox, php-dev-core]
 metadata:
@@ -17,10 +17,9 @@ Symfony-specific shortcuts and commands for Govard environments.
 
 **REQUIRED BACKGROUND:** Load `govard-toolbox` first — this skill only covers Symfony-specific shortcuts layered on top of Govard's base environment commands (`govard up`, `govard sh`, `govard db`, remote sync, Xdebug setup).
 
-**Docker requirement:** stack commands here (`govard up/down/sh`, `govard db`,
-`govard tool ...`) need Docker. On a host without it they exit `3` with
-`CAPABILITY_MISSING`; `govard audit run --checks integrity` still works and
-covers manifest/lock and Magento module/DI checks without a container.
+**Docker requirement:** stack commands here need Docker; without it they exit
+`3` `CAPABILITY_MISSING`. `govard audit run --checks integrity` is the
+container-free exception — see `govard-toolbox` ## Host Without Docker.
 
 
 For generic PHP (strict_types/PSR-12/PHPStan/Security) see php-dev-core.
@@ -60,7 +59,19 @@ govard tool symfony cache:clear
 govard tool symfony cache:pool:clear cache.app
 ```
 
-Govard's `stack.php_version` (default `8.2` for the Symfony 7 skeleton; Symfony 8 requires `8.4`) determines the PHP runtime; `govard config get stack.php_version` shows the active version. Verified 2026-08-28 on fresh `symfony/skeleton` `7.4.17` (`govard-test-symfony`, PHP 8.2.33, MariaDB 10.11) — bootstrap warns `Cannot use symfony/skeleton v8.1.99 as it requires php >=8.4`.
+Govard's PHP runtime is `stack.php_version`. **Do not assume a number** —
+read it:
+
+```bash
+govard config get stack.php_version   # the series this project runs
+```
+
+A bootstrap warning like `Cannot use symfony/skeleton v8.1.99 as it requires
+php >=8.4` means the resolved PHP is *below* what the skeleton demands: raise
+`stack.php_version` in `.govard.yml` (or `govard config set stack.php_version
+<series>`) and re-run `govard env up`. The per-framework fallback Govard applies
+when a project sets no `php_version` is an internal default, not a contract —
+the merged config plus the running containers are the truth.
 
 ## Routing & Debug
 

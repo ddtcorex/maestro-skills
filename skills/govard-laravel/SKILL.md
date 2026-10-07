@@ -21,10 +21,9 @@ Laravel-specific shortcuts for Govard environments.
 
 **REQUIRED BACKGROUND:** Load `govard-toolbox` first — this skill only covers Laravel-specific shortcuts layered on top of Govard's base commands (`govard up`, `govard sh`, `govard db`).
 
-**Docker requirement:** stack commands here (`govard up/down/sh`, `govard db`,
-`govard tool ...`) need Docker. On a host without it they exit `3` with
-`CAPABILITY_MISSING`; `govard audit run --checks integrity` still works and
-covers manifest/lock and Magento module/DI checks without a container.
+**Docker requirement:** stack commands here need Docker; without it they exit
+`3` `CAPABILITY_MISSING`. `govard audit run --checks integrity` is the
+container-free exception — see `govard-toolbox` ## Host Without Docker.
 
 
 For generic PHP (strict_types/PSR-12/PHPStan/Security) see php-dev-core.
@@ -76,7 +75,13 @@ govard tool artisan tinker
 govard db connect
 ```
 
-Govard `stack.php_version` defaults to 8.4 for Laravel 11; verify with `govard config get stack.php_version` before running fresh migrations.
+Check the PHP series this project actually runs before a fresh migration — the framework's own default can lag what the current Laravel release requires:
+
+```bash
+govard config get stack.php_version
+```
+
+If `composer install` or an artisan command reports a PHP constraint, raise `stack.php_version` and re-run `govard env up`; the per-framework fallback Govard applies when a project sets none is an internal default, not a contract.
 
 ## Queue Operations
 

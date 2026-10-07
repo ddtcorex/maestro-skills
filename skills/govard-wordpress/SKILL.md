@@ -17,10 +17,9 @@ WordPress-specific shortcuts and commands for Govard environments.
 
 **REQUIRED BACKGROUND:** Load `govard-toolbox` first — this skill only covers WordPress-specific shortcuts layered on top of Govard's base environment commands (`govard up`, `govard sh`, `govard db`, remote sync, Xdebug setup).
 
-**Docker requirement:** stack commands here (`govard up/down/sh`, `govard db`,
-`govard tool ...`) need Docker. On a host without it they exit `3` with
-`CAPABILITY_MISSING`; `govard audit run --checks integrity` still works and
-covers manifest/lock and Magento module/DI checks without a container.
+**Docker requirement:** stack commands here need Docker; without it they exit
+`3` `CAPABILITY_MISSING`. `govard audit run --checks integrity` is the
+container-free exception — see `govard-toolbox` ## Host Without Docker.
 
 
 For generic PHP (strict_types/PSR-12/PHPStan/Security) see php-dev-core.
@@ -40,9 +39,20 @@ govard sh
 wp --info
 ```
 
-Govard default for WordPress (verified 2026-08-28 `govard-test-wordpress`): `stack.php_version 8.0` (PHP 8.0.30), `web_root /`, `db mariadb 10.6`. Verify with `govard config get stack.php_version`. Note: request `--framework-version 6` currently installs WP 7.1 (latest); PHP/DB versions are template defaults and may differ per bootstrap.
+Govard's PHP/DB/web-root for WordPress are project values, not framework
+constants — a template default is a starting point, not a guarantee. Read the
+merged config instead of assuming:
 
-Bedrock layout `web/wp/wp-includes/version.php` is auto-detected via `web/wp/wp-includes/version.php` (see `govard-toolbox` for provider details).
+```bash
+govard config get stack.php_version    # PHP series actually in the container
+govard config get stack.db_version     # DB series
+```
+
+`--framework-version <v>` on bootstrap is **pinned, not "latest"**: Govard
+normalises it (`6` → `6.0`) and downloads that exact archive from
+`wordpress.org/wordpress-<v>.tar.gz`. Pin a series you mean; omit the flag to
+track latest. Bedrock layout `web/wp/wp-includes/version.php` is auto-detected
+(see `govard-toolbox` for provider details).
 
 ## Audit
 
@@ -51,7 +61,10 @@ For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4
 ## Cache Management
 
 ```bash
-# Object cache flush (requires installed site; object-cache drop-in else no-op)
+# Object cache flush — needs an installed site: before `wp core install` this
+# returns "The site you have requested is not installed"; after it, the drop-in
+# is present and it prints "Success: The cache was flushed" (a no-op without an
+# object-cache drop-in)
 govard tool wp cache flush  # fresh DB without install returns "The site you have requested is not installed"
 
 # Transients
@@ -61,14 +74,13 @@ govard tool wp transient delete --all
 govard tool wp rocket clean --confirm
 ```
 
-Verified 2026-08-28: `cache flush` succeeds after `wp core install` (`Success: The cache was flushed`), fails pre-install.
-
 No Govard-level `frontend_sync` for WordPress — use `govard tool npm run watch` if the theme uses a build step.
 
 ## Plugin & Theme Management
 
 ```bash
-# List — requires installed site (verified: fresh govard-test-wordpress shows akismet 5.7.2 + hello 1.7.2 after install, fails pre-install)
+# List — needs an installed site; a fresh checkout has no DB yet, so these fail
+# until `wp core install` has run (after it, the default themes and plugins appear)
 govard tool wp plugin list
 govard tool wp theme list
 
@@ -96,7 +108,8 @@ govard tool wp core verify-checksums
 # Search-replace (after domain change, e.g. staging sync)
 govard tool wp search-replace 'https://staging.example.com' 'https://wordpress.test' --all-tables
 
-# Fresh install — Govard bootstrap creates wp-config.php but leaves DB empty (verified 2026-08-28: govard-test-wordpress required manual install)
+# Fresh install — Govard bootstrap creates wp-config.php but leaves the DB empty,
+# so this install step is yours to run, not a red flag
 govard tool wp core install --url=https://wordpress.test --title="Local" --admin_user=admin --admin_email=admin@example.com
 # After install: govard tool wp core is-installed && govard tool wp db query "SHOW TABLES" shows wp_* tables
 ```

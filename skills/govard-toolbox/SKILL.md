@@ -124,15 +124,17 @@ govard deploy unlock production [--force]       # lock left by an interrupted ru
 
 Capabilities: `plan`/`build` need nothing; `check`, `releases`, `status` and `unlock` need `ssh`; `deploy`/`rollback` also `rsync`; `sandbox *` alone needs Docker. A missing runtime is exit `3` `CAPABILITY_MISSING`, never a half-run. Recover a failed run with `--resume` (or `--from <task>`), never by unlocking and starting over. Resume adopts a recorded *migrate* verdict without re-probing; a recorded *skip* is discarded and re-probed; prior-`ok` steps are not repeated.
 
-**Topology.** Project-wide defaults live in a `deploy:` block (`repository`, `branch`, `publish`, `deploy_path`); per-remote overrides live ONLY under `remotes.<name>.deploy:` — the flat keys (`remotes.<name>.branch|repository|publish|deploy_path`) were removed and the loader rejects them (exit 4, e.g. `remotes.staging: "branch" was removed; move it under remotes.staging.deploy.branch`). Unset `deploy_path` probes the target, adopted only when exactly one layout candidate matches.
+**Conditional migrate (Magento only).** Before the downtime block the recipe
+probes `cd {{release_path}} && {{php_bin}} bin/magento setup:db:status`: exit 0
+skips `maintenance:enable`, `app:workers:pause`, `app:config:import`,
+`db:migrate`, `app:workers:resume`, `maintenance:disable`
+(`db up-to-date (probe exit 0)`); 1/2 runs them; any other exit fails the deploy.
+Always-run: `build:compile`, `app:cache:flush`, `db:backup`. Laravel, Symfony and
+WordPress have no probe — their migrate steps always run.
 
-**Conditional migrate (Magento only).** Before the downtime block the recipe probes `cd {{release_path}} && {{php_bin}} bin/magento setup:db:status`: exit 0 skips `maintenance:enable`, `app:workers:pause`, `app:config:import`, `db:migrate`, `app:workers:resume`, `maintenance:disable` (`db up-to-date (probe exit 0)`); 1/2 runs them; any other exit fails the deploy. Always-run: `build:compile`, `app:cache:flush`, `db:backup`. Laravel/Symfony/WordPress have no probe — their migrate steps always run.
+**Topology.** Project-wide defaults live in a `deploy:` block (`repository`, `branch`, `publish`, `deploy_path`); per-remote overrides live ONLY under `remotes.<name>.deploy:` — the flat keys were removed and the loader rejects them (exit 4, e.g. `remotes.staging: "branch" was removed; move it under remotes.staging.deploy.branch`). Unset `deploy_path` probes the target, adopted only when exactly one layout candidate matches.
 
-What the target runs comes from the framework **recipe** — Magento 2, Mage-OS (inherits it), Laravel, Symfony and WordPress ship one; any other framework gets the neutral pipeline with the application steps empty, filled by `deploy.hooks`.
-
-**Build modes.** `--build=auto` resolves by presence (an artifact directory means the build already happened); `server` builds on the target; `artifact` skips the five build tasks the artifact replaces, except those a recipe marks *needs the application*, which always run on the target. `govard deploy build --output <dir>` makes the artifact.
-
-**Backups.** `--db-backup` defaults off; when on, the dump lands in `shared/backups/deploy/<n>/` before the first database-mutating task, and `rollback --with-db` restores it. Magento and WordPress have a dump; **Laravel and Symfony do not**, so `--db-backup` on them is refused before the run starts (exit 4), naming the recipe.
+What runs on the target comes from the framework **recipe**; `--build=auto|server|artifact` decides who builds, and `govard deploy build --output <dir>` makes the artifact. `--db-backup` defaults off; when on, the dump lands in `shared/backups/deploy/<n>/` and `rollback --with-db` restores it. Which frameworks ship a dump — and therefore refuse `--db-backup` up front (exit 4) — is per-framework: see the framework skill.
 
 ```bash
 # Rehearse the whole thing against a container playing the target
@@ -145,7 +147,10 @@ Sandbox lists come from the recipe; `deploy.settings.sandbox_{packages,extension
 
 > **Deploy preflight:** `govard deploy plan [remote]` is read-only and never connects (`--json` for machine-readable output); `govard deploy check [remote]` connects over ssh and leaves nothing behind on the target: its `mv -T` probe creates a `.dep` scratch directory there and removes it again. Both accept `--build`, `--artifact-dir`, `--branch`, `--revision` and `--tag`; `check` prints human text only. Run them on the host.
 
-Per-framework detail: `govard-magento`, `govard-laravel`, `govard-symfony`, `govard-wordpress`. Full reference: <https://govard.ddtcorex.com/workflows/deployment>.
+Per-framework detail (recipes, the conditional-migrate probe, and each
+framework's own step table): `govard-magento`, `govard-laravel`,
+`govard-symfony`, `govard-wordpress`. Full reference:
+<https://govard.ddtcorex.com/workflows/deployment>.
 
 ## Host Without Docker
 
@@ -167,8 +172,12 @@ govard capabilities --json   # machine-readable, schema_version 1
 - Container-free analysis: `govard audit run --checks integrity --format json`
   runs Go analyzers on the checkout — no Docker, no PHP, no toolchain. It
   reports composer manifest/lock problems and Magento module/DI wiring problems
-  (`govard-integrity` findings). `--checks lint` still needs Docker and, without
-  it, exits `3` pointing at `--checks integrity`.
+  (`govard-integrity` findings). **`--checks lint` still needs Docker** and,
+  without it, exits `3` pointing at `--checks integrity`.
+  Xdebug is orthogonal to the container: on a host with `stack.features.xdebug`
+  on, this command refuses to start and asks for `--allow-xdebug` (the same
+  message `govard verify` gives). Pass the flag or turn Xdebug off — it is not a
+  capability failure and the exit code is not `3`.
 - Commands that forward their arguments (`govard tool php ...`,
   `govard redis cli ...`) cannot parse `--error-json`; their exit codes are
   unchanged.
