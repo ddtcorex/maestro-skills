@@ -169,16 +169,16 @@ item:
 
 | Group | Commands | Verified by |
 |---|---|---|
-| Host and diagnostics | `doctor` (+ `trust`), `diag`, `status`, `capabilities`, `version`, `completion *` | P1 items, `diag --json` |
+| Host and diagnostics | `doctor` (+ `trust`, which needs sudo and skips without it), `diag`, `status`, `capabilities`, `version`, `completion *`, `gateway status`, `audit toolchain status`, `sandbox status` | P1 items; `diag --json` by hand |
 | Lifecycle | `env up/down/ps/logs/restart/exec/run/cp/build/cleanup`, `up`, `down`, `ps`, `logs`, `restart`, `shell`, `sh` | P2 items, by hand for the rest |
-| Config and locking | `config get/set/auto/profile *`, `lock generate/check/diff`, `domain add/list/remove`, `blueprint cache *`, `custom list` | P1/P2/P5 items cover `config get/auto` and `lock`; `config set`, `domain *`, `config profile *` by hand |
+| Config and locking | `config get/set/auto/profile *`, `lock generate/check/diff`, `domain add/list/remove`, `blueprint cache *`, `custom list` | items cover `config get/auto/profile`, `lock`, `domain list` and `custom list`; `config set`, `domain add/remove`, `config profile apply/switch/clear` by hand |
 | Database | `db connect/query/info/dump/import/top` | by hand (local); see Remote coverage for `-e` |
 | Snapshots | `snapshot create/list/restore/export/pull/push/delete` | P4/P5 items cover create, list, restore and `--help` of export/pull; push and delete by hand |
 | Services | `redis *`, `valkey`, `elasticsearch`, `opensearch`, `rabbitmq`, `varnish *`, `svc up/sleep/wake` | partial: P4 probes redis and search; run the rest against a stack that enables the service |
 | Browser and IDE | `open <target>`, `debug on/off/status/shell`, `frontend start/stop/logs`, `vscode *` | P2/P3 cover `open --help`, `debug status`, `frontend start`; the IDE shims mean nothing in CI |
 | Audit | `audit run/diff/rerun/status/result/cleanup`, `audit toolchain status/pull/build` | P3/P5 items cover run, rerun, status, result; toolchain and cleanup by hand |
 | Host without Docker | `audit run --checks integrity`, `capabilities`, `doctor` | exit `3` `CAPABILITY_MISSING` is the expected result of a Docker-needing command |
-| Project registry | `project list/open/orphans/delete`, `desktop doctor`, `self-update`, `upgrade` | by hand; `project delete`, `self-update` and `upgrade` mutate shared or project state |
+| Project registry | `project list/open/orphans/delete`, `desktop doctor`, `self-update`, `upgrade` | `project orphans` has an item; the rest by hand, and `project delete`, `self-update` and `upgrade` mutate shared or project state |
 
 ### Framework-specific surfaces
 
@@ -232,22 +232,19 @@ behavior disagree.
 ## Remote coverage
 
 The remote-reaching commands are those whose `requires` contains `ssh`, `rsync`
-or `cloudflared` in `govard capabilities --json`. The checklist covers the read
-surface and plans, never the write surface:
+or `cloudflared` in `govard capabilities --json`. The checklist reaches them
+through `--remote <name>`; use `--remote sandbox` (see below) so no real host is
+needed.
 
-| Command | Item | Note |
+| Command | Reached by | Note |
 |---|---|---|
-| `govard remote test` | remote probe | one remote, whichever `--remote` names |
-| `govard remote audit tail` / `stats` | audit tail item | |
-| `govard remote list` | remote list item | the inventory the probe items assume |
-| `govard sync` | sync plan items | `--plan` only; never a real transfer |
-| `govard deploy plan` | deploy plan item | `--json`, renders the task plan without connecting |
-| `govard deploy status` | deploy status item | human output on purpose: `deploy status --json` exits **0** on an unreachable remote, so the `--json` form is a false green |
-| `govard deploy releases` | deploy releases item | `--json` |
-| `govard deploy check` | none | connects, and leaves nothing behind |
-| `govard deploy` / `rollback` / `unlock` | none | writes; never run against a shared remote from a checklist |
-| `govard remote add` / `copy-id` / `exec` | none | |
-| `govard tunnel start` | none | `tunnel status` and `stop` act on one recorded pid and need no `cloudflared` |
+| `remote test`, `remote list`, `remote exec`, `remote audit tail/stats` | probe rows | `remote exec` runs `hostname` only; the audit log is global, so its counts include other projects |
+| `sync` | `--plan` rows (db, file, media, full) | never a real transfer from the checklist |
+| `deploy plan`, `deploy releases`, `deploy status`, `deploy check` | read rows | `deploy status` uses human output on purpose: `deploy status --json` exits **0** on an unreachable remote, so the `--json` form is a false green |
+| `deploy` | rehearsal row, `REMOTE-WRITE` | runs only with `--allow-remote-write`; point it at the sandbox |
+| `deploy rollback`, `deploy unlock` | `--help` rows only | the real thing is a manual step, see below |
+| `bootstrap -e <remote>` | plan rows, plus two `REMOTE-WRITE` rows | the write rows need `--allow-remote-write` |
+| `remote add`, `remote copy-id`, `tunnel start` | none | by hand; `tunnel status` and `stop` act on one recorded pid and need no `cloudflared` |
 
 Several surfaces reach a remote while declaring only `docker`, so they are
 invisible to the capability table and to the checklist: `db <sub> -e <remote>`
@@ -255,43 +252,86 @@ invisible to the capability table and to the checklist: `db <sub> -e <remote>`
 `open <target> -e <remote>`, `bootstrap -e <remote>`, `sandbox <sub>` and
 `verify --remote <name>`.
 
-### Required verifications the checklist does not perform
+### Verify remote commands against the sandbox
 
-Run these by hand before trusting a remote workflow:
+`govard sandbox up` runs a container that plays a production target over real
+SSH and rsync, and `sandbox` resolves as a remote name while it runs. It is the
+only honest end-to-end check of the remote commands without a real host, and
+every write lands in a disposable container. The sandbox mirrors the project's
+git repository, so the project must be a git repo with the work committed.
 
 ```bash
-# Deploy lifecycle: read the plan first, never write to a shared remote
-govard deploy plan   --remote <r> --build auto
-govard deploy check  --remote <r>                  # read-only; its mv -T probe creates .dep and removes it
-govard deploy status --remote <r>
-govard deploy releases --remote <r>
-govard deploy unlock --remote <r> --help           # the recovery path exists
-govard deploy rollback --remote <r> --help         # and what it would restore
-
-# Sandbox rehearsal: the only end-to-end deploy test
-govard sandbox up --profile full --docroot symlink
-govard deploy --remote sandbox --yes
-govard sandbox down --purge                        # container, image, key, mirror
-
-# Remote DB and snapshots
-govard db dump   -e <r> --file /tmp/r.sql.gz --no-pii   # check the prefix filter against the live target
-govard db info   -e <r>                                  # and that a write is refused where protection is on
-govard snapshot create <name> -e <r> && govard snapshot list -e <r>
-govard snapshot restore <name> -e <r>                    # restore is the risky half
-
-# Remote execution and tunnel
-govard remote list && govard remote test <r> && govard remote exec <r> -- hostname
-govard tunnel status && govard tunnel start && govard tunnel stop
-
-# Files and framework routes
-govard sync -s <r> --db --no-noise --plan && govard sync -s <r> --file --path <dir> --plan
-govard open admin -e <r>        # Magento probes the route; the other frameworks do not
-govard open sftp  -e <r>        # confirm the media path per framework
+govard env up
+govard sandbox up --profile full          # seeds once from the running origin env; see SANDBOX.md for traps
+govard verify --phase 1 --json
+govard verify --phase 2 --remote sandbox --allow-remote-write --json
+govard verify --phase 3 --json            # add --allow-xdebug when the project enables Xdebug
+govard verify --phase 4 --remote sandbox --json   # must record a restorable snapshot
+govard verify --phase 5 --allow-destructive --json
+govard sandbox down --purge
 ```
 
-Remote media paths differ per framework (`pub/media` on Magento 2, `public/media`
-on Laravel and Symfony, `wp-content/uploads` on WordPress): confirm the path in
-`deploy plan` before a media sync.
+Order matters. The phase-2 rehearsal deploy is what gives the sandbox a release.
+The clone-bootstrap row in the same phase runs before it, so on a fresh sandbox
+it can fail on rsync until a release exists (run the rehearsal deploy once by
+hand first). Several phase-4 rows also read a deployed target: `sync --db` plans, `remote exec`
+and the DB probes fail on a fresh sandbox until a release exists. If the
+rehearsal row is red, expect those rows to fail as a cascade and fix the deploy
+first. A row's JSON `evidence_excerpt` keeps only the head of the output, so
+re-run a red row by hand to see its tail. A deploy to a fresh sandbox also needs the framework's shared files
+seeded (see the framework skill: `shared/.env` for Laravel, `shared/.env.local`
+for Symfony, `shared/wp-config.php` for WordPress), or it fails at the migrate
+step and keeps its lock.
+
+### Remote commands the checklist does not run
+
+Run these by hand against the sandbox (never a shared remote):
+
+```bash
+# Deploy lifecycle
+govard deploy --remote sandbox --yes && govard deploy releases --remote sandbox
+govard deploy --remote sandbox --yes --force        # a second release
+govard deploy rollback --remote sandbox --yes       # back to the previous release
+govard deploy unlock --remote sandbox --force       # after an interrupted run
+govard deploy --remote sandbox --resume
+
+# Data movement: plan first, then the real transfer
+govard sync -s sandbox --db --plan && govard sync -s sandbox --db --yes
+govard sync -s sandbox --file --path <dir> --yes
+govard sync -s sandbox --media --plan               # confirm the media path per framework
+govard bootstrap -e sandbox --plan
+
+# Remote DB, snapshots and execution
+govard db dump -e sandbox --local --no-pii --no-noise   # then grep the dump for user tables
+govard db info -e sandbox
+govard snapshot create <name> -e sandbox && govard snapshot list -e sandbox
+govard remote exec sandbox -- hostname
+```
+
+What this exercise established, so a run can be judged against it:
+
+- `deploy` on an unchanged revision is a no-op (exit 0, "already deployed");
+  pass `--force` to rehearse. `--db-backup` is accepted or refused per
+  framework recipe.
+- `deploy --resume` continues the newest unfinished release but does not redo
+  steps already marked done, so a fix that belongs to an earlier step needs
+  `deploy unlock --force` and a fresh deploy. `unlock --force` clears the lock,
+  not maintenance mode.
+- `db dump -e <remote> --file <path>` writes the file **on the remote**; use
+  `--local` to land it on the host. Verify `--no-pii` / `--no-noise` on the dump
+  itself: the table-prefix filter is honored for remote dumps only on frameworks
+  that detect a prefix, so a remote WordPress dump can still contain user tables.
+- `snapshot create -e <remote>` stores the snapshot on the target, inside the
+  release directory it resolved, so it disappears when that release is pruned.
+- `sync --media` on a framework whose media directory does not exist on the
+  target can print an rsync error and still exit 0: read the output, not only
+  the exit code.
+- `open <target> -e sandbox` does not resolve the synthetic remote (it accepts
+  configured remotes only), and `sandbox ssh` opens an interactive shell only:
+  use `remote exec sandbox -- <cmd>` for commands.
+- Remote media paths differ per framework (`pub/media` on Magento 2,
+  `public/media` on Laravel and Symfony, `wp-content/uploads` on WordPress):
+  confirm the path in the plan before a media sync.
 
 ## Output contract
 
@@ -351,12 +391,12 @@ prints a single document.
 
 ```
 1. govard verify --phase 1 --json     -> parse JSON, render P1, fix if FAIL
-2. govard verify --phase 2 --plan --json -> show the plan, ask confirm, then run with --remote <r> if one is named
+2. govard verify --phase 2 --plan --json -> show the plan, ask confirm, then run with --remote sandbox --allow-remote-write (or a named remote without the write flag)
 3. govard verify --phase 3 --json     (Magento-gated rows report as skipped elsewhere; the framework's declared items run instead)
 4. govard verify --phase 4 --json     -> the snapshot item must record a restorable snapshot
 5. gate: no phase-4 artifact (mode run, this project) -> block P5
 6. govard verify --phase 5 --allow-destructive --json -> destructive last, after the snapshot
-7. work through "Command coverage" for what no phase reaches, then "Required verifications" for the remote surfaces
+7. work through "Command coverage" for what no phase reaches, then "Remote commands the checklist does not run" against the sandbox
 ```
 
 Evidence before claim: read `exit_code`, `duration_ms` and `status` from

@@ -126,14 +126,14 @@ govard tool wp db query "SHOW TABLES"
 govard tool wp db export --add-drop-table
 ```
 
-**Privacy filters need `table_prefix` set.** `--no-noise` and `--no-pii` exclude WordPress tables by name (`users`, `usermeta`, `comments`, `commentmeta` for PII; a few cache/log tables for noise) with the project's `table_prefix` prepended. Govard does not read the prefix from `wp-config.php` for WordPress: with `table_prefix` unset in `.govard.yml` the filters match nothing and **`wp_users` is dumped in full**. Set it once and re-check:
+**Privacy filters need `table_prefix` set, and a remote ignores it.** `--no-noise` and `--no-pii` exclude WordPress tables by name (`users`, `usermeta`, `comments`, `commentmeta` for PII; a few cache/log tables for noise) with the project's `table_prefix` prepended. Govard does not read the prefix from `wp-config.php` for WordPress. On a **local** dump the filters match only after `govard config set table_prefix wp_`; without it `wp_users` is dumped in full. Against a **remote** (`db dump -e <remote>`, `sync -s <remote> --db`, `bootstrap`, `db import --stream-db`) the configured `table_prefix` is not applied at all for WordPress: the filters name the unprefixed tables (`users`, `comments`), match nothing, and `wp_users` and `wp_comments` come through even with the prefix set.
 
 ```bash
 govard config set table_prefix wp_
 govard config get table_prefix
 ```
 
-Verify any "sanitized" dump before sharing it (for example `grep -c 'INSERT INTO `wp_users`' backup.sql` must be 0).
+So never trust `--no-pii` on a WordPress remote. Verify every "sanitized" dump before sharing it (`grep -c 'INSERT INTO `wp_users`'` must be 0), and prefer importing first, then dumping locally with the prefix set. `db dump -e <remote> --file <path>` writes `<path>` on the **remote**; add `--local` to stream the dump into the project's `var/` directory.
 
 ## Environment
 
@@ -165,12 +165,25 @@ The remote needs a branch (`--branch`, `--revision`, `--tag`, or a configured `b
 
 Three steps are **hybrids**: `wp` when the target has wp-cli, a `wp-load.php` PHP bootstrap when it does not.
 
-- **Seed `shared/wp-config.php` before the first deploy.** `deploy:shared` links a shared entry only when it already exists, so an unseeded `shared/` leaves the release with the repository's `wp-config.php`, the one naming the development database. The release then fails at `db:migrate` ("Error establishing a database connection"), and the lock and release directory are kept; continue with `govard deploy --remote <name> --resume` or clear the lock with `govard deploy unlock`.
-- Maintenance writes `time() + 86400`, not WordPress's own `time()`: a flag older than ten minutes expires, so a longer window would silently reopen the site mid-migration. The drop-in carries a marker, so a project's own maintenance page is kept.
-- `--db-backup` needs **wp-cli on the target**: `wp db export`/`wp db import` have no `wp-load.php` fallback.
+- **Seed `shared/wp-config.php` before the first deploy.** `deploy:shared` links a shared entry only when it already exists, so an unseeded `shared/` leaves the release with the repository's `wp-config.php`, the one naming the development database. The first run fails at `db:migrate` ("Error establishing a database connection"), and the lock and release directory are kept. **Seeding afterwards does not repair that release:** `--resume` skips `deploy:shared` as already done (and `--from` does not re-run it), so link the shared file into the release by hand (`ln -sfn <deploy_path>/shared/wp-config.php <release>/wp-config.php`) before resuming, or start a fresh release. In one resumed run the unlinked release passed `db:migrate` and was **activated** before `app:cache:flush` failed with the same connection error, so an unseeded release can go live.
+- `deploy:check` refuses a verify URL that redirects. A database copied from another environment keeps that environment's `siteurl`, so WordPress answers the verify URL with a 301 and the preflight stops. Point `siteurl`/`home` at the target URL (`wp option update`), or set `deploy.verify.follow_redirects: true`.
+- Maintenance writes `time() + 86400`, not WordPress's own `time()`: a flag older than ten minutes expires, so a longer window would silently reopen the site mid-migration. The drop-in carries a marker, so a project's own maintenance page is kept. A deploy that fails after `maintenance:enable` leaves the flag and the lock behind; `--resume` (after `deploy unlock --force` if the lock is fresh) finishes the release and removes the flag.
+- `--db-backup` needs **wp-cli on the target**: `wp db export`/`wp db import` have no `wp-load.php` fallback. Without wp-cli the deploy stops at `db:backup` and exits `127` (the failing command's status, not the documented `1`). Without the flag the `db:backup` row still prints a green tick but dumps nothing. With it the dump lands in `shared/backups/deploy/<release>/dump.sql`.
+- `deploy rollback --with-db` restores the dump recorded by the release after the rollback target, and refuses (exit `1`) when that release has none, for example the newest one.
+- `deploy unlock` refuses a fresh lock without `--force`. `deploy --resume` with nothing unfinished starts a new release, and says "already runs ... nothing to do" when the revision is already live (use `--force`).
 - In artifact mode the only build step is the guarded `composer install`; the database steps still run on the target.
 - Shared: `wp-config.php` (file), `wp-content/uploads` (dir); writable: `wp-content/{uploads,cache,upgrade,languages}`.
-- `govard sandbox up` gives a disposable PHP target with wp-cli, a MySQL client, the usual PHP extensions and `mariadb` + `redis-server`, so a deploy can be rehearsed locally with `govard deploy --remote sandbox --yes`. As above, seed `shared/wp-config.php` or the rehearsal fails at `db:migrate`.
+
+### Rehearsing on the sandbox
+
+`govard sandbox up` gives a disposable target with wp-cli, a MySQL client, the usual PHP extensions and `mariadb` + `redis-server`, so a deploy can be rehearsed with `govard deploy --remote sandbox --yes`. The origin environment must be running to seed.
+
+- `--profile full` probes its database with `mysqladmin`, which the newer MariaDB image does not ship (only `mariadb-admin`). A stack on that image fails with "the sandbox database ... never answered" (exit `127`); pass `--db mariadb:<older series>` (after `sandbox down --purge`, because the volume refuses an older engine) or use `--profile php`. A seed that produces no shared tree can also stop at `chown ... .deployer: No such file`; a second `up` then succeeds without re-seeding.
+- The seed copies the database but writes no `wp-config.php` and no shared tree for WordPress. Seed `shared/wp-config.php` yourself (the sandbox database user keeps the origin credentials; set `DB_HOST` to `localhost`), over `ssh -p <port> -i .govard/sandbox/id_ed25519 deployer@127.0.0.1`.
+- `sandbox ssh` is interactive only and takes no command. Use `govard remote exec sandbox -- <cmd>`, which fails on the dangling `current` until the first deploy and again after `sandbox reset` (reset also wipes `shared/`, so re-seed `wp-config.php`).
+- `govard remote exec`, `remote test`, `deploy plan|check|status|releases|rollback|unlock`, `db dump -e sandbox`, `snapshot create|list -e sandbox` and real `sync -s sandbox` (`--db`, `--file --path wp-content/themes`, `--media` which maps to `wp-content/uploads`) all work against it. `sync -s sandbox --db` needs a deployed `wp-config.php` on the target to detect credentials.
+- `snapshot create -e <remote>` writes into `<current>/.govard/snapshots/` inside the served release, so the next deploy leaves it behind in the previous release directory.
+- `govard open admin` opens `/admin`, not `/wp-admin` (local and remote), and `open admin -e sandbox` is refused as an unknown remote because `open` does not resolve the synthetic name; use a configured remote.
 
 Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> and <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-11-wordpress>.
 
@@ -185,15 +198,15 @@ govard tool wp rewrite flush
 govard tool wp cache flush
 ```
 
-### Sync from Staging (privacy-safe)
+### Sync from Staging
 
-Set `table_prefix` first (see Database), then:
+`--no-pii` and `--no-noise` do not protect `wp_users` against a remote (see Database), so treat the copy as containing real users:
 
 ```bash
-govard bootstrap --clone -e staging --no-pii --no-noise --yes
+govard bootstrap --clone -e staging --yes     # --yes (or -y) is required non-interactively
 # or DB-only
-govard sync -s staging --db --no-pii --no-noise
+govard sync -s staging --db
 govard tool wp search-replace 'https://staging.example.com' 'https://<project-domain>' --all-tables
 ```
 
-Preview any of these with `--plan` first (`govard sync ... --plan`, `govard bootstrap ... --plan`); `sync --db --plan` still probes the remote over ssh for DB credentials.
+A `bootstrap -e <remote>` run rewrites `siteurl`/`home` to the local domain after the import. Preview any of these with `--plan` first (`govard sync ... --plan`, `govard bootstrap ... --plan`); `sync --db --plan` still probes the remote over ssh for DB credentials. The clone plan lists Magento-only excludes (`app/etc/env.php`, `pub/static`) that mean nothing for WordPress.
