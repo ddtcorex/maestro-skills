@@ -146,11 +146,14 @@ Flags: `--phase 0..5` (0 = all), `--json`, `--plan`, `--allow-destructive`
 (alias `--yes`), `--allow-xdebug`, `--lint-jobs`, `--timeout auto|0|<dur>`,
 `--checks lint,profiler`, `--base <ref>`, `--remote <name>`, `--project <path>`.
 
-**Only `--base`, `--allow-xdebug` and `--allow-destructive` change what runs.**
-`--checks`, `--lint-jobs` and `--timeout` are accepted and ignored — `opts.Checks`,
-`opts.LintJobs` and `opts.Timeout` are threaded into the argv of the items that run
-the lint check (P3-10, P3-11, P3-13, P3-14, P5-04), and each records the resolved
-argv as the first line of its evidence excerpt. Two deliberate details:
+**Only `--base`, `--allow-xdebug` and `--allow-destructive` change *which
+rows* run.** `--checks`, `--lint-jobs` and `--timeout` change *what those rows
+execute* — they are accepted and threaded, not ignored (this line used to claim
+the opposite; #472 is closed and the code agrees with the paragraph below):
+`opts.Checks`, `opts.LintJobs` and `opts.Timeout` are threaded into the argv of
+the items that run the lint check (P3-10, P3-11, P3-13, P3-14, P5-04), and each
+records the resolved argv as the first line of its evidence excerpt. Two
+deliberate details:
 `--lint-jobs` is **not** forwarded at verify's own default (4), so `audit run`
 keeps its host-tuned worker count — the literal `4` is the one inexpressible value;
 and `--timeout` falls back per item (`auto` for the phase-3 lint rows, `0` for
@@ -165,10 +168,20 @@ a true dry run: `RunPhase` never calls an item's `Run` in plan mode and records
 is marked skipped **before** the plan stub, so plan mode still reports the gate.
 
 An item never picks a remote for itself. Every remote-naming item takes the name
-from `--remote` and nothing else, and a run without one **skips** those rows with
-`no --remote named: this item contacts a remote` — there is no `staging` fallback
-left in the registry. Pass `--remote` explicitly to run them; the two rows that
-write through a remote also need `--allow-remote-write`.
+from `--remote` and nothing else, and a **run** without one **skips** those rows
+with `no --remote named: this item contacts a remote` — there is no `staging`
+fallback left in the registry. Pass `--remote` explicitly to run them; the two
+rows that write through a remote also need `--allow-remote-write`.
+
+That skip is **run-mode only**, and it is worth knowing why before reading a
+plan as a gate report. The no-remote decision lives in `withRemote`, *inside*
+`Run`, so plan mode replaces `Run` with a stub and never reaches it: a
+`--plan` run without `--remote` reports P4-01/P4-13 as ordinary
+`exit_code: 0` plan stubs, not as skipped rows. Only `GuardRemoteWrite` and
+`GuardDestructiveLocal` are visible in plan mode, because `DecideGuard` is
+applied to the item before the plan stub. P2-05 and P2-08 are the rows that show
+this: in `--plan` they carry their `REMOTE-WRITE` reason while P4-01 beside
+them does not.
 
 ## Gates
 
@@ -216,9 +229,57 @@ discover a module under `app/code` and audit it with `audit run --path`).
 `P4-05`, `P4-06` and `P4-07` titled 3–4 invocations while running 1; their titles have
 been corrected since.
 
+## Local coverage
+
+The remote section below measures the checklist against what reaches a remote.
+**The larger gap is the other side**: on govard v1.78.0 `govard capabilities
+--json` reports **143 unique local command rows**, and only **29** are reached by
+an item's own argv. Count a row covered only when some `execGovard(ctx, cfg,
+opts, …)` call site — in `registry.go` or in a framework's `VerifyToolItems`,
+which `RegistryFor` turns into `tool <Tool> <Args…>` — begins with exactly that
+command's words. Grepping for a command name instead overstates coverage: it
+calls `tool artisan` and `audit rerun` uncovered when P3-LAR-01…03 and P3-15 run
+them.
+
+| Command | What an item would prove |
+|---|---|
+| `govard capabilities` | the manifest every table here is measured against |
+| `govard audit toolchain status` | lint image present, `Context digest` matching the build — SKILL.md requires this after `make build`, no item does it |
+| `govard config profile` | which profile layer is active, before touching a drifting `.govard.yml` |
+| `govard lock diff` | drift between the stack and `govard.lock` (exit 1 with no lock file is evidence, not a defect) |
+| `govard domain list` | the domains this project actually serves |
+| `govard project orphans` / `list` | containers outside the registry; registry entries whose checkout is gone |
+| `govard custom list` | the plugin contract resolves, or silently contributes nothing |
+| `govard gateway status` | the SSH bastion is up and holding its allowlist |
+
+All read-only, safe in any phase. Uncovered rows by group, largest first: `tool`
+11, `audit` 8, `vscode` 7, `config` 6, `sandbox` 6, then six groups of 4.
+
+Still absent on purpose: the **local write** surface (`config set`,
+`domain add`/`remove`, `env cleanup`, `audit cleanup`, `svc sleep`,
+`project delete`, `debug on`/`off`, `snapshot delete`) needs a phase-5 item plus
+`GuardDestructiveLocal`; the **IDE shims** (`vscode php`, `composer`,
+`phpstan`, `phpcs`, `phpunit`, `setup`) mean nothing in CI; and the other `tool`
+shims (`drush`, `grunt`, `magerun`, `shopware`, `dagster`, `npx`, `pnpm`, `yarn`)
+belong in a framework's `VerifyToolItems`, not the core registry.
+
+### `govard capabilities` reports duplicated rows
+
+`--json` emits **157** rows but only **148** distinct commands: `redis`,
+`redis cli`, `redis flush`, `redis info`, `valkey`, `elasticsearch`,
+`opensearch`, `varnish` and `rabbitmq` each appear twice, both with
+`requires: docker`. The cause is registration, not reporting — `internal/cmd/env.go`
+adds the same six `*cobra.Command` pointers that `root.go` already added, so
+`walkCommandTree` reaches each one through two parents and the walk emits one
+row per path. `govard env redis` resolves, so the alias is intentional; only the
+manifest is affected.
+
+Count distinct `command` values before quoting a row total. Any table here that
+says "N command rows" means unique commands.
+
 ## Remote coverage
 
-`govard capabilities --json` reports **18** command rows whose `requires`
+`govard capabilities --json` reports **12** command rows whose `requires`
 contains `ssh`, `rsync` or `cloudflared`. The checklist covers **8** of them —
 four read-only probe items in phase 4 close the deploy read surface:
 
@@ -238,13 +299,15 @@ four read-only probe items in phase 4 close the deploy read surface:
 | `govard remote add` | ssh,rsync | — | **none** |
 | `govard remote copy-id` | ssh,rsync | — | **none** |
 | `govard remote exec` | ssh,rsync | — | **none** |
-| `govard tunnel`, `tunnel start`, `tunnel status`, `tunnel stop` | cloudflared | — | **none of the four** |
+| `govard tunnel start` | cloudflared | — | **none** |
 
-The four new items carry `Guard: "READ-ONLY-REMOTE"` like P4-01…P4-07, and that
+The four new items carry `Guard: "REMOTE-PROBE"` like P4-01…P4-07, and that
 label is enforced by the runner (see "Gates"). Deploy
-**writes** (`deploy`, `deploy rollback`, `deploy unlock`) and the whole **tunnel**
-surface stay absent: 10 of the 18 rows, and the surfaces where a mistake is
-expensive.
+**writes** (`deploy`, `deploy rollback`, `deploy unlock`) and `tunnel start`
+stay absent: 4 of the 12 rows, and the surfaces where a mistake is expensive.
+`tunnel status` and `tunnel stop` no longer belong in this table at all — since
+#503 the group declares `CapNone` and only `start` re-declares `cloudflared`,
+because `stop` signals one recorded pid and `status` reads one record.
 
 Six more surfaces reach a remote while declaring only `docker`, so they are
 invisible to the capability table *and* to the checklist:
@@ -269,7 +332,7 @@ refuses to touch.
 ```bash
 # Deploy lifecycle — read the plan first, never write to a shared remote
 govard deploy plan   --remote <r> --build auto     # covered by P4-13 (the item adds --json)
-govard deploy check  --remote <r>                  # leaves nothing behind: its mv -T probe creates .dep and removes it (#468)
+govard deploy check  --remote <r>                  # read-only; its mv -T probe creates .dep and removes it (#468)
 govard deploy status --remote <r>                  # covered by P4-14 (lock holder + live release)
 govard deploy unlock --remote <r> --help           # recovery path exists at all
 govard deploy releases --remote <r>                # covered by P4-15 (what rollback could target)
@@ -281,15 +344,15 @@ govard deploy --remote sandbox --yes               # the only end-to-end rehears
 govard sandbox down --purge                        # container, image, key, mirror
 
 # Remote DB and snapshots
-govard db dump   -e <r> --file /tmp/r.sql.gz --no-pii   # check the prefix filter (#471)
-govard db info   -e <r>                                  # and `db import -e <r>` protection (#466)
+govard db dump   -e <r> --file /tmp/r.sql.gz --no-pii   # check the prefix filter against the live target
+govard db info   -e <r>                                  # and that a write is refused where protection is on
 govard snapshot create <name> -e <r> && govard snapshot list -e <r>
 govard snapshot restore <name> -e <r>                    # restore is the risky half
 
 # Remote execution and tunnel
 govard remote list && govard remote test <r> && govard remote exec <r> -- hostname
 # remote list is covered by P4-16; remote test by P4-01; remote exec by nothing
-govard tunnel status && govard tunnel start && govard tunnel stop   # stop pkills every cloudflared (#469)
+govard tunnel status && govard tunnel start && govard tunnel stop   # stop signals one recorded pid (#469)
 
 # Files and framework routes
 govard sync -s <r> --db --no-noise --plan && govard sync -s <r> --file --path pub/media --plan
@@ -297,19 +360,31 @@ govard open admin -e <r>        # Magento probes the route; WordPress/Laravel/Sy
 govard open sftp  -e <r>        # confirm the media path per framework (table above)
 ```
 
-### Known-bad spots in the remote surface
+### Fixed remote defects worth recognising
 
-Do not re-file these; they are open issues:
+Every issue this section used to list as open is now **closed** (#466–#472,
+2026-09-29 → 2026-09-30). They are kept here as shapes to recognise, not as open
+bugs — re-reading one as a live defect is a duplicate report:
 
-| Issue | Behaviour |
-|---|---|
-| [#466](https://github.com/ddtcorex/govard/issues/466) | db write protection is inverted: reads refused on a protected remote, `db import -e production` allowed |
-| [#467](https://github.com/ddtcorex/govard/issues/467) | `remote test` (and `db *-e`, `open *-e`, `sync`) offer to write the local public key into the target's `authorized_keys`, default Yes |
-| [#468](https://github.com/ddtcorex/govard/issues/468) | `deploy check` is not read-only: `mkdir -p <deploy_path>` on the target, plus `.dep/` probe entries |
-| [#469](https://github.com/ddtcorex/govard/issues/469) | `tunnel stop` runs `pkill cloudflared` — every tunnel on the host, not just the project's |
-| [#470](https://github.com/ddtcorex/govard/issues/470) | `sync -e sandbox` / `bootstrap -e sandbox` fail: `ResolveAutoRemote` has no synthetic branch |
-| [#471](https://github.com/ddtcorex/govard/issues/471) | the sandbox cannot be configured: `remote add sandbox` refused, hand-written block shadowed, no `sandbox_php` / credential hook |
-| [#472](https://github.com/ddtcorex/govard/issues/472) | `--checks`, `--lint-jobs` and `--timeout` parse and then do nothing |
+| Issue | Was | Now |
+|---|---|---|
+| [#466](https://github.com/ddtcorex/govard/issues/466) | db write protection inverted: reads refused on a protected remote, `db import -e production` allowed | reads and writes are both gated on the remote's protection flag |
+| [#467](https://github.com/ddtcorex/govard/issues/467) | `remote test` / `db *-e` / `open *-e` / `sync` offered to write the local public key into the target's `authorized_keys`, default Yes | the offer is opt-in and reports what it would add |
+| [#468](https://github.com/ddtcorex/govard/issues/468) | `deploy check` created `mkdir -p <deploy_path>` and `.dep/` probes on the target | read-only; its `mv -T` probe cleans up after itself |
+| [#469](https://github.com/ddtcorex/govard/issues/469) | `tunnel stop` ran `pkill cloudflared` — every tunnel on the host | it signals **one** recorded pid under `$GOVARD_HOME_DIR/tunnels/<project>.pid`, and `tunnel status` reads that record (which is also why neither needs `cloudflared`, #503) |
+| [#470](https://github.com/ddtcorex/govard/issues/470) | `sync -e sandbox` / `bootstrap -e sandbox` failed: `ResolveAutoRemote` had no synthetic branch | `ResolveAutoRemote` resolves `sandbox` explicitly, and a hand-written `remotes.sandbox` block layers over the container instead of shadowing it |
+| [#471](https://github.com/ddtcorex/govard/issues/471) | the sandbox could not be configured: `remote add sandbox` refused, block shadowed, no `sandbox_php` / credential hook | configurable |
+| [#472](https://github.com/ddtcorex/govard/issues/472) | `--checks`, `--lint-jobs` and `--timeout` parsed and did nothing | they thread into an item's argv — `--lint-jobs` is forwarded only when it differs from verify's own default `4`, and each lint item records its resolved argv as the first line of its evidence excerpt |
+
+A red on any of these surfaces is therefore new behaviour, not a regression of a
+known defect: classify it against the current source before calling it a repeat.
+
+### Still open
+
+The one gap found by this review is **not filed upstream** and has no issue
+number: `govard capabilities --json` emits 9 duplicated rows (see
+"`govard capabilities` reports duplicated rows", above). `govard` currently has
+no open issues at all, so file it before assuming someone else will.
 
 ## Output contract
 
@@ -320,7 +395,7 @@ stderr. Do not assume the human table is on stderr.
 
 ```json
 {
-  "govard_version": "1.77.0",
+  "govard_version": "1.78.0",
   "project_sha": "885c165dbff78fdc579d53ad91dd7870d18d8e2f",
   "project_id": "project-35322aefe766ba6b",
   "phase": "phase1",
@@ -403,7 +478,9 @@ snapshot gate against a flat global `verify-runs/`, and run items through the
 `PATH` `govard`. Confirm the binary before trusting the contract:
 
 ```bash
-govard capabilities --json | python3 -c 'import json,sys;print(len(json.load(sys.stdin)["commands"]),"command rows")'
+# distinct commands: the raw row count includes the 9 service aliases that
+# appear twice (see "govard capabilities reports duplicated rows")
+govard capabilities --json | python3 -c 'import json,sys;print(len({c["command"] for c in json.load(sys.stdin)["commands"]}),"commands")'
 ```
 
 See `govard/internal/verify/registry.go` for the 60 base items and the
