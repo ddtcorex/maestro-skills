@@ -36,8 +36,15 @@ describe('govard CLI contract documentation', () => {
   it('every govard framework skill states the Docker requirement', async () => {
     for (const name of ['govard-magento', 'govard-laravel', 'govard-symfony', 'govard-wordpress']) {
       const content = await skill(name)
-      expect(content, `${name} must state the Docker requirement`).toContain('Docker requirement')
-      expect(content, `${name} must point at the container-free check`).toContain('--checks integrity')
+      expect(content, `${name} must state the Docker requirement`).toMatch(/Docker (requirement|running)|need Docker/)
+    }
+  })
+
+  it('only Magento 2 offers the container-free integrity audit; the others say it is unsupported', async () => {
+    expect(await skill('govard-magento')).toContain('--checks integrity')
+    for (const name of ['govard-laravel', 'govard-symfony', 'govard-wordpress']) {
+      const content = (await skill(name)).replace(/\s+/g, ' ')
+      expect(content, `${name} must say integrity is unsupported`).toMatch(/integrity[^.]*(not supported|not available|does not support)|(not supported|not available|no)[^.]*integrity/i)
     }
   })
 })

@@ -12,12 +12,14 @@ Use `bootstrap` with the `--clone` flag and privacy filters for a full initial s
 govard bootstrap --clone -e staging --no-pii --no-noise --yes
 ```
 
-This performs:
-- `rsync` of source code
-- `db import` with privacy filters
-- `media sync`
+This performs the following, unless skipped by flags (`--code-only`, `--no-db`, `--no-media`, `--no-composer`):
+- `rsync` of source code (`--clone`)
 - `composer install`
+- database import with privacy filters
+- media sync
 - Auto-configuration of local settings
+
+Preview it first with `govard bootstrap --clone -e staging --plan`.
 
 ### Safe Data Review
 
@@ -33,7 +35,7 @@ This shows exactly what files and database tables will be affected.
 
 ### Magento 2 Multi-Website Setup
 
-1. Add domains to `.govard.yml`:
+1. Map the extra domains in `.govard.yml`:
    ```yaml
    domain: "primary.test"
    store_domains:
@@ -41,7 +43,7 @@ This shows exactly what files and database tables will be affected.
        code: base
        type: website
    ```
-2. Manually register domains:
+2. Register the domain with Govard:
    ```bash
    govard domain add brand-b.test
    ```
@@ -56,15 +58,15 @@ This shows exactly what files and database tables will be affected.
 1. Open environment: `govard up`
 2. Run migrations: `govard tool artisan migrate`
 3. Generate key: `govard tool artisan key:generate`
-4. Open admin: `govard open admin`
+4. Open the app: `govard open admin` (framework admin panel, where one exists)
 
 ## 3. Remote Operations & Optimization
 
-Rehearse against a container playing the target first — see [SANDBOX.md](SANDBOX.md).
+Rehearse against a container playing the target first, see [SANDBOX.md](SANDBOX.md).
 
 ### Secure Remote Dump
 
-Capture a remote database securely to your local `var/` directory without saving it on the remote server.
+Stream a remote database dump into the project's local `var/` directory instead of leaving it on the remote server.
 
 ```bash
 govard db dump -e staging --local --no-noise --no-pii
@@ -84,13 +86,14 @@ govard sync --source prod --file --path app/etc/config.php
 
 When working on many projects, use `svc sleep` and `svc wake` to manage global resources efficiently.
 
-- `govard svc sleep`: Suspend all running Govard environments
-- `govard svc wake`: Resume environments that were recently active
+- `govard svc sleep`: Stop all running Govard projects and persist the wake state
+- `govard svc wake`: Start the projects recorded in that sleep state
 
 ### Clean Junk
 
 When Docker storage gets full, run diagnostics and cleanup.
 
-- `govard diag --fix`: Fix common Docker/Compose port and permission issues
-- `govard env cleanup`: Prune stale compose files and orphan resources
+- `govard doctor --fix` (alias `diag`): Apply safe automatic fixes (Govard home, stale compose files, registry, config drift); it does not free busy ports
+- `govard env cleanup`: Prune stale compose files and manifests
+- `govard project orphans`: Show Docker resources that are not in the registry
 - `govard project delete <name>`: Completely remove a project's containers and persistent volumes

@@ -19,176 +19,150 @@ Laravel-specific shortcuts for Govard environments.
 
 ## Related Skills
 
-**REQUIRED BACKGROUND:** Load `govard-toolbox` first — this skill only covers Laravel-specific shortcuts layered on top of Govard's base commands (`govard up`, `govard sh`, `govard db`).
+**REQUIRED BACKGROUND:** Load `govard-toolbox` first. This skill only covers Laravel-specific shortcuts layered on top of Govard's base commands (`govard env up`, `govard sh`, `govard db`).
 
-**Docker requirement:** stack commands here (`govard up/down/sh`, `govard db`,
-`govard tool ...`) need Docker. On a host without it they exit `3` with
-`CAPABILITY_MISSING`; `govard audit run --checks integrity` still works and
-covers manifest/lock and Magento module/DI checks without a container.
+**Docker requirement:** stack commands here need Docker; without it they exit `3` `CAPABILITY_MISSING`. `govard deploy` needs only ssh and rsync. `govard audit run --checks integrity` is **not** available for Laravel (it exits 1: `framework "laravel" does not support integrity audit`), so the container-free audit path in `govard-toolbox` does not apply here.
 
-
-For generic PHP (strict_types/PSR-12/PHPStan/Security) see php-dev-core.
+For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`.
 
 ## Artisan Commands
 
-Laravel's `artisan` CLI runs inside the PHP container via `govard tool artisan`. Govard exposes every artisan command without entering the container shell:
+`govard tool artisan` runs Laravel's `artisan` inside the PHP container, from the project root, with no shell session. The exit code is artisan's own. Run `govard tool artisan list` for what the installed Laravel offers; `govard tool --help` lists the other wrapped tools (`composer`, `php`, `npm`, `npx`, `pnpm`, `yarn`).
 
 ```bash
 # Cache management
 govard tool artisan config:cache
 govard tool artisan config:clear
 govard tool artisan cache:clear
-
-# Route cache
 govard tool artisan route:cache
 govard tool artisan route:clear
-
-# View cache
 govard tool artisan view:cache
 govard tool artisan view:clear
+govard tool artisan optimize:clear
 ```
+
+`artisan` commands that belong to optional packages (for example `log:clear`, Horizon, Pail) exist only when that package is installed; check with `artisan list` before relying on them.
 
 ## Audit
 
-For generic PHP (strict_types/PSR-12/PHPStan/Security) see `php-dev-core`. For 4-framework matrix and `govard audit run --checks lint --lint-provider govard --mode project --format json` see `govard-toolbox` ## Audit.
+`govard audit run --checks lint --lint-provider govard --mode project --format json` runs the lint audit (PHPCS PSR-12, PHPCompatibility, PHPStan). For the cross-framework matrix and flags see `govard-toolbox` ## Audit. A stock Laravel skeleton reports real findings (PSR-12 style, PHPStan), so a non-zero exit on a fresh project is normal; judge the findings, not the exit code alone.
 
-**Laravel lint excludes (since `v1.68.0`):** `bootstrap/cache/*` and `storage/*` (`storage/framework/cache|sessions|views`, `storage/logs`) are **always ignored** — both `phpcs --ignore=*/bootstrap/cache/*,*/storage/*` and `phpstan excludePaths` in `docker/audit/bin/glint` and Go-side `filterGeneratedFindings` in `internal/audit/lint_govard.go`. Fresh `laravel 11` audit no longer fails on `bootstrap/cache/packages.php`/`services.php` or `storage/framework/views/*.php`; remaining findings are real project files (`config/`, `app/`, `tests/`).
+With `stack.features.xdebug: true` the audit refuses to start and says so; pass `--allow-xdebug` or set the feature to `false`. `--scope diff --base <ref>` needs a ref that exists locally (a repository with no `origin/master` silently audits the whole project instead).
+
+`bootstrap/cache/*` and `storage/*` are always ignored by the lint audit, so generated caches and compiled views never show up as findings. Remaining findings are project files (`config/`, `app/`, `tests/`, `routes/`).
 
 ## Database
 
 ```bash
-# Migrations
 govard tool artisan migrate
-govard tool artisan migrate:fresh
-govard tool artisan migrate:refresh
-govard tool artisan migrate:rollback
 govard tool artisan migrate:status
-
-# Seeders
+govard tool artisan migrate:rollback
 govard tool artisan db:seed
 govard tool artisan db:seed --class=UserSeeder
-
-# Factory
-govard tool artisan make:factory PostFactory
-govard tool artisan tinker
-
-# Direct SQL
-govard db connect
+govard tool artisan migrate:fresh      # drops ALL tables
+govard tool artisan migrate:refresh    # rolls back everything, then migrates
 ```
 
-Govard `stack.php_version` defaults to 8.4 for Laravel 11; verify with `govard config get stack.php_version` before running fresh migrations.
+Add `--force` when running non-interactively with `APP_ENV=production`. `migrate:fresh` and `migrate:refresh` destroy data: on anything but a throwaway database take `govard snapshot create <name>` first.
 
-## Queue Operations
+Direct SQL and dumps use Govard's own DB commands (see `govard-toolbox` ## Database):
 
 ```bash
-# Start queue worker
+govard db connect                      # interactive client, needs a TTY
+govard db query "select version()"
+govard db info
+govard db dump                         # writes to var/
+```
+
+**Which database does artisan use?** Govard runs MariaDB reachable inside the stack as host `db`, user `laravel`, database `laravel`, but `govard env up` does **not** edit `.env`. A freshly scaffolded Laravel `.env` says `DB_CONNECTION=sqlite`, and then `artisan migrate` writes to the sqlite file and ignores the Govard database. To use it, set `DB_CONNECTION=mariadb` (or `mysql`), `DB_HOST=db`, `DB_DATABASE`, `DB_USERNAME` and `DB_PASSWORD` in `.env` yourself (the user and database are shown by `govard db info`). Only `govard bootstrap` rewrites `.env` values (`APP_ENV`, `APP_DEBUG`, `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, and runs `key:generate`).
+
+Check the PHP series the project runs before a fresh migration, since the framework's own minimum can be higher than the project's setting:
+
+```bash
+govard config get stack.php_version
+```
+
+If `composer install` or an artisan command reports a PHP constraint, raise `stack.php_version` (`govard config set stack.php_version <x.y>`) and re-run `govard env up`.
+
+## Queue and Cache Services
+
+There is no queue supervisor container. Run a worker in the foreground, or bounded:
+
+```bash
 govard tool artisan queue:work
-
-# Queue withSupervisor
-govard svc up
-
-# Retry failed jobs
+govard tool artisan queue:work --stop-when-empty
 govard tool artisan queue:retry all
 govard tool artisan queue:failed
-
-# Clear queue
-govard tool artisan queue:flush
+govard tool artisan queue:flush        # deletes all failed jobs
 ```
+
+Redis is opt-in: set `stack.services.cache: redis` (or `valkey`) in `.govard.yml`, then `govard env up`. Until then `govard redis ...` fails with `Redis container <project>-redis-1 is unknown`. Once enabled: `govard redis cli ping`, `govard redis info`, `govard redis flush`. Point `.env` at it (`REDIS_HOST=redis`, `CACHE_STORE=redis` / `QUEUE_CONNECTION=redis`) yourself.
 
 ## Scheduler
 
 ```bash
-# Run scheduler (keep in cron)
-govard tool artisan schedule:run
-
-# List scheduled
+govard tool artisan schedule:run       # one tick; wire a real cron around it if needed
 govard tool artisan schedule:list
 ```
 
 ## Development
 
 ```bash
-# Create commands
+govard tool artisan make:model Post -mcr   # model + migration + resource controller
 govard tool artisan make:command MyCommand
 govard tool artisan make:controller MyController
-govard tool artisan make:model Post
 govard tool artisan make:migration create_posts_table
-
-# Tinker (interactive REPL)
-govard tool artisan tinker
-
-# Show routes
+govard tool artisan make:factory PostFactory
 govard tool artisan route:list
 govard tool artisan route:list --path=api
+govard tool artisan tinker                 # REPL, needs a TTY
+govard tool artisan tinker --execute='echo 1+1;'   # non-interactive
 ```
 
 ## Testing
 
 ```bash
-# Run tests
+govard test                                # default suite (artisan test)
+govard test phpunit
 govard tool artisan test
-
-# With PHPUnit
-govard tool php artisan test
-govard tool php vendor/bin/phpunit
-
-# Specific test
 govard tool php vendor/bin/phpunit --filter=UserTest
 ```
 
 ## Frontend Assets
 
 ```bash
-# Node modules
 govard tool npm install
+govard tool npm run build
 govard tool npm run dev
-govard tool npm run prod
-govard tool npm run watch
-
-# Laravel Mix (if using)
-govard tool npm run dev
-govard tool npm run production
-
-# Clear Vite cache
-# node_modules is bind-mounted into the container; clearing from the host is safe
-rm -rf node_modules/.vite
 ```
 
-Laravel has no Govard `frontend_sync` watcher (unlike Hyvä/Luma). Use `govard tool npm run watch` for live builds.
+Use the script names from the project's own `package.json`: current Laravel starter kits ship only `build` and `dev` (Vite), while older Mix projects use `development`/`production`/`watch`. Running a missing script exits 1 with `Missing script`. `npm run dev` is long-running and was not exercised here. Laravel has no Govard `frontend_sync` watcher (that is for Magento themes), and `govard frontend start` exits 1 with `frontend sync is disabled` unless `stack.features.frontend_sync` is set.
 
 ## Environment (.env)
 
-Govard injects `APP_KEY`, `DB_CONNECTION`, `DB_HOST`, and `APP_ENV` via `.env`. Check values:
+Govard does not generate or rewrite `.env` on `govard env up`; it reads whatever is committed. Inspect:
 
 ```bash
 govard config get stack.php_version
-cat .env | grep -E 'APP_ENV|DB_'
+grep -E 'APP_ENV|DB_' .env
 govard tool artisan env
 ```
 
-- `APP_ENV` defaults to `local`; Govard does not overwrite a committed `.env`.
-- `DB_CONNECTION` is auto-wired to Govard MariaDB (`mariadb 11.4` default).
-- `APP_KEY` is generated on `govard env up` if missing.
+If `.env` is missing, `govard bootstrap` copies `.env.example`, switches `APP_ENV=production` to `local`, and runs `key:generate`. Otherwise run `cp .env.example .env && govard tool artisan key:generate` yourself.
 
 ## Logging
 
 ```bash
-# View logs
 tail -f storage/logs/laravel.log
-
-# Clear logs
-govard tool artisan log:clear
-
-# Laravel Debugbar (if installed)
-curl -s https://local.test/_debugbar/open
+govard logs                            # container logs (php, web, db)
 ```
 
 ## Deployment
 
-Laravel ships a deploy recipe, so `govard deploy` runs Laravel's own commands instead of the engine's neutral defaults. Watch before you run:
+Laravel ships a deploy recipe, so `govard deploy` runs Laravel's own commands instead of the engine's neutral defaults. Watch before you run (the table below is the recipe; `govard deploy plan` is the source of truth):
 
 ```bash
-govard deploy plan production          # the resolved pipeline — no connection, no Docker
+govard deploy plan production          # the resolved pipeline, no connection, no Docker
 govard deploy check production         # preflight over ssh
 govard deploy production --yes
 ```
@@ -201,22 +175,26 @@ govard deploy production --yes
 | `db:migrate` | `artisan migrate --force --no-interaction` |
 | `maintenance:enable` / `disable` | `artisan down` / `artisan up`, run in the **served** release |
 | `app:workers:pause` | with `worker_control: true`: `artisan queue:restart`, plus `horizon:terminate` if Horizon is installed |
-| `app:cache:flush` | `artisan optimize:clear` then `artisan optimize` |
-| `deploy:verify` (`app`) | `artisan db:show`; `migrate:status` on Laravel 10 and older |
-| `db:backup` | **none** — `--db-backup` fails naming the reason instead of producing no dump |
+| `app:cache:flush` | `artisan optimize:clear` then `artisan optimize`, then `runtime_reload_command` |
+| `deploy:verify` (`app`) | `artisan db:show`, or `migrate:status` where `db:show` does not exist |
+| `db:backup` | none: `--db-backup` is refused (exit 4) with a message naming the reason, instead of producing no dump |
 
 `.env` is a shared **file** and `storage` a shared **directory** (the maintenance flag lives at `storage/framework/down`); `sync_paths` is `vendor` and `public/build` for an in-place docroot. Settings: `frontend_dir`, `frontend_command`, `worker_control`, `runtime_reload_command`.
 
 - The caches are built **on the target**: `artisan optimize` writes `bootstrap/cache/config.php`, and once that file exists the process environment no longer overrides `.env`.
-- Maintenance is guarded on `artisan` **and** `vendor/autoload.php` in the served path: on a first in-place deploy onto a fresh docroot both are absent, both steps exit 0, and **no window opens** — silently.
+- Maintenance is guarded on `artisan` **and** `vendor/autoload.php` in the served path: on a first in-place deploy onto a fresh docroot both are absent, both steps exit 0, and **no window opens**, silently.
 - `queue:restart` exits 0 whatever the cache store is, so `worker_control: true` only means something with a persistent store (Redis).
-- **First deploy:** seed the target's `.env` first, or the release keeps the repository's copy, which names the local database.
-- **In artifact mode** no Laravel step stays on the target — nothing is marked *needs the application* — so the artifact must carry `vendor/` and `public/build`; `app:cache:flush` still runs on the target.
-- Sandbox: `default-mysql-client`, extensions `bcmath curl gd intl mbstring mysql sqlite3 xml zip`, services `mariadb` + `redis-server`.
+- **First deploy:** seed the target's `.env` first, or the release keeps the repository's copy, which names the local database. `deploy:shared` links an entry only when it already exists under the target's `shared/` at that moment, so `shared/.env` (and `shared/storage`, if you want the storage directory shared rather than living inside each release) must exist **before** the release is created. Without `shared/.env` the release has no `.env` at all and `artisan migrate` falls back to the sqlite defaults.
+- **In artifact mode** the build steps do not run on the target, so the artifact must carry `vendor/` and `public/build`; `app:cache:flush` still runs on the target (`govard deploy build` makes the artifact, `govard deploy plan --build artifact --artifact-dir <dir>` shows the result).
+- Rehearse against the disposable sandbox with `govard sandbox up` then `govard deploy --remote sandbox --yes`. A first run fails at `db:migrate` until the target has a `.env` (see above). The seed does not copy a Laravel `.env` or media into the sandbox, so write `shared/.env` yourself (as the deploy user, with the sandbox database host and credentials) before the first deploy; `govard sandbox reset` wipes it again. `govard sandbox down` removes the sandbox. Package, extension and service needs are set via `deploy.settings.sandbox_*` in `.govard.yml`.
+- **Recovering a first deploy that failed at `db:migrate`:** `--resume` does **not** pick up a `.env` seeded afterwards, because `deploy:shared` is already recorded as done for that release. Seed `shared/.env`, run `govard deploy unlock <remote> --force`, then run a fresh `govard deploy`; it creates a new release that links the file and migrates. The error line shows only the failed command, not artisan's own output: re-run `artisan migrate` in the release directory on the target to read the cause.
+- **A failed migration leaves the live site in maintenance.** `maintenance:enable` runs in the served release before `db:migrate`, so when the migration fails the previous release keeps answering HTTP 503 and the lock is kept, until a later deploy succeeds (it runs `artisan up`) or you run `artisan up` there. `govard deploy unlock` without `--force` refuses a recent lock and names the holder.
+- Redeploying the same revision is a no-op (`already deployed`, exit 0, `--force` to deploy again), so a second deploy needs a new commit. `govard deploy rollback` re-points the `current` symlink to the previous release and works against the sandbox; `rollback --with-db` is refused (exit 1) because the Laravel recipe records no dump, and `--db-backup` stays refused with exit 4.
+- **Media:** `govard sync -s <remote> --media` reads `public/media`, which a stock Laravel app does not have, and a missing remote directory is reported by rsync while the command still exits 0. Use `--file --path <dir>` (for example `storage/app/public`) for what the project actually stores.
 
-> **Deploy preflight:** `govard deploy plan [remote]` prints this pipeline without executing anything or connecting (add `--json` for machine-readable output); `govard deploy check [remote]` runs the connectivity and release-layout preflight. Run both on the host.
+> **Deploy preflight:** `govard deploy plan [remote]` prints this pipeline without executing anything or connecting (add `--json` for machine-readable output). It needs the remote to have `deploy.branch` (or pass `--branch`/`--revision`/`--tag`), otherwise it exits 4. `govard deploy check [remote]` runs the connectivity and release-layout preflight and needs ssh. `deploy` needs no Docker, so it also runs in CI.
 
-Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> · worked config: <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-9-laravel>.
+Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and-wordpress> and worked config <https://govard.ddtcorex.com/workflows/deploy-case-studies#case-9-laravel>.
 
 ## Common Workflows
 
@@ -226,22 +204,23 @@ Reference: <https://govard.ddtcorex.com/workflows/deployment#laravel-symfony-and
 govard tool composer install
 govard tool artisan migrate
 govard tool artisan cache:clear
-govard tool npm install && govard tool npm run dev
+govard tool npm install && govard tool npm run build
 ```
 
 ### Creating Features
 
 ```bash
-govard tool artisan make:model Post -mcr  # Model + Migration + Controller
+govard tool artisan make:model Post -mcr
 govard tool artisan migrate
 govard tool artisan route:list
 ```
 
-### Deployment Prep
+### Deployment Prep (local rehearsal)
 
 ```bash
-govard tool artisan config:cache
-govard tool artisan route:cache
-govard tool artisan view:cache
-govard tool npm run prod
+govard tool artisan config:cache && govard tool artisan route:cache && govard tool artisan view:cache
+govard tool npm run build
+govard tool artisan optimize:clear     # undo the caches locally afterwards
 ```
+
+A cached config (`bootstrap/cache/config.php`) makes the process environment stop overriding `.env`, so clear the caches before debugging local configuration. For a real deploy use `govard deploy`, which builds the caches on the target.
