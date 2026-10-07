@@ -14,11 +14,11 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/govard/master/install.sh |
 
 ### Q: Port conflict when starting environment
 
-**A**: Run `govard doctor --fix` to identify and repair port-hogging processes.
+**A**: `govard doctor` reports conflicts on ports 80/443; `--fix` does not free them. Find the process holding the port (for example `ss -tlnp`), stop it, then run `govard svc up` again.
 
 ### Q: Host/Domain identity collision
 
-**A**: Change `project_name` or `domain` in `.govard.yml` to a unique value. Update with `govard cfg set`.
+**A**: Change `project_name` or `domain` in `.govard.yml` to a unique value. Update with `govard config set` (alias `cfg`).
 
 ---
 
@@ -30,11 +30,11 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/govard/master/install.sh |
 
 ### Q: Domain doesn't resolve (.test)
 
-**A**: Ensure `dnsmasq` service is running with `govard svc up`. Use `resolvectl query <domain>` for diagnostics.
+**A**: Ensure the global DNS service is running with `govard svc up`. Use `resolvectl query <domain>` for diagnostics.
 
 ### Q: RabbitMQ management UI not reachable
 
-**A**: Check `stack.services.queue` is `rabbitmq` (not `none`), re-run `govard env up` once, and use `http://<domain>:15672` (plain HTTP, guest/guest) — never `https://`.
+**A**: Check `stack.services.queue` is `rabbitmq` (not `none`), re-run `govard env up`, and use `http://<domain>:15672` (plain HTTP, guest/guest), never `https://`.
 
 ---
 
@@ -54,11 +54,11 @@ govard sync -s staging --full --no-compress --no-noise
 
 ### Q: Gateway SSH refused / sandbox unreachable at :2222
 
-**A**: Check the chain: `govard svc up` (bastion) → `sandbox up` (target) → `gateway allow-key` (key). `gateway status` shows target/allowlist counts and warns if port 2222 is held by another process. Log in as the slugged name (`Foo_Bar` → `foo-bar`); pass the key as one quoted shell argument.
+**A**: Check the chain: `govard svc up` (bastion), then `govard sandbox up` (target), then `govard gateway allow-key` (key). `gateway status` shows target and allowlist counts and warns if port 2222 is held by another process. Log in as the slugged name (`Foo_Bar` becomes `foo-bar`); pass the key as one quoted shell argument.
 
-### Q: Remote dump fails after an update that used to succeed
+### Q: Remote dump fails
 
-**A**: Dumps fail loudly now instead of writing an empty file — read the credential warning first. Point the remote at the layout root is fine (Govard probes `<path>`, `public_html`, `current`); "no database configuration at …" lists every path tried.
+**A**: A failed dump is reported as a failure, not as an empty file; read the credential warning first. A remote path that points at the layout root is fine (Govard probes `<path>`, `public_html`, `current`); "no database configuration at ..." lists every path tried, so check the path before retrying.
 
 ---
 
@@ -66,7 +66,7 @@ govard sync -s staging --full --no-compress --no-noise
 
 ### Q: Magento 2 Database password is wrong after bootstrap
 
-**A**: Run `govard config auto` to rebuild `app/etc/env.php` with the correct local credentials.
+**A**: Run `govard config auto` to rebuild the app-level config (for Magento, `app/etc/env.php`) with the correct local credentials.
 
 ### Q: PHPMyAdmin doesn't show my project's database
 
@@ -85,7 +85,7 @@ govard sync -s staging --full --no-compress --no-noise
 
 ### Q: Xdebug slows down my site
 
-**A**: Use `govard debug off` to disable Xdebug when not in use. Xdebug routes only when the cookie is present.
+**A**: Use `govard debug off` to disable Xdebug when not in use. With the `XDEBUG_SESSION` cookie absent, requests are not routed to the debug container.
 
 ---
 
@@ -96,8 +96,8 @@ govard sync -s staging --full --no-compress --no-noise
 **A**:
 1. `govard project orphans` to find stale projects
 2. `govard project delete <name>` for unused projects
-3. `govard env cleanup` to prune compose files
+3. `govard env cleanup` to prune stale compose files and manifests
 
 ### Q: Desktop App shows old data
 
-**A**: Restart the desktop process. Use `govard self-update` to ensure all binaries are current.
+**A**: Restart the desktop process, and make sure the installed Govard binaries are current (`govard self-update`).
