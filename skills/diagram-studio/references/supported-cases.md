@@ -63,7 +63,7 @@ See `SKILL.md` § Audience Rules for the exact checklist.
 
 | Output | Path | Audience rule | Render | Verification |
 |---|---|---|---|---|
-| GitHub-native Mermaid | `docs/architecture.md §1.1`, `docs/specs/*-design.md` | Always show source | GitHub auto-renders ```mermaid | parse (CLI) + manual drift check |
+| GitHub-native Mermaid | `docs/ARCHITECTURE.md §1.1`, `docs/specs/*-design.md` | Always show source | GitHub auto-renders ```mermaid | parse (CLI) + manual drift check |
 | Editorial HTML | `docs/diagrams/<slug>.html` (inline SVG/CSS, no JS) | Team vs Client | Chrome `screenshot 980×1100` → PNG | `grep -c "<svg"` + `file` + 0 external deps |
 | Deck PDF | `docs/diagrams/maestro-harness-deck.pdf` (A4 landscape, 3 pages) | Always Client | `chrome --print-to-pdf` (303K) | `pdfinfo Pages:3` |
 
@@ -71,8 +71,9 @@ See `SKILL.md` § Audience Rules for the exact checklist.
 
 | Case | Tool | Input | Expected |
 |---|---|---|---|
-| Parse ok | `verify-mermaid.mjs` | Valid 5 types | `{ok:true}`, exit 0 |
+| Parse ok | `verify-mermaid.mjs` | Valid 5 types | `{ok:true, validator:"mermaid"}`, exit 0 |
 | Parse fail | `verify-mermaid.mjs` | `A-->` or empty | `{ok:false, line:2}`, exit 1 |
+| Heuristic only | `verify-mermaid.mjs` | no `mermaid` installed | `validator:"heuristic"` plus a warning; `--require-parser` exits 2 |
 | Anti-pattern | `verify-mermaid.mjs --strict` | `shadow:true` | `{warnings:1}` |
 | Drift | manual | architecture doc vs the packages it names | every node maps to real code, nothing real is missing |
 | Missing file | `verify-mermaid.mjs` | `docs/nonexistent.md` | `{ok:false}` with the read error, exit 1 |

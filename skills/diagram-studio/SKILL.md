@@ -47,7 +47,7 @@ Extracted from `cathrynlavery/diagram-design` — see `references/diagram-design
 
 ## Where to Write
 
-- `docs/architecture.md §1.1` — single source for the umbrella architecture (do not duplicate elsewhere).
+- `docs/ARCHITECTURE.md §1.1` — single source for the umbrella architecture (do not duplicate elsewhere).
 - `docs/specs/*-design.md` — for RFC/spec diagrams; each spec may embed one Mermaid block that lives with the design.
 - `docs/diagrams/<slug>.html` — for editorial export (optional, self-contained HTML+SVG for client decks). Link preview via `![Preview](diagrams/<slug>.html)` in markdown when needed. Use spacing tokens from `references/style-guide.md#deck-html-layout-tokens` (header 16px, line-height 1.6) so deck text isn't cramped — verify with `grep line-height`.
 - `docs/diagrams/maestro-harness-deck.html` — 3-page A4 deck (cover + 2 diagrams). Must use deck layout tokens above; header `flowchart TB` and `10 plugins + meta` must have 8px gap, not `flowchart TB10`.
@@ -67,7 +67,7 @@ Every diagram has two audiences. The skill MUST decide on `audience` before writ
 | **Styling** | Full tokens `paper/ink/accent/muted/link` as in `references/style-guide.md` | Same tokens (visual stays identical) — only the meta cards differ |
 
 Rules for other locations (not audience-driven):
-- `docs/architecture.md` and `docs/specs/*-design.md` — **always show source** as ```mermaid block (GitHub renders it, diffable, single source of truth, verification checks it) — audience rule does not apply here.
+- `docs/ARCHITECTURE.md` and `docs/specs/*-design.md` — **always show source** as ```mermaid block (GitHub renders it, diffable, single source of truth, verification checks it) — audience rule does not apply here.
 - `docs/diagrams/*.pdf` deck — **always client rules** (hide source, hide tokens card, hide technical footer, use PNG only) — PDF is for distribution.
 
 When `audience` is ambiguous, **default to Team** (show everything collapsed) and add a 1-line note: "Hiding source/tokens for client — say 'clean for client' to hide."
@@ -78,7 +78,7 @@ This skill covers 5 diagram types × 2 audiences × 3 outputs. Parse and strict 
 
 | # | Mermaid type | When to use | Audience variants | Output |
 |---|---|---|---|---|
-| 1 | `flowchart TB/LR` | Components + connections | Team: `harness-architecture.html` 16K (svg+pre) → Client: `...-client.html` 12K (svg only) | `docs/architecture.md §1.1` + HTML + PDF p1 |
+| 1 | `flowchart TB/LR` | Components + connections | Team: `harness-architecture.html` 16K (svg+pre) → Client: `...-client.html` 12K (svg only) | `docs/ARCHITECTURE.md §1.1` + HTML + PDF p1 |
 | 2 | `sequenceDiagram` | Messages over time | Team: `harness-turn-flow-sequence.html` 31K → Client: `...-client.html` 30K | `docs/specs/...-sequence.md` + HTML + PDF p2 |
 | 3 | `classDiagram` | Classes + ops | Team/Client per Audience Rules | `cheatsheet.md#class` |
 | 4 | `erDiagram` | Entities + fields | Team/Client | `cheatsheet.md#er` |
@@ -88,10 +88,10 @@ All 5 share tokens `paper/ink/accent/muted/link` (no shadow, rx:6, accent 1-2). 
 
 ## Verify & Drift
 
-Always verify before commit: a diagram that fails parse must never ship. Run the bundled CLI, which extracts every mermaid block, runs `mermaid.parse()` when available (heuristic fallback otherwise) and returns `{ok, errors, warnings}`; it exits 0 on success and 1 on failure. Add `--strict` to report anti-patterns (e.g. `shadow`, legacy `graph`) as warnings.
+Always verify before commit: a diagram that fails parse must never ship. Run the bundled CLI, which extracts every mermaid block and checks each one on its own. It runs the real `mermaid.parse()` when `mermaid` and `jsdom` can be imported from the script (for example `npm i --no-save mermaid jsdom` in the repo checkout) and returns `{ok, errors, warnings, validator}` with `validator: "mermaid"`. Without them it falls back to a heuristic (incomplete arrows, unterminated strings, unclosed flowchart brackets), reports `validator: "heuristic"` and a warning, and a heuristic `ok` is not a syntax guarantee: use `--require-parser` to refuse that mode (exit 2). It exits 0 on success and 1 on failure. Add `--strict` to report anti-patterns (e.g. `shadow`, legacy `graph`) as warnings.
 
 ```bash
-node maestro-skills/skills/diagram-studio/scripts/verify-mermaid.mjs docs/architecture.md --strict
+node maestro-skills/skills/diagram-studio/scripts/verify-mermaid.mjs docs/ARCHITECTURE.md --strict
 node scripts/verify-mermaid.mjs <file|-> --strict   # from this repo's root, or '-' for stdin
 ```
 

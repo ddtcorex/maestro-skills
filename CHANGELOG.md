@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- **`diagram-studio` verifier no longer passes broken Mermaid silently.** `scripts/verify-mermaid.mjs`
+  returned `ok: true` for an unclosed bracket because the real parser was never
+  loaded and the fallback only caught `A-->`. It now loads `mermaid` (with `jsdom`)
+  when available and awaits its async `parse()` per block, reports
+  `validator: "mermaid"` or `"heuristic"`, warns when it is only heuristic,
+  catches unclosed flowchart brackets and unterminated strings, and gains
+  `--require-parser` (exit 2 without a real parser).
+
 ## [2.16.0] - 2026-09-27
 
 ### Changed
