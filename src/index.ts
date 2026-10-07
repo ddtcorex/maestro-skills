@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url'
 import type { Context } from '@deepseek-ai/cordis'
 import type {
   SkillCandidate,
-  SkillDefinition,
   SkillLookupOptions,
   SkillProviderControl,
 } from '@deepseek-ai/dsh-skill'
