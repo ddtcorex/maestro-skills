@@ -32,7 +32,7 @@ Source: `diagram-design` § Brief — "confirm the cut before you draw."
 
 ## 5. GitHub-Native First, Editorial Export Second
 
-Default output is diffable Mermaid in `docs/` (`docs/architecture.md §1.1`, `docs/specs/*-design.md`) so review lives in git history. Editorial HTML+SVG (`docs/diagrams/<slug>.html`, self-contained, inline CSS, no JS) is an explicit `export: html` step only when `audience: client`. No Figma dependency, no drag UI.
+Default output is diffable Mermaid in `docs/` (`docs/ARCHITECTURE.md §1.1`, `docs/specs/*-design.md`) so review lives in git history. Editorial HTML+SVG (`docs/diagrams/<slug>.html`, self-contained, inline CSS, no JS) is an explicit `export: html` step only when `audience: client`. No Figma dependency, no drag UI.
 
 Source: `diagram-design` § Output — 52 editorial types mapped to 5 Mermaid grammars (`flowchart`, `sequenceDiagram`, `classDiagram`, `erDiagram`, `stateDiagram`) in `cheatsheet.md`; the 18 unmappable ordinals live in the Out-of-scope table in `supported-cases.md`.
 
