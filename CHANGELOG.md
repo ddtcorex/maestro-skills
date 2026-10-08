@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **Govard skills follow the remaining open-issue fixes.** Remote snapshot location, `open admin` notice on Laravel and Symfony, `sandbox ssh -- <cmd>`, the profiler CSV on Magento.
 - **Govard skills follow the sandbox verification fixes.** WordPress `--no-pii` now
   reads the prefix from `wp-config.php` and fails closed; `--db-backup` is a plain
   dump (Magento, WordPress without wp-cli); pulls skip out-of-tree symlinks unless

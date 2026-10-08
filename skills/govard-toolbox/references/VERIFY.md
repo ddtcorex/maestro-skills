@@ -192,11 +192,11 @@ means the behavior differs per framework and must be observed, not assumed.
 | `config auto` | rebuilds `app/etc/env.php` | unsupported, writes nothing | unsupported, writes nothing | verify |
 | `env up` wires app config | verify | no: `.env` keeps its own DB settings until `bootstrap` rewrites it | no: set `DATABASE_URL` yourself | no: `wp-config.php` is generated only when missing at bootstrap |
 | `audit run --checks integrity` | supported, container-free (still refused while Xdebug is on) | unsupported (exit 1) | unsupported (exit 1) | unsupported (exit 1) |
-| `audit run --checks profiler` | supported, but verify the CSV is produced | verify | verify | unsupported (exit 1) |
+| `audit run --checks profiler` | supported, the CSV artifact is produced | verify | verify | unsupported (exit 1) |
 | Audit coding standard | `Magento2` | `PSR12` | `Symfony` | `WordPress` |
-| `open admin` | probes the route | opens `/admin`, a route Laravel does not have | verify | opens `/admin`, not `/wp-admin` |
+| `open admin` | probes the route | opens `/admin` and prints a notice that the framework has no stock admin route | same notice | opens `/wp-admin` |
 | `frontend start` | needs `stack.features.frontend_sync`; check the sync container is healthy | needs `frontend_sync` (exit 1 otherwise) | needs `frontend_sync` | verify |
-| `db dump --no-noise/--no-pii` | table-prefix aware | verify | verify | filters match nothing until `table_prefix` is set in `.govard.yml` (no detector), so grep the dump |
+| `db dump --no-noise/--no-pii` | table-prefix aware | verify | verify | prefix read from `wp-config.php` (remote too); `--no-pii` is refused when it cannot be read, so still grep the dump |
 | Deploy: maintenance window | yes | yes | **none in the recipe** | yes |
 | Deploy: conditional migrate probe | yes (`setup:db:status`) | always runs | always runs | always runs |
 | Deploy: `--db-backup` | supported | refused (exit 4) | refused (exit 4) | supported |
