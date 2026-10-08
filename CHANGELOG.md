@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Govard skills follow the sandbox verification fixes.** WordPress `--no-pii` now
+  reads the prefix from `wp-config.php` and fails closed; `--db-backup` is a plain
+  dump (Magento, WordPress without wp-cli); pulls skip out-of-tree symlinks unless
+  `--resolve-symlinks`; `open` resolves the sandbox and `/wp-admin`; `snapshot
+  restore` needs `-y` without a TTY; the sandbox key directory ignores itself.
+
 ### Fixed
 
 - **`diagram-studio` verifier no longer passes broken Mermaid silently.** `scripts/verify-mermaid.mjs`
