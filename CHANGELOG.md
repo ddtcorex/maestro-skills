@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **`govard-laravel` documents the sandbox database prerequisite.** A first sandbox deploy needs a database user with a password (created through the container, since root is refused to the deploy user) as well as `shared/.env`; confirmed by a full deploy, redeploy and rollback on a sandbox.
 - **Govard skills follow the remaining open-issue fixes.** Remote snapshot location, `open admin` notice on Laravel and Symfony, `sandbox ssh -- <cmd>`, the profiler CSV on Magento.
 - **Govard skills follow the sandbox verification fixes.** WordPress `--no-pii` now
   reads the prefix from `wp-config.php` and fails closed; `--db-backup` is a plain
