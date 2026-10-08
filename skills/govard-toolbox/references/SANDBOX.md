@@ -30,8 +30,9 @@ The seed runs only on a fresh container from the still-running origin env (DB du
 - The sandbox mirrors the project's **git repository**: the project must be a git repo with the work committed, and tracked build output (for example Magento's `pub/static`) breaks the release build. Keep `.govard/` and build output out of git.
 - The origin must be installed and running: an empty origin database makes the seed fail on missing core tables.
 - The seed copies the database and the framework's media tree. It does **not** seed environment files that live outside the repository, so a first deploy fails at the migrate step until the target has them (`shared/.env`, `shared/.env.local`, `shared/wp-config.php`: see the framework skill). `sandbox reset` wipes `shared/`, so re-seed afterwards. Write them non-interactively with `printf '...' | govard sandbox ssh`.
-- The `full` profile waits for its database to answer. On a MariaDB series whose image ships `mariadb-admin` but not `mysqladmin`, `up` can exit 127: pass `--db mariadb:<older series>`. If the final seed step fails on `chown` of the deploy user's home, a second plain `up` reuses the seeded container.
-- `sandbox ssh` opens an interactive shell and takes no command; use `govard remote exec sandbox -- <cmd>`. `govard open <target> -e sandbox` does not resolve the synthetic remote.
+- The `full` profile waits for its database to answer, using the MariaDB client names (`mariadb-admin`, `mariadb`, `mariadb-dump`) when the image ships no `mysql*` ones. A seed that fails half way is retried by the next plain `up`.
+- `sandbox ssh` opens an interactive shell and takes no command; use `govard remote exec sandbox -- <cmd>`. `govard open <target> -e sandbox` resolves the synthetic remote.
+- `.govard/sandbox/` (the private key) ignores itself, so `git add -A` never stages it. `sandbox down --purge` removes the images of every profile built for the project.
 - `deploy unlock --force` clears the lock but not maintenance mode; a deploy that failed mid-way can leave the live release returning 503 until a later deploy or `--resume` completes.
 - `up` waits for a real SSH login, not just an open TCP port. No Docker means exit `3` `CAPABILITY_MISSING`.
 

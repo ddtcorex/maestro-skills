@@ -61,7 +61,7 @@ The name `sandbox` is a synthetic remote (no config block), see [SANDBOX.md](SAN
 - `snapshot create`: Capture local state or remote `-e <env>`
 - `snapshot list`: List available snapshots
 - `snapshot delete <name>` / `snapshot export <name>`: Remove a snapshot / export it to a tar.gz
-- `snapshot restore <name>`: Roll back current environment
+- `snapshot restore <name>`: Roll back current environment (asks to confirm; `-y` skips the prompt, required without a TTY)
 - `snapshot pull <name> -e <env>`: Fetch remote snapshot to local
 - `snapshot push <name> -e <env>`: Send local snapshot to remote
 
