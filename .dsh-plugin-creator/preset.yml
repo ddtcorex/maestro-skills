@@ -1,0 +1,3 @@
+name: Maestro Creator
+description: >-
+  AI Agent preset combining the DSH Creator tooling (Cordis dynamic-definition tools, preset-authoring skills, plugin-manager tools, direct URL fetch) with the Maestro Skills identity (Govard environment orchestration, Magento 2, Laravel, Symfony, WordPress, generic PHP, plus the superpowers process-skills workflow) and the subagent_codex and subagent_claude_code delegation tools enabled (both @deepseek-ai/dsh-subagent-codex and @deepseek-ai/dsh-subagent-claude-code must be installed in the Profile for the tool rows to register). Note: both providers authenticate via ChatGPT/Claude subscription - child runs fail with quota errors when the subscription session limit is hit.

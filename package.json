@@ -30,6 +30,7 @@
     "lib",
     "skills",
     ".dsh-plugin",
+    ".dsh-plugin-creator",
     "cordis.patch.yml"
   ],
   "scripts": {
