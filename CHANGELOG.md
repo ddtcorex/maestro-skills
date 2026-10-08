@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.17.0] - 2026-10-08
+
+### Added
+
+- **Maestro Creator preset** (`.dsh-plugin-creator/`): a second preset that combines the Creator tooling with the Maestro identity, with a spec covering its template.
+
 ### Changed
 
 - **`govard-laravel` documents the sandbox database prerequisite.** A first sandbox deploy needs a database user with a password (created through the container, since root is refused to the deploy user) as well as `shared/.env`; confirmed by a full deploy, redeploy and rollback on a sandbox.
