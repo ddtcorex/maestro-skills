@@ -9,7 +9,8 @@ Standard inline CSS for performance audit HTML reports. Every `report.html` gene
 :root{--bg:#f8fafc;--card:#ffffff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--green:#16a34a;--green-bg:#dcfce7;--yellow:#ca8a04;--yellow-bg:#fef9c3;--red:#dc2626;--red-bg:#fee2e2;--blue:#2563eb}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
 a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
-.header{ background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;padding:32px 24px}
+.header{ background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;padding-block:32px}
+.header-inner{max-width:1100px;margin:0 auto;padding-inline:24px}
 .header h1{margin:0 0 8px;font-size:28px;letter-spacing:-0.02em}
 .header .meta{opacity:0.85;font-size:13px;line-height:1.7}
 .header .meta code{background:rgba(255,255,255,0.14);padding:2px 6px;border-radius:6px;font-size:12px}
@@ -55,7 +56,7 @@ ul{margin:8px 0;padding-left:18px}
 <!-- inline <style> above -->
 </head>
 <body>
-<div class="header"><h1>{{title}}</h1><div class="meta">{{meta}}</div></div>
+<div class="header"><div class="header-inner"><h1>{{title}}</h1><div class="meta">{{meta}}</div></div></div>
 <div class="container">
   <div class="kpi">{{kpi}}</div>
   <div class="card"><h2>URLs Audited <span class="badge badge-gray">{{scope}}</span></h2>{{urls}}</div>
@@ -72,6 +73,7 @@ ul{margin:8px 0;padding-left:18px}
 - Copy `report.html.template` and replace `{{title}}`, `{{date}}`, `{{meta}}`, `{{kpi}}`, `{{urls}}`, `{{sections}}`, `{{host}}`, `{{session}}` from the same data that populates `report.md`.
 - Render every audited URL as `<td class="url"><code>…</code></td>` (bare `<td>` does not pick up the wrapping rule below); long URLs wrap via `.url,td.url{overflow-wrap:anywhere;word-break:break-all}` instead of overflowing.
 - Brand slots `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}` default to the neutral theme below; an org theme overrides only these slots.
+- Header layout: the gradient is full-bleed, but its text lives in `.header-inner`, which uses the same `max-width:1100px` and `24px` side padding as `.container`, so header and card left edges align at every viewport width. Keep both rules in sync if either changes.
 - Theme rule: brand-fixed surfaces (header/footer brand background) never invert with dark/light theme — only data tokens do. A brand color used as a header/footer background stays fixed in both modes; inverting it (light header in dark mode) reads as a bug, not theming.
 - Keep `Per-Page Query Detail` for deep as 7 `<details><summary>home — 363 queries, 42 shapes</summary><table>…</table></details>` blocks (see `report-template.md`); quick may use `Skipped: quick — 3 pages only, Per-Page Detail deferred to deep`.
 - PDF via `google-chrome --headless --no-pdf-header-footer --print-to-pdf="report.pdf" "file://$(pwd)/report.html"` — verify with `pdftotext`.
