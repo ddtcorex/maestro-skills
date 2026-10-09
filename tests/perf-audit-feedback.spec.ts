@@ -122,3 +122,20 @@ describe('review fix pass', () => {
     expect(readme).not.toContain('DSH tool map')
   })
 })
+
+describe('perf-audit report layout', () => {
+  const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+  const template = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
+  const theme = () => readFileSync(join(refs, 'report-theme.md'), 'utf-8')
+
+  it('aligns header content with the container on wide screens', () => {
+    // Full-bleed gradient, but the text sits in the same 1100px column as the cards,
+    // with the same horizontal padding, so left edges line up at every width.
+    for (const text of [template(), theme()]) {
+      expect(text).toContain('.header-inner{max-width:1100px;margin:0 auto;padding-inline:24px}')
+      expect(text).toContain('.container{max-width:1100px;margin:0 auto;padding:24px}')
+      expect(text).toContain('<div class="header"><div class="header-inner">')
+      expect(text).not.toMatch(/\.header\{[^}]*padding:32px 24px/)
+    }
+  })
+})

@@ -8,7 +8,8 @@
 :root{--bg:#f8fafc;--card:#ffffff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--green:#16a34a;--green-bg:#dcfce7;--yellow:#ca8a04;--yellow-bg:#fef9c3;--red:#dc2626;--red-bg:#fee2e2;--blue:#2563eb}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
 a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
-.header{ background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;padding:32px 24px}
+.header{ background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;padding-block:32px}
+.header-inner{max-width:1100px;margin:0 auto;padding-inline:24px}
 .header h1{margin:0 0 8px;font-size:28px;letter-spacing:-0.02em}
 .header .meta{opacity:0.85;font-size:13px;line-height:1.7}
 .header .meta code{background:rgba(255,255,255,0.14);padding:2px 6px;border-radius:6px;font-size:12px}
@@ -41,14 +42,14 @@ ul{margin:8px 0;padding-left:18px}
 </style>
 </head>
 <body>
-<div class="header">
+<div class="header"><div class="header-inner">
   <h1>{{title}}</h1>
   <div class="meta">
     <div>Date: <b>{{date}}</b> · Govard <code>{{govard_version}}</code> · <code>{{host}}</code> · profile <code>{{profile}}</code></div>
     <div>Magento <code>{{magento_version}}</code> · PHP <code>{{php_version}}</code> · MariaDB <code>{{mariadb_version}}</code> · Redis <code>{{redis_version}}</code> · OpenSearch <code>{{opensearch_version}}</code> · {{fpc}}</div>
     <div>Lint audit <code>{{lint_session}}</code> · <b>{{lint_findings}}</b> findings · <b>{{lint_duration}}</b> · {{lint_size}}</div>
   </div>
-</div>
+</div></div>
 <div class="container">
 
 <div class="kpi">

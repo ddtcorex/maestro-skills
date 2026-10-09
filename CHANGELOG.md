@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **`magento2-performance-audit` report header aligns with the content column.** The HTML report template and theme put the header text flush to the viewport edge while cards sat in a centered 1100px column, so the two drifted apart on wide screens. Header text now lives in `.header-inner` with the same `max-width` and side padding as `.container`; the gradient stays full-bleed.
+
 ## [2.17.0] - 2026-10-08
 
 ### Added
