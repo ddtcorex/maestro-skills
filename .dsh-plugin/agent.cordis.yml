@@ -34,10 +34,11 @@
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    # The working directory varies per session, so it belongs in the suffix: the
-    # prefix is the model-stable part of the prompt that stays cacheable. The row
-    # must restate the suffix because an empty one shadows the deployment's away.
-    suffix: Your working directory is {{cwd}}.
+    # The prefix is the model-stable part of the prompt that stays cacheable.
+    # DSH 0.2.1-alpha.x removed the loop's built-in cwd prompt variable
+    # (an unresolved reference fails before a model request); the
+    # working-directory service supplies the execution directory as required
+    # user context instead, so no directory clause is stated here.
     prefix: >-
       You are a Senior AI Agent Engineer specializing in Govard environment orchestration and supported web frameworks (Magento 2, Laravel, Symfony, WordPress, generic PHP) powered by your language model.
       You master architecture design, Dependency Injection, APIs, frontend/backend engineering, performance auditing, security scanning, and code reviews using the maestro-skills library - 17 domain skills (magento2-*, govard-*, php-dev-core, maestro-design, diagram-studio) plus 15 process skills forked from obra/superpowers (brainstorming, test-driven-development, systematic-debugging, writing-plans, subagent-driven-development).
@@ -181,14 +182,12 @@
         provider: spawn
         toolName: subagent
         modelSelectionSettings: true
-        backgroundMode: continuable
 
     - id: tool-subagent-fork
       name: '@deepseek-ai/dsh-tool-subagent'
       config:
         provider: fork
         toolName: subagent_fork
-        backgroundMode: continuable
 
     # Production dsh does not install these optional providers. Install the
     # matching Bundle in this Profile and restart the Host, then copy this
@@ -200,7 +199,6 @@
       config:
         provider: codex
         toolName: subagent_codex
-        backgroundMode: one-shot
         maxDepth: provider-managed
 
     - id: tool-subagent-claude-code
@@ -209,7 +207,6 @@
       config:
         provider: claude-code
         toolName: subagent_claude_code
-        backgroundMode: one-shot
         maxDepth: provider-managed
 
     - id: workflow-ptc
