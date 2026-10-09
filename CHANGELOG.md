@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.17.2] - 2026-10-10
+
+### Fixed
+
+- **Preset drops removed delegation keys.** DSH 0.2.1-alpha.x removed `backgroundMode` from dsh-tool-subagent and the loop built-in cwd prompt variable; the `.dsh-plugin` base template states neither, and the working-directory service supplies the directory instead.
+
 ## [2.17.1] - 2026-10-09
 
 ### Fixed
