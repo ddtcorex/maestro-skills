@@ -27,13 +27,13 @@ Then announce "Using [skill] to [purpose]" and follow the skill exactly. If it h
 
 When multiple skills apply, process skills come first — they set the approach, then implementation skills (frontend-design, etc.) carry it out. Brainstorming and systematic-debugging are Superpowers' most common process skills, but the rule holds for any of them.
 
-- "Let's build X" → brainstorming first, then implementation skills.
-- "Fix this bug" → systematic-debugging first, then domain skills.
+- "Let's build X" → superpowers:brainstorming first, then implementation skills.
+- "Fix this bug" → superpowers:systematic-debugging first, then domain skills.
 
 > Fork note (maestro-skills): upstream prefixes skills as `superpowers:<name>`.
 > In this bundle the process skills ship un-namespaced alongside the domain
 > skills (magento2-*, govard-*), so invoke them by their bare names. This file
-> and its references are forked from obra/superpowers v6.4.2 (MIT); body edits
+> and its references are forked from obra/superpowers v7.0.0 (MIT); body edits
 > beyond tool mapping should go through upstream — see THIRD-PARTY-NOTICES.md.
 
 ## Red Flags

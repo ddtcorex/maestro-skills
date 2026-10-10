@@ -41,7 +41,7 @@ outcomes in the PR description as well.
 A dual-ecosystem plugin (`maestro-skills`, npm `@ddtcorex/maestro-skills`)
 bundling its skills in two halves: the Magento 2 / Govard domain skills written
 here (`ls skills`, minus the forked names), plus the **superpowers process library forked verbatim from
-[obra/superpowers](https://github.com/obra/superpowers) v6.4.2** (MIT — see
+[obra/superpowers](https://github.com/obra/superpowers) v7.0.0** (MIT — see
 `THIRD-PARTY-NOTICES.md`). Distributed via self-listing marketplaces for both
 Claude Code and Codex CLI, and as a DeepSeek Harness Cordis plugin. There is no
 application code beyond `src/` (the Cordis plugin); `tests/` is a vitest suite
@@ -196,7 +196,7 @@ agents, executing-plans, finishing-a-development-branch, receiving-code-review,
 requesting-code-review, subagent-driven-development, systematic-debugging,
 test-driven-development, using-git-worktrees, using-superpowers,
 verification-before-completion, writing-plans, writing-skills) are **not
-hand-maintained** — they are a verbatim fork of obra/superpowers v6.4.2:
+hand-maintained** — they are a verbatim fork of obra/superpowers v7.0.0:
 
 - **Do not edit forked skill bodies.** Upstream is their single source of
   truth. This is a deliberate exception to the "single source of truth"
@@ -307,7 +307,7 @@ bash install.sh --help
 ```bash
 # Superpowers fork sync (see "Superpowers fork governance" above)
 scripts/sync-superpowers.sh            # to upstream HEAD
-scripts/sync-superpowers.sh v6.4.2     # or a specific tag; review the diff it prints
+scripts/sync-superpowers.sh v7.0.0     # or a specific tag; review the diff it prints
 ```
 
 ## Release checklist
