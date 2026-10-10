@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.18.0] - 2026-10-10
+
 ### Changed
 
 - **Superpowers fork v6.4.2 → v7.0.0.** `brainstorming` is rebuilt from
