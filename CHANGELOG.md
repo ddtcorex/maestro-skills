@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Superpowers fork v6.4.2 → v7.0.0.** `brainstorming` is rebuilt from
+  scratch — it draws out what you want with playback, matches the process to
+  the work, and reviews the design through a builder check; upstream swaps
+  `spec-document-reviewer-prompt.md` for `builder-check-prompt.md` plus a
+  `server.cjs` literal-insert fix. `task-done` records silently-passing test
+  commands, the `requesting-code-review` example survives skill arguments,
+  `sdd-workspace` preserves a committed `.gitignore` and fixes Windows paths,
+  the `systematic-debugging` example no longer prints secrets, and
+  `using-superpowers` adopts upstream's `superpowers:` namespaced invocation
+  (fork note re-applied: this bundle still invokes bare names).
+
 ## [2.17.2] - 2026-10-10
 
 ### Fixed

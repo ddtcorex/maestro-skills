@@ -2,7 +2,7 @@
 # Sync the forked superpowers skills in skills/ against upstream obra/superpowers.
 #
 #   scripts/sync-superpowers.sh            # sync to upstream dev HEAD (or existing clone)
-#   scripts/sync-superpowers.sh v6.4.2     # sync to a tag/branch/commit
+#   scripts/sync-superpowers.sh v7.0.0     # sync to a tag/branch/commit
 #
 # What it does:
 #   1. Ensures a clone of upstream exists at $SYNC_DIR (default /tmp/superpowers-sync).
