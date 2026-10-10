@@ -342,10 +342,9 @@ manual release step in the GitHub UI.
    dependency here). The real DSH validation gate is external and CI-only —
    the `awesome-dsh-plugin` submission check that reads `dsh.bundle.patch`
    (see the `[1.0.4]` CHANGELOG entry for the manifest shape it expects).
-7. Commit, then tag and push:
+7. Merge the release-prep PR first (master is never a push target), then tag and push only the tag:
    ```bash
    git tag -a vX.Y.Z -m "vX.Y.Z - <one-line summary>"
-   git push origin master
    git push origin vX.Y.Z
    ```
 8. Confirm the workflow succeeded and the release published:
