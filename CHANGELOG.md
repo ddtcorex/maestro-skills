@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [2.18.1] - 2026-10-21
+
+### Changed
+
+- **Superpowers fork v7.0.0 → v7.0.1.** `brainstorming` is retuned after
+  its v7.0.0 rebuild — it digs for context (project, spec, files) before
+  its first question, asks follow-ups that build on your answers, only
+  offers to skip the questions when it started on its own, and presents
+  approaches plus a design doc before building. `subagent-driven-development`
+  and `writing-skills` move their long sections into `references/` so the
+  skills survive Claude Code compaction (skills re-attach cut at 20k
+  characters); `executing-plans` drops its repeated Example Workflow; the
+  issue/PR templates and `diagnosing-superpowers` ask for a human-written
+  summary under 200 words.
+
 ## [2.18.0] - 2026-10-10
 
 ### Changed
