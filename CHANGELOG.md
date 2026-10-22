@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.18.2] - 2026-10-22
+
 ### Fixed
 
 - **`magento2-hyva-dev`: Alpine scope follows the DOM.** The review gate
