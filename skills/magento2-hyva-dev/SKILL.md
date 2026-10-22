@@ -517,6 +517,18 @@ PHP-interpolated utilities (`class="columns-<?= $n ?>"`) are invisible to the sc
 
 Directive values must be dot paths — no operators, literals, globals, or spaces. Violations fail silently (console.warn only), so static review is the primary gate. Treat vendor guidance like "`x-model` is unsupported" as recommended style: dot-path `x-model` works on shipped CSP builds, so warn rather than fail.
 
+### 6. Alpine scope follows the DOM
+
+Alpine 3 resolves an expression through every ancestor `x-data` in the rendered DOM, not only the closest component: a nested component reads the parent's properties, and `this.prop = value` writes back to the parent. A property missing from a component's own `return {...}` is therefore not evidence that a binding is undefined.
+
+Before claiming `Alpine Expression Error: … is not defined` or "the value is never submitted":
+
+- Find where the template is rendered. A child `.phtml` included through `$block->getLayout()->createBlock()` or `getChildHtml()` sits inside whatever element wraps that call, so read the caller and match the opening and closing tags around it.
+- Check the sibling fields in the same component. If they use the same pattern (bound in the child, declared only on an ancestor) and work, the new binding works too.
+- Only when no ancestor declares the property, and `Alpine.store` does not supply it, report the binding as broken. If the render chain cannot be traced from the worktree, ask instead of asserting.
+
+The same rule holds for Knockout `$parent` / `$root` in Luma templates.
+
 > Idea credits: verification-gate patterns distilled from makotokimura96/hyva-skills (CC BY 4.0) and hyva-themes/hyva-ai-tools (OSL-3.0).
 
 ## Layout XML

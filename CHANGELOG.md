@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **`magento2-hyva-dev`: Alpine scope follows the DOM.** The review gate
+  gains a sixth check: a nested `x-data` reads and writes its ancestors'
+  properties, so a property absent from a component's own object is not an
+  undefined binding. Reviewers must trace where the child template is
+  rendered and compare sibling fields using the same pattern before
+  reporting one. A review once raised a blocking false positive on exactly
+  this pattern.
+
 ## [2.18.1] - 2026-10-21
 
 ### Changed
