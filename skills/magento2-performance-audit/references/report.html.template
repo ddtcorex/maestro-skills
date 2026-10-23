@@ -75,11 +75,11 @@ ul{margin:8px 0;padding-left:18px}
 
 <div class="card">
   <h2>Before/After Comparison Matrix <span class="badge badge-gray">same metrics · frozen URL set</span></h2>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:8px">One row per page, each cell shows the before value and the after value for the same metric. Closed fixed column set: the column set extends only through a template update, never per report. A metric recorded on one side only is a gate failure, not a blank cell. Warm cells for legacy audits read <code>Skipped: legacy audit, cold only</code> with no re audit forced.</div>
   <table>
     <tr><th>Page</th><th>Query count</th><th>LCP cold</th><th>LCP warm</th><th>CLS</th><th>Performance score cold</th><th>Performance score warm</th></tr>
     {{comparison_rows}}
   </table>
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">One row per page, each cell shows the before value and the after value for the same metric. Closed fixed column set: the column set extends only through a template update, never per report. A metric recorded on one side only is a gate failure, not a blank cell. Warm cells for legacy audits read <code>Skipped: legacy audit, cold only</code> with no re audit forced.</div>
 </div>
 
 <div class="card">
@@ -121,8 +121,8 @@ ul{margin:8px 0;padding-left:18px}
 
 <div class="card">
   <h2>Per-Page Query Detail <span class="badge {{perpage_badge}}">{{perpage_status}}</span></h2>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Deep: 7 pages unfiltered per-page tables (mandatory). Quick: Skipped matrix entry only. Each <code>&lt;details&gt;</code> shows total queries + distinct-shape count; tables are <code>Count | SQL (normalized)</code>.</div>
   {{perpage_details}}
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">Deep: 7 pages unfiltered per-page tables (mandatory). Quick: Skipped matrix entry only. Each <code>&lt;details&gt;</code> shows total queries + distinct-shape count; tables are <code>Count | SQL (normalized)</code>.</div>
 </div>
 
 <div class="card">
@@ -140,11 +140,11 @@ ul{margin:8px 0;padding-left:18px}
 
 <div class="card">
   <h2>Core Web Vitals <span class="badge {{cwv_badge}}">{{cwv_status}}</span></h2>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Cold is the first load after <code>cache:flush</code> expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers. Columns: LCP cold, LCP warm, performance score cold, performance score warm, INP, CLS.</div>
   <table>
     <tr><th>Metric</th><th>Cold</th><th>Warm</th><th>Status</th></tr>
     {{cwv_rows}}
   </table>
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">Cold is the first load after <code>cache:flush</code> expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers. Columns: LCP cold, LCP warm, performance score cold, performance score warm, INP, CLS.</div>
 </div>
 
 <div class="card">

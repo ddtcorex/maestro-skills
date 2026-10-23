@@ -138,4 +138,20 @@ describe('perf-audit report layout', () => {
       expect(text).not.toMatch(/\.header\{[^}]*padding:32px 24px/)
     }
   })
+
+  it('renders each context note below its data table', () => {
+    const html = template()
+    // Matrix card: the comparison table precedes its context note.
+    expect(html.indexOf('<tr><th>Page</th><th>Query count</th>')).toBeLessThan(html.indexOf('One row per page'))
+    // Per-page card: the detail blocks precede their context note.
+    expect(html.indexOf('{{perpage_details}}')).toBeLessThan(html.indexOf('Deep: 7 pages unfiltered'))
+    // CWV card: the vitals table precedes its context note.
+    expect(html.indexOf('<tr><th>Metric</th><th>Cold</th>')).toBeLessThan(html.indexOf('Cold is the first load'))
+  })
+
+  it('documents note below table with the seen-data rationale', () => {
+    const text = theme()
+    expect(text).toContain('note below table')
+    expect(text).toContain('context annotates data the reader has already seen')
+  })
 })

@@ -46,6 +46,8 @@ ul{margin:8px 0;padding-left:18px}
 
 ## Structure
 
+Layout rule: every card renders its context note below table markup, never above the data. Neutral rationale: context annotates data the reader has already seen.
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -61,6 +63,7 @@ ul{margin:8px 0;padding-left:18px}
   <div class="kpi">{{kpi}}</div>
   <div class="card"><h2>URLs Audited <span class="badge badge-gray">{{scope}}</span></h2>{{urls}}</div>
   <!-- one .card per Audit Report Template section: Infrastructure, Cache Status, ... Database, Per-Page Query Detail (7 <details>), etc. -->
+  <!-- context note below table in each card: context annotates data the reader has already seen -->
   <div class="card" style="border-left:4px solid var(--red)"><h2>Recommendations <span class="badge badge-red">{{count}} actions</span></h2>{{recommendations}}</div>
   <div class="footer">Generated {{date}} from live govard captures on <code>{{host}}</code> (audit <code>{{session}}</code>). <a href="report.md">Markdown</a> · <a href="report.pdf">PDF via Print</a></div>
 </div>
