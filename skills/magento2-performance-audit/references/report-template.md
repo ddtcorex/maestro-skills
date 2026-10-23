@@ -5,9 +5,9 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 > **Scope gate:** every report starts with a `Scope: quick` or `Scope: deep` header (see Quick vs Deep in `references/per-page-type-audit.md`: quick 3 pages call-stack false threshold 1 batch govard sh + grep recipes for stats, trap single; deep 7 pages call-stack true threshold 0 two-pass + Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease `artifacts/profiler/profile.csv` SHA). Workflow step 10 is not done until every checkbox below is either checked with evidence or `Skipped: <reason>` — the Skipped Matrix at the end of the template enforces this, no silent omission.
 
 > **Machine-readable sidecar:** every audit writes `audit-data.json` next to `report.md`/`report.html` with this fixed schema — `report.md`/`report.html` render from it, never the other way around (no regex-scraping rendered markdown to recover data):
-> `{scope, generatedAt, pages[{label, url, uri, totalQueries, distinctShapes, shapes[{sql, count}]}]}` (`url` = absolute, `uri` = path + query). Minimal example:
+> `{scope, generatedAt, urlSet[{label, url, uri}], pages[{label, url, uri, totalQueries, distinctShapes, shapes[{sql, count}]}]}` (`url` = absolute, `uri` = path + query). `urlSet` is a new top-level key holding the frozen comparison set recorded at discovery time; readers ignore unknown keys, so older consumers stay backward compatible. Minimal example:
 > ```json
-> {"scope":"deep","generatedAt":"2026-09-21T00:00:00Z","pages":[{"label":"home","url":"https://store.test/","uri":"/","totalQueries":363,"distinctShapes":42,"shapes":[{"sql":"SELECT ... FROM catalog_product_entity WHERE entity_id IN (...)","count":42},{"sql":"SELECT ... FROM cms_block WHERE block_id=?","count":1}]}]}
+> {"scope":"deep","generatedAt":"2026-09-21T00:00:00Z","urlSet":[{"label":"home","url":"https://example.test/","uri":"/"},{"label":"category_small","url":"https://example.test/sample-category.html","uri":"/sample-category.html"}],"pages":[{"label":"home","url":"https://example.test/","uri":"/","totalQueries":363,"distinctShapes":42,"shapes":[{"sql":"SELECT ... FROM catalog_product_entity WHERE entity_id IN (...)","count":42},{"sql":"SELECT ... FROM cms_block WHERE block_id=?","count":1}]},{"label":"category_small","url":"https://example.test/sample-category.html","uri":"/sample-category.html","totalQueries":221,"distinctShapes":31,"shapes":[{"sql":"SELECT ... FROM catalog_category_product_index WHERE ...","count":18}]}]}
 > ```
 
 > **If the environment supports publishing a rendered page (e.g. Claude Code's `Artifact` tool), publish the report that way instead of — or alongside — raw markdown.** Severity reads as a color-coded chip/pill at a glance instead of a flat checklist, and a published link is easier to share with a team than pasted text. This is optional and environment-dependent (not available in Codex CLI/OpenCode/Copilot) — the markdown template below is the portable baseline every environment can produce, and if you do publish a rendered page, still include everything the template covers (URLs audited, all findings, severities) rather than a lighter summary.
@@ -23,7 +23,7 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 ```markdown
 # Performance Audit Report
 
-Audience: dev — use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (neutral defaults, inject org branding at render time — never hard-code a client name in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`.
+Audience: dev - use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (DDTCoreX defaults, replace all three together for an overlay - never hard-code another brand in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`.
 
 Scope: quick — 3 pages (quick PR, ~5–10m), call-stack false, threshold 1, batch govard sh, grep recipes for stats, trap single
 <!-- For a release audit use: Scope: deep — 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->
@@ -31,7 +31,7 @@ Scope: quick — 3 pages (quick PR, ~5–10m), call-stack false, threshold 1, ba
 
 ## Scope Detail
 
-Scope: quick — use for PRs: 3 pages (1 home + 1 category + 1 product), `--include-call-stack=false` `--query-time-threshold=1`, single batch `govard sh` setup, grep recipes for query-log stats, Govard-native `govard audit run --checks lint,profiler --url https://example.test/<path>.html` single-URL profiler lease where needed. Every checkbox below either `checked` with evidence or `Skipped: <reason>` — no silent omission.
+Scope: quick - use for PRs: 3 pages (1 home + 1 category + 1 product), `--include-call-stack=false` `--query-time-threshold=1`, single batch `govard sh` setup, grep recipes for query-log stats, Govard-native `govard audit run --checks lint,profiler --url https://example.test/sample-page.html` single-URL profiler lease where needed. Every checkbox below either `checked` with evidence or `Skipped: <reason>` - no silent omission.
 
 Scope: deep — use for release: 7 pages (1 home + 3 category small/medium/large + 3 product), `--include-call-stack=true` `--query-time-threshold=0`, two-pass call-stack (pass 1 false for counts, pass 2 true for 1–2 N+1 traces), same batch `govard sh` + `trap single`, same grep recipes, plus `EXPLAIN` on prod-sized tables (200k+ rows) and `pt-query-digest` when available. Same gate: every checkbox checked or explicitly Skipped.
 
@@ -43,6 +43,51 @@ Scope: deep — use for release: 7 pages (1 home + 3 category small/medium/large
 URL form by audience — never truncate with `…` in either: dev (`audience: dev`) shows the full absolute URL (scheme + host + path + query); client (`audience: client`) shows the full URI (path + query, no scheme/host required) — enough to identify the page without leaking hostnames. No bare `[link](…)` that hides the target. The same rule applies to Per-Page Detail summaries and `audit-data.json` (`url` + `uri` keys).
 
 Always state the exact URLs tested, not just "homepage/category/product" — without them the report isn't reproducible or independently verifiable later. Testing 3 samples per type (not 1) is what lets a finding be reported as "confirmed across all samples of this type" rather than "seen on the one page tested."
+
+## Comparison Gate - Frozen URL Set
+
+Before/after comparisons are only valid when both audits measured the same pages. The first
+audit freezes its URL set into `audit-data.json` under the `urlSet` key, and every later audit
+reuses that frozen set instead of re-picking URLs. Freeze the set at discovery time, before any
+capture runs, so mid-audit reselection cannot silently shift the baseline. A later audit that
+measures different pages and still claims improvement is comparing unrelated work, so the gate
+is strict: identity is computed on the normalized URI
+(path plus query, scheme and host ignored, trailing slash normalized), and any divergence
+between the frozen set and the current set is a hard gate failure without a recorded reason.
+The single allowed substitution is a 301 redirect target: when a frozen URL now returns 301,
+the audit may measure the redirect target instead and must mark that row with a dagger
+footnote naming the original URL. Any other change, added page, dropped page, or swapped
+sample, fails the step 10 gate unless the report records the explicit reason beside the
+skipped matrix row. Readers ignore unknown top-level keys, so `urlSet` remains fully
+backward compatible with older consumers.
+
+## Comparison Matrix - Same Metrics Before/After
+
+Every before/after report renders one comparison matrix over the frozen URL set from the gate
+above: one row per page, each cell holding the before value and the after value for the same
+metric on the same page, so a reader can see at a glance whether each page improved, regressed,
+or stayed flat. The matrix keeps a closed fixed column set of exactly six metrics: query count,
+LCP cold, LCP warm, CLS, performance score cold, performance score warm.
+The column set extends only through a template update, never per report: a report adds rows for
+its pages but never adds, renames, or drops a metric column, which is what keeps any two reports
+directly comparable without realigning columns by hand.
+A metric recorded on one side only is a gate failure, not a blank cell: an empty half hides
+whether the number improved, regressed, or was never captured, so the step 10 gate fails the
+matrix until both sides carry a value or an explicit Skipped reason. Legacy `audit-data.json`
+files captured before warm measurement existed are grandfathered without forcing a re-audit:
+their warm cells read `Skipped: legacy audit, cold only`, and the comparison still gates on the
+remaining cold columns plus query count and CLS.
+The CLS column reports the cold value, so both sides stay comparable.
+The legacy reason applies only to legacy data captured before warm measurement existed; a fresh
+audit using it for warm cells fails the step 10 gate.
+
+| Page | Query count | LCP cold | LCP warm | CLS | Performance score cold | Performance score warm |
+|---|---|---|---|---|---|---|
+| home - before/after | 363 → 341 | 3.1s → 2.8s | 1.9s → 1.7s | 0.02 → 0.01 | 71 → 78 | 92 → 94 |
+| category_small - before/after | 221 → 205 | 2.6s → 2.4s | 1.5s → 1.4s | 0.00 → 0.00 | 76 → 81 | 94 → 95 |
+<!-- one row per frozen URL; each cell shows "before → after". Warm cells for legacy audits
+read `Skipped: legacy audit, cold only` for legacy data only; a fresh audit using it fails
+the gate. CLS reports the cold value. -->
 
 ## Infrastructure
 - [ ] Application Mode: production
@@ -144,17 +189,18 @@ template timer exceeded the threshold on any captured page`) — same rule as th
 Shapes table above: an empty table with no comment reads as "not checked."
 
 ## Core Web Vitals
-| Metric | Value | Status |
-|--------|-------|--------|
-| LCP | X.Xs | PASS/FAIL |
-| INP | X.Xms | PASS/FAIL |
-| CLS | X.XXX | PASS/FAIL |
+| Metric | Cold | Warm | Status |
+|--------|------|------|--------|
+| LCP (LCP cold, LCP warm) | X.Xs | X.Xs | PASS/FAIL |
+| Performance score (performance score cold, performance score warm) | NN | NN | PASS/FAIL |
+| INP | X.Xms | same as cold | PASS/FAIL |
+| CLS | X.XXX | X.XXX | PASS/FAIL |
 
-## Per-Page Query Detail — deep mandatory gate
+Cold is the first load after `cache:flush` expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers (see `references/core-web-vitals.md`). When a capture cannot run, use exactly one closed reason: `Skipped: no cache backend`, `Skipped: flush not permitted on this environment`, `Skipped: legacy audit, cold only`.
 
-> **Deep (`Scope: deep`) must populate this section for all 7 pages.** Each page gets one `<details>` (HTML) / collapsed block (markdown) with: page label + URL + total queries (pass1/pass2) + distinct-shape count + unfiltered table `Count | SQL normalized` (via the `grep -c '## QUERY'` recipes). Quick (`Scope: quick`) may use the Skipped row below, but must state `Skipped: quick — 3 pages only, Per-Page Detail deferred to deep` and remains in the Skipped Matrix. A deep report that omits this section or shows only the summary `363/221/611...` without the 7 tables fails the step 10 gate.
+## Per-Page Query Detail - deep mandatory gate
 
-<details><summary>home — 363 queries, 42 shapes</summary>
+<details><summary>home - 363 queries, 42 shapes</summary>
 
 | Count | SQL (normalized) |
 |-------|------------------|
@@ -162,14 +208,16 @@ Shapes table above: an empty table with no comment reads as "not checked."
 | 18 | `SELECT ... FROM catalog_category_product_index WHERE ...` |
 
 </details>
-<details><summary>category small — 221 queries, 31 shapes — dev: `https://example.test/eveil/livres/livre-sonore.html` / client: `/eveil/livres/livre-sonore.html`</summary>
+<details><summary>category small - 221 queries, 31 shapes - dev: `https://example.test/sample-category-small.html` / client: `/sample-category-small.html`</summary>
 
 | Count | SQL (normalized) |
 |-------|------------------|
 | ... | ... |
 
 </details>
-<!-- repeat for category medium, category large, product bundle, product simple 1, product simple 2 — 7 total for deep -->
+<!-- repeat for category medium, category large, product bundle, product simple 1, product simple 2 - 7 total for deep -->
+
+> **Deep (`Scope: deep`) must populate this section for all 7 pages.** Each page gets one `<details>` (HTML) / collapsed block (markdown) with: page label + URL + total queries (pass1/pass2) + distinct-shape count + unfiltered table `Count | SQL normalized` (via the `grep -c '## QUERY'` recipes). Quick (`Scope: quick`) may use the Skipped row below, but must state `Skipped: quick - 3 pages only, Per-Page Detail deferred to deep` and remains in the Skipped Matrix. A deep report that omits this section or shows only the summary `363/221/611...` without the 7 tables fails the step 10 gate.
 
 ## Recommendations
 1. ...

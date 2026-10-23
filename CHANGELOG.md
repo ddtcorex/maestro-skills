@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **`magento2-performance-audit` report prose hygiene.** The comparison gate and matrix paragraphs are hard-wrapped near 95 characters, `re-audit` and `top-level` use hyphenated compounds, and the audience line plus rewritten prose use plain hyphens only. The Core Web Vitals context note sits below its table with a blank line between, the HTML comparison note rewords the stacked legacy sentence without changing its gate meaning, the sidecar example measures the same pages its frozen `urlSet` holds, and the brand defaults section is trimmed into the 170-220 word budget with the stamp pin, logo render rule, overlay rule, and dark reservation intact. Tests extend the dash scan to the full new prose and narrow the client substring ban so legitimate audience vocabulary passes while brand terms still fail.
+
 ## [2.18.2] - 2026-10-22
 
 ### Fixed

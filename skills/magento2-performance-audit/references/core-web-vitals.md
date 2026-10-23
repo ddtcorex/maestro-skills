@@ -13,10 +13,22 @@ When a Chrome DevTools MCP server is connected, `performance_start_trace` (with 
 npm install -g @lhci/cli
 
 # Run audit
-lhci autorun --collect.url=https://your-store.test \
+lhci autorun --collect.url=https://example.test/sample-page.html \
              --collect.numberOfRuns=3 \
              --assert.preset=desktop
 ```
+
+## Cold plus warm capture protocol
+
+Every page type is measured twice, once cold and once warm, so cache effects stay visible instead of averaged away. Both loads use the same tool and settings on the same URL, run back to back, so the only difference between the two numbers is cache state.
+
+- Cold: first load after `cache:flush`, expecting a cache MISS. Record LCP, INP, CLS, performance score, and the cache status response headers proving the MISS. INP is recorded on the cold pass and the same value is reported for warm unless re-measured.
+- Warm: one immediate repeat load of the same URL, expecting a cache HIT. Record the same metrics plus the cache status response headers proving the HIT.
+- A repeat load taken minutes later, or after another flush, is not a warm load. When a cold or warm capture cannot run, use exactly one of these closed reasons, never a free-form variant:
+  - `Skipped: no cache backend`
+  - `Skipped: flush not permitted on this environment`
+  - `Skipped: legacy audit, cold only`
+- The legacy reason applies only to legacy data captured before warm measurement existed; a fresh audit using it for warm cells fails the gate.
 
 ## Core Web Vitals Thresholds
 
