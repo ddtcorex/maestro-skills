@@ -19,3 +19,7 @@ lib/
 # Force-track agent instruction files even if a global core.excludesFile rule excludes them
 !AGENTS.md
 !CLAUDE.md
+
+# The global gitignore hides docs/superpowers to keep in-progress specs out of
+# sub-repos; this repo commits shipped design records there (see AGENTS.md).
+!docs/superpowers
