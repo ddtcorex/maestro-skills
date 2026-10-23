@@ -3,8 +3,8 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 // Standalone brand assets shipped for report overlays: mark only, lockup for
-// light surfaces, lockup for dark surfaces. Geometry follows the Direction A
-// source (demo files stay out of the repo, these three files are the set).
+// light surfaces, lockup for dark surfaces. The mark is the Maestro M from the
+// workspace logo set on the DSH brand tile; these three files are the set.
 const assetsDir = join(
   __dirname,
   '..',
@@ -13,26 +13,22 @@ const assetsDir = join(
   'references',
   'assets',
 )
-const markFile = join(assetsDir, 'ddtcorex-mark.svg')
-const lockupFile = join(assetsDir, 'ddtcorex-lockup.svg')
-const darkFile = join(assetsDir, 'ddtcorex-lockup-dark.svg')
+const markFile = join(assetsDir, 'maestro-mark.svg')
+const lockupFile = join(assetsDir, 'maestro-lockup.svg')
+const darkFile = join(assetsDir, 'maestro-lockup-dark.svg')
 
 // Brand hex allowlist, same values as the brand free gate: every asset hex
 // must stay within it so the skill wide hex gate keeps passing.
 const hexAllow = new Set(
   [
-    '#3b82f6',
+    '#2563eb',
+    '#0a84ff',
     '#1e40af',
     '#0f172a',
     '#64748b',
     '#ffffff',
-    '#f5f5f7',
-    '#e5e7eb',
-    '#0b0f19',
-    '#151b2b',
+    '#f8fafc',
     '#e2e8f0',
-    '#94a3b8',
-    '#2a3242',
   ].map((h) => h.toLowerCase()),
 )
 
@@ -65,7 +61,7 @@ describe('perf-audit brand assets', () => {
   it('shares the same mark geometry across mark and both lockups', () => {
     const mark = readFileSync(markFile, 'utf-8')
     const rect = mark.match(/<rect\b[^>]*\/>/)?.[0]
-    const cut = mark.match(/<text\b[^>]*>d<\/text>/)?.[0]
+    const cut = mark.match(/<path\b[^>]*d="M2 11 L5 4 L8 9 L11 4 L14 11"[^>]*\/>/)?.[0]
     expect(rect).toBeDefined()
     expect(cut).toBeDefined()
     for (const file of [lockupFile, darkFile]) {
@@ -78,7 +74,7 @@ describe('perf-audit brand assets', () => {
   it('uses the ink wordmark on the light lockup and the light wordmark on dark', () => {
     const lockup = readFileSync(lockupFile, 'utf-8')
     const dark = readFileSync(darkFile, 'utf-8')
-    expect(lockup).toMatch(/<text\b[^>]*x="42"[^>]*fill="#0f172a"[^>]*>ddtcorex<\/text>/)
-    expect(dark).toMatch(/<text\b[^>]*x="42"[^>]*fill="#ffffff"[^>]*>ddtcorex<\/text>/)
+    expect(lockup).toMatch(/<text\b[^>]*x="42"[^>]*fill="#0f172a"[^>]*>Maestro<\/text>/)
+    expect(dark).toMatch(/<text\b[^>]*x="42"[^>]*fill="#ffffff"[^>]*>Maestro<\/text>/)
   })
 })

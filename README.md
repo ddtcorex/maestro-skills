@@ -186,8 +186,12 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/inst
 | GitHub Copilot | `.github/skills/` | `~/.copilot/skills/` |
 
 > The installer only serves tools without a plugin loader. On Claude Code,
-> Codex CLI and DSH, install the plugin (sections 1–3 above) instead of
+> Codex CLI and DSH, install the plugin (sections 1-3 above) instead of
 > linking loose files: a loose copy shadows the plugin with a stale cache.
+> Upgrading from an install that used the removed `claude`, `codex` or `dsh`
+> targets: run `install.sh --uninstall` once (it removes every path the
+> installer recorded, old targets included), then rerun the installer for
+> OpenCode or Copilot only.
 
 ---
 

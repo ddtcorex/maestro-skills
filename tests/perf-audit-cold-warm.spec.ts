@@ -124,3 +124,14 @@ describe('perf-audit review finding I5 legacy scope', () => {
     expect(gateRejectsWarm(legacyAuditFixture)).toBe(false)
   })
 })
+
+describe('perf-audit CWV card note', () => {
+  it('CWV note describes the table columns', () => {
+    const card = htmlTemplate().match(/<h2>Core Web Vitals[\s\S]*?<\/div>\s*<\/div>/)?.[0] ?? ''
+    const note = card.match(/<\/table>\s*<div[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? ''
+    expect(note.length).toBeGreaterThan(0)
+    expect(note).not.toContain('Columns: LCP cold')
+    expect(note).toMatch(/Cold and Warm columns/)
+    for (const metric of ['LCP', 'performance score', 'INP', 'CLS']) expect(note, metric).toContain(metric)
+  })
+})

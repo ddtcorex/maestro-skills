@@ -2,9 +2,27 @@
 
 ## [Unreleased]
 
+## [2.19.0] - 2026-10-23
+
+### Added
+
+- **`magento2-performance-audit` before/after comparison methodology.** A frozen `urlSet` in `audit-data.json` gates every comparison on the same normalized URIs (a 301 target with a dagger footnote is the only substitution), a closed six-column matrix compares query count, LCP cold and warm, CLS, and performance score cold and warm, and Core Web Vitals record a cold pass after `cache:flush` plus an immediate warm repeat with cache status headers. Missing captures use one of three closed `Skipped:` reasons. (#110)
+- **Brand slots in the HTML report template.** `{{brand_logo}}`, `{{brand_colors}}` and `{{brand_font}}`, previously documented only, now exist in `report.html.template`; an overlay replaces all three together. (#110)
+- **Overlay token map for report branding.** The header surface is now four tokens (`--header-bg`, `--header-text`, `--header-accent`, `--header-code-bg`) with Maestro defaults, a `--link-decoration` token (default `none`) lets an overlay underline links, and `report-theme.md` lists every token an overlay may redefine plus the exact construct each slot takes: one `:root{...}` block for `{{brand_colors}}`, one complete `body{font-family:...}` rule for `{{brand_font}}`.
+
+### Changed
+
+- **Report defaults carry the Maestro brand** instead of a neutral theme, through the same three slots overlays fill: the inline Maestro lockup (white M on a `#0a84ff` tile), links in `#2563eb`, an `#0a84ff` header accent, Inter with JetBrains Mono, palette copied from the Maestro design system. Standalone `maestro-mark.svg`, `maestro-lockup.svg` and `maestro-lockup-dark.svg` ship beside the template.
+- **KPI grid renders in two rows of three on desktop**, one column below 640px. (#111)
+
+### Removed
+
+- **`install.sh` targets `claude`, `codex` and `dsh`, and the DSH preset copy.** Those tools have plugin loaders, and a loose copy linked beside a plugin install shadows it with a stale cache. Migration: run `install.sh --uninstall` once to remove every recorded path, then rerun the installer for OpenCode or Copilot only. Passing a removed target now exits with the plugin install command for that tool. (#109)
+
 ### Fixed
 
-- **`magento2-performance-audit` report prose hygiene.** The comparison gate and matrix paragraphs are hard-wrapped near 95 characters, `re-audit` and `top-level` use hyphenated compounds, and the audience line plus rewritten prose use plain hyphens only. The Core Web Vitals context note sits below its table with a blank line between, the HTML comparison note rewords the stacked legacy sentence without changing its gate meaning, the sidecar example measures the same pages its frozen `urlSet` holds, and the brand defaults section is trimmed into the 170-220 word budget with the stamp pin, logo render rule, overlay rule, and dark reservation intact. Tests extend the dash scan to the full new prose and narrow the client substring ban so legitimate audience vocabulary passes while brand terms still fail.
+- **Baseline audits omit the comparison matrix** and record a `Baseline recorded:` note the step 10 gate accepts. (#111)
+- **Core Web Vitals card note** describes its real `Metric | Cold | Warm | Status` columns.
 
 ## [2.18.2] - 2026-10-22
 
