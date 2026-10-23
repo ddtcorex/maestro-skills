@@ -149,15 +149,10 @@ To reference the plugin from a hand-written patch layer instead, the row must na
       name: '@ddtcorex/maestro-skills'
 ```
 
-<details>
-<summary>Alternative: loose skill files via installer (no plugin)</summary>
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/install.sh | bash -s -- --target dsh
-```
-Links all skills into `~/.dsh/skills/`. It does not install an agent preset — presets are
-declaration rows now (see above).
-</details>
+> Do not link skills into `~/.dsh/skills/` (the old `install.sh --target dsh`
+> path, removed): the preset-layer `skill-filesystem` provider would shadow
+> the plugin with a stale cache. The plugin is the single source of truth
+> on DSH.
 
 ---
 
@@ -187,7 +182,6 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/inst
 | Tool | Scans (project scope) | Scans (personal scope) |
 |------|------------------------|--------------------------|
 | Claude Code | `.claude/skills/` | `~/.claude/skills/` |
-| DeepSeek Harness (DSH) | `.dsh/skills/` | `~/.dsh/skills/` |
 | OpenCode | `.opencode/skills/` | `~/.config/opencode/skills/` |
 | Codex CLI | `.agents/skills/` | `~/.agents/skills/` |
 | GitHub Copilot | `.github/skills/` | `~/.copilot/skills/` |

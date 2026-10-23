@@ -19,12 +19,16 @@
 #   opencode  -> .opencode/skills        (~/.config/opencode/skills)
 #   codex     -> .agents/skills          (~/.agents/skills)
 #   copilot   -> .github/skills          (~/.copilot/skills)
-#   dsh       -> .dsh/skills             (~/.dsh/skills)
+# NOTE: DeepSeek Harness (DSH) is intentionally NOT a target: on DSH the
+# Cordis plugin serves the packaged skills itself, and a second copy linked
+# into ~/.dsh/skills shadows the plugin via the preset-layer skill-filesystem
+# provider (stale cache wins duplicate names outright). Use
+# `dsh plugin --profile web add github:ddtcorex/maestro-skills` instead.
 set -euo pipefail
 
 REPO_URL="https://github.com/ddtcorex/maestro-skills.git"
 CACHE_DIR="${MAESTRO_SKILLS_HOME:-$HOME/.maestro-skills}"
-ALL_TOOLS="claude opencode codex copilot dsh"
+ALL_TOOLS="claude opencode codex copilot"
 
 scope="project"
 targets="all"
@@ -39,7 +43,7 @@ usage() {
 Usage: install.sh [options]
 
   --scope <project|personal>  Where to link skills (default: project; prompted if interactive)
-  --target <list|all>         Comma list of: claude,opencode,codex,copilot,dsh (default: all)
+  --target <list|all>         Comma list of: claude,opencode,codex,copilot (default: all)
   --skills <list|all>         Comma list of skill names to install (default: all)
   --mode <symlink|copy>       How to place files in the target dirs (default: symlink)
   --force                     Overwrite existing paths not created by this installer
@@ -114,7 +118,7 @@ if [ "$do_uninstall" = "yes" ]; then
 fi
 
 ask scope "Install scope -- 'project' (current dir) or 'personal' (all projects, ~)?" "$scope"
-ask targets "Target tools -- comma list of claude,opencode,codex,copilot,dsh, or 'all'" "$targets"
+ask targets "Target tools -- comma list of claude,opencode,codex,copilot, or 'all'" "$targets"
 
 case "$scope" in
   project|personal) ;;
@@ -143,7 +147,7 @@ target_dir_for() {
     opencode) [ "$scope" = personal ] && echo "$HOME/.config/opencode/skills" || echo "$PWD/.opencode/skills" ;;
     codex)    [ "$scope" = personal ] && echo "$HOME/.agents/skills"          || echo "$PWD/.agents/skills" ;;
     copilot)  [ "$scope" = personal ] && echo "$HOME/.copilot/skills"        || echo "$PWD/.github/skills" ;;
-    dsh)      [ "$scope" = personal ] && echo "$HOME/.dsh/skills"            || echo "$PWD/.dsh/skills" ;;
+    dsh) echo "Target 'dsh' was removed: on DeepSeek Harness install the Cordis plugin instead (dsh plugin --profile web add github:ddtcorex/maestro-skills). A copy linked into ~/.dsh/skills shadows the plugin with a stale cache." >&2; return 1 ;;
     *) echo "Unknown target: $1" >&2; return 1 ;;
   esac
 }
@@ -178,30 +182,8 @@ for tool in $tool_list; do
   done
 done
 
-# ── DSH agent preset ────────────────────────────────────────────────────────
-# When the target list includes `dsh`, also install the bundled Agent Preset
-# so it appears in the DSH Web GUI Agent picker.
-dsh_preset_installed=""
-for tool in $tool_list; do
-  if [ "$tool" = "dsh" ] && [ -d "$CACHE_DIR/.dsh-plugin" ]; then
-    preset_src="$CACHE_DIR/.dsh-plugin"
-    preset_dest="$HOME/.dsh/.agent-presets/maestro-skills"
-    mkdir -p "$preset_dest"
-    for f in preset.yml agent.cordis.yml; do
-      if [ -f "$preset_src/$f" ]; then
-        cp "$preset_src/$f" "$preset_dest/$f"
-      fi
-    done
-    grep -qxF "$preset_dest" "$manifest" || echo "$preset_dest" >> "$manifest"
-    dsh_preset_installed="yes"
-  fi
-done
-
 echo
 echo "Done. $installed skill link(s) created/updated, $skipped skipped."
-if [ -n "$dsh_preset_installed" ]; then
-  echo "DSH Agent Preset 'Maestro Skills' installed at $preset_dest"
-fi
 echo "Scope: $scope | Targets: $tool_list | Mode: $mode"
 echo "Update anytime by re-running this script (it re-pulls $CACHE_DIR and re-links)."
 echo "Uninstall with: install.sh --uninstall"

@@ -122,11 +122,11 @@ paths — it works for two tools, but for two different reasons:
 
 OpenCode and GitHub Copilot have no plugin-loader equivalent as of this
 writing. `install.sh` exists to bridge the gap for direct (non-plugin) use on
-any tool — including Claude/Codex users who'd rather symlink skill files than
+those tools — including Claude/Codex users who'd rather symlink skill files than
 install a plugin: it never tries to make one folder satisfy all four tools,
-it links per-tool into whichever directory each one actually scans. On DSH the
-installer is **optional**: the Cordis plugin serves the packaged skills itself,
-so `dsh plugin add` alone is a complete *skill* install. The agent preset is a
+it links per-tool into whichever directory each one actually scans. DSH is
+not an installer target: the Cordis plugin is the single source of truth
+there, so `dsh plugin add` alone is a complete *skill* install. The agent preset is a
 separate step — see the next section.
 
 ### The agent preset is a declaration row, not a directory (2026-09-22)
@@ -245,7 +245,10 @@ modifying it:
   `~/.maestro-skills` (override: `MAESTRO_SKILLS_HOME`; the legacy
   `AGENT_DEV_SKILLS_HOME` still works when the new var is unset); re-running
   the same command is the update path (`git pull --ff-only` + re-link) — there
-  is no separate `update.sh`. On DSH this installer is optional — see above.
+  is no separate `update.sh`. DSH is not an installer target: the Cordis
+  plugin is the single source of truth there, and a copy linked into
+  `~/.dsh/skills` shadows it with a stale cache (preset-layer
+  `skill-filesystem` wins duplicate names outright).
 - **TTY handling follows the rustup-init.sh pattern**: `[ -t 0 ]` for a real
   interactive stdin, else fall back to `< /dev/tty` if `[ -t 1 ]` (stdout is
   still a real terminal even though stdin was consumed by the `curl | bash`
