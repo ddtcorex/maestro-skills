@@ -28,7 +28,9 @@ const sixColumns = [
 // Guard definition: the single brand term this gate scans for.
 const brandPattern = /sutunam/i
 // A line is a guard line when the term appears only as the asserted pattern.
-const guardLine = /toMatch|RegExp|brandPattern|guard/i
+// The alternation names assertion syntax only: a bare word must never excuse
+// a hit, or prose could leak the term beside an innocent word.
+const guardLine = /toMatch|RegExp|brandPattern/i
 const dashPattern = /[\u2013\u2014]/
 
 function walkFiles(dir: string): string[] {
@@ -56,7 +58,10 @@ describe('perf-audit brand free gate', () => {
     }
   })
 
-  it('confines brand terms in batch spec files to guard assertions', () => {
+  // Commit subjects and bodies are a manual controller gate recorded in the
+  // SDD ledger, not a vitest assertion (history greps are environment
+  // fragile). This test asserts batch spec file content only.
+  it('keeps batch spec files free of brand terms outside guard assertions', () => {
     for (const name of batchSpecs) {
       const text = readFileSync(join(__dirname, name), 'utf-8')
       const proseHits = text
