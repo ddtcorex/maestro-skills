@@ -25,7 +25,8 @@ h2 .badge{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:up
 .badge-yellow{background:var(--yellow-bg);color:var(--yellow);border-color:#fde68a}
 .badge-red{background:var(--red-bg);color:var(--red);border-color:#fecaca}
 .badge-gray{background:#f5f5f7;color:var(--muted)}
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+@media (max-width:640px){.kpi{grid-template-columns:1fr}}
 .kpi .box{border:1px solid var(--border);border-radius:12px;padding:12px;background:#ffffff}
 .kpi .box .label{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
 .kpi .box .value{font-size:20px;font-weight:700;margin-top:4px}
@@ -85,6 +86,7 @@ ul{margin:8px 0;padding-left:18px}
   </table>
   <div style="font-size:13px;color:var(--muted);margin-top:8px">One row per page, each cell shows the before value and the after value for the same metric. Closed fixed column set: the column set extends only through a template update, never per report. A metric recorded on one side only is a gate failure, not a blank cell. The CLS column reports the cold value, so both sides stay comparable. Warm cells for legacy audits read <code>Skipped: legacy audit, cold only</code>; no re-audit is forced because the reason covers legacy data only. The legacy reason applies only to legacy data captured before warm measurement existed; a fresh audit using it for warm cells fails the gate.</div>
 </div>
+<!-- Baseline mode: with no prior URL set, replace the matrix card above with a note card reading `Baseline recorded: <date> - no prior URL set exists, comparison deferred to the next audit`. The step 10 gate accepts the baseline note in place of the matrix. -->
 
 <div class="card">
   <h2>Infrastructure <span class="badge {{infra_badge}}">{{infra_status}}</span></h2>

@@ -143,6 +143,16 @@ describe('perf-audit same metrics comparison matrix', () => {
   })
 })
 
+describe('perf-audit baseline mode without prior audit', () => {
+  it('omits the matrix on a first audit and records a baseline note instead', () => {
+    expect(template()).toMatch(/no prior URL set/i)
+    expect(template()).toMatch(/comparison deferred/i)
+    expect(template()).toMatch(/Baseline recorded/i)
+    expect(htmlTemplate()).toMatch(/no prior URL set/i)
+    expect(htmlTemplate()).toMatch(/Baseline recorded/i)
+  })
+})
+
 describe('perf-audit review findings C2 and I4', () => {
   it('uses only sample placeholder paths with no French taxonomy path', () => {
     expect(template()).toContain('sample-')
