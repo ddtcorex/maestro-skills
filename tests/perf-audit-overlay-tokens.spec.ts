@@ -89,3 +89,57 @@ describe('perf-audit header surface tokens', () => {
     expect(styles.border).toBe('rgb(59, 130, 246)')
   }, 120_000)
 })
+
+const section = (text: string, heading: string) => {
+  const start = text.indexOf(heading)
+  if (start < 0) return ''
+  const rest = text.slice(start + heading.length)
+  const next = rest.search(/\n#{2,3} /)
+  return next < 0 ? rest : rest.slice(0, next)
+}
+const words = (text: string) => text.replace(/```[\s\S]*?```/g, '').split(/\s+/).filter(Boolean).length
+
+describe('perf-audit overlay token map', () => {
+  const overlayTokens = ['--bg', '--card', '--border', '--text', '--muted', '--blue', '--header-bg', '--header-text', '--header-accent', '--header-code-bg']
+
+  it('documents the overlay token map', () => {
+    const map = section(theme(), '### Overlay token map')
+    expect(map.length).toBeGreaterThan(0)
+    for (const token of overlayTokens) expect(map, token).toContain(`\`${token}\``)
+    for (const status of ['--green', '--yellow', '--red']) expect(map, status).not.toContain(`\`${status}\``)
+  })
+
+  it('states the slot fill shapes', () => {
+    const map = section(theme(), '### Overlay token map')
+    expect(map).toMatch(/`\{\{brand_colors\}\}`[^\n]*`:root\{/)
+    expect(map).toMatch(/`\{\{brand_font\}\}`[^\n]*`body\{font-family:/)
+  })
+
+  it('theme rule lets the header rebrand through tokens', () => {
+    const body = theme()
+    expect(body).not.toContain('not brand-fixed surfaces')
+    const ruleLine = body.split('\n').find((l) => l.startsWith('- Theme rule:')) ?? ''
+    expect(ruleLine).toContain('--header-')
+    expect(ruleLine).toMatch(/light and dark/)
+  })
+
+  it('overlay token map stays within the lesson budget', () => {
+    const count = words(section(theme(), '### Overlay token map'))
+    expect(count).toBeGreaterThanOrEqual(170)
+    expect(count).toBeLessThanOrEqual(220)
+  })
+
+  it('brand defaults stays within the lesson budget', () => {
+    const count = words(section(theme(), '### Brand defaults (DDTCoreX)'))
+    expect(count).toBeGreaterThanOrEqual(170)
+    expect(count).toBeLessThanOrEqual(220)
+  })
+})
+
+describe('perf-audit markdown template brand pointer', () => {
+  it('points overlay authors at the token map', () => {
+    const md = readFileSync(join(refs, 'report-template.md'), 'utf-8')
+    const line = md.split('\n').find((l) => l.includes('Brand slots (DDTCoreX defaults')) ?? ''
+    expect(line).toContain('Overlay token map')
+  })
+})

@@ -82,7 +82,7 @@ Layout rule: every card renders its context note below table markup, never above
 - Render every audited URL as `<td class="url"><code>…</code></td>` (bare `<td>` does not pick up the wrapping rule below); long URLs wrap via `.url,td.url{overflow-wrap:anywhere;word-break:break-all}` instead of overflowing.
 - Brand slots `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}` default to the DDTCoreX values below; an overlay replaces all three together, never one alone.
 - Header layout: the gradient is full-bleed, but its text lives in `.header-inner`, which uses the same `max-width:1100px` and `24px` side padding as `.container`, so header and card left edges align at every viewport width. Keep both rules in sync if either changes.
-- Theme rule: brand-fixed surfaces (header and footer brand backgrounds) never invert with dark/light theme, only data tokens do. A brand color used as a header or footer background stays fixed in both modes; inverting it (light header in dark mode) reads as a bug, not theming.
+- Theme rule: the header is one of the brand-fixed surfaces, set only through the `--header-` tokens, and it stays fixed across light and dark modes; only data tokens follow the mode. Inverting it (a light header in dark mode) reads as a bug, not theming.
 - Keep `Per-Page Query Detail` for deep as 7 `<details><summary>home - 363 queries, 42 shapes</summary><table>...</table></details>` blocks (see `report-template.md`); quick may use `Skipped: quick - 3 pages only, Per-Page Detail deferred to deep`.
 - PDF via `google-chrome --headless --no-pdf-header-footer --print-to-pdf="report.pdf" "file://$(pwd)/report.html"` - verify with `pdftotext`.
 
@@ -92,6 +92,37 @@ The template ships with DDTCoreX defaults in all three slots, so a default rende
 
 `{{brand_logo}}` sits in the header above the title, defaulting to the inline SVG lockup: blue rounded square, white cut, lowercase wordmark in white for the dark header. Default renders keep the SVG, drop the marker line; an overlay fills the marker, drops the default block. Never use an external image reference: single-file HTML stays offline capable with the logo inline.
 
-`{{brand_colors}}` sits on its own line after the `:root` rule and defaults to the DDTCoreX palette already in `:root`. An overlay adds a second `:root` block redefining only the custom properties it needs: data tokens, not brand-fixed surfaces, which stay fixed in both modes per the theme rule above. Dark pairs (`#0b0f19`, `#151b2b`, `#e2e8f0`, `#94a3b8`, `#2a3242`) stay reserved for a dark variant.
+`{{brand_colors}}` sits on its own line after the `:root` rules and defaults to the DDTCoreX palette already there. An overlay fills it with one `:root` block redefining only tokens from the overlay token map below, header tokens included, which stay fixed in both modes per the theme rule above. Dark pairs (`#0b0f19`, `#151b2b`, `#e2e8f0`, `#94a3b8`, `#2a3242`) stay reserved for a dark variant.
 
 `{{brand_font}}` sits on its own line after the `body` rule and defaults to the Inter stack in `body` plus the JetBrains Mono `code` rule. An overlay replaces it with one `body` rule setting only the family stack, leaving size, line height, and spacing untouched.
+
+### Overlay token map
+
+An overlay rebrands the report by redefining custom properties, never by overriding selectors, so an upstream class rename cannot silently drop its branding. These are the only tokens an overlay may set:
+
+| Token | Role |
+|---|---|
+| `--bg` | page background |
+| `--card` | card background |
+| `--border` | card and table lines |
+| `--text` | body text |
+| `--muted` | secondary text, table headings |
+| `--blue` | links and inline accents |
+| `--header-bg` | header background, a color or a gradient |
+| `--header-text` | header title and meta text |
+| `--header-accent` | header bottom border |
+| `--header-code-bg` | code chips in the header meta |
+
+Status colors stay stock: green, yellow, and red mean pass, warn, and fail everywhere.
+
+Each slot takes exactly one construct:
+
+- `{{brand_colors}}` is one `:root{...}` block of tokens from the table above.
+- `{{brand_font}}` is one complete `body{font-family:Inter}` rule carrying the whole stack.
+
+A bare declaration such as `font-family:Inter;` at the top level of the style block merges into the next selector and drops that rule: the font never applies and links lose their style. New properties nothing reads, such as `--brand-primary`, change nothing. Keep text tokens at 4.5:1 contrast against their background; a bright accent belongs on `--header-accent`, not on text.
+
+```css
+:root{--header-bg:#ffffff;--header-text:#0f172a;--header-accent:#3b82f6;--header-code-bg:#f5f5f7;--blue:#1e40af}
+body{font-family:Inter,system-ui,sans-serif}
+```
