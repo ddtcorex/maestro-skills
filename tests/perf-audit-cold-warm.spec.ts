@@ -87,12 +87,16 @@ describe('perf-audit review finding I5 legacy scope', () => {
   })
 
   it('rejects a fresh audit that reuses the legacy reason for warm cells', () => {
+    const docs = [template(), htmlTemplate(), cwv()]
+    for (const body of docs) {
+      expect(body).toMatch(/legacy reason applies only to legacy data/i)
+    }
+    expect(cwv()).toContain('Skipped: legacy audit, cold only')
+    const scopePinned = docs.every((body) => /legacy reason applies only to legacy data/i.test(body))
     const legacyReason = 'Skipped: legacy audit, cold only'
     const gateFails = (fixture: { isLegacy: boolean; warmReason: string }) =>
-      fixture.warmReason === legacyReason && !fixture.isLegacy
-    const fresh = { isLegacy: false, warmReason: legacyReason }
-    const legacy = { isLegacy: true, warmReason: legacyReason }
-    expect(gateFails(fresh)).toBe(true)
-    expect(gateFails(legacy)).toBe(false)
+      fixture.warmReason === legacyReason && (!fixture.isLegacy || !scopePinned)
+    expect(gateFails({ isLegacy: false, warmReason: legacyReason })).toBe(true)
+    expect(gateFails({ isLegacy: true, warmReason: legacyReason })).toBe(false)
   })
 })
