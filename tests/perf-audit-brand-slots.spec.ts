@@ -70,6 +70,11 @@ describe('perf-audit brand slots', () => {
     expect(body).not.toMatch(
       /Roboto|Helvetica|Segoe|Arial|system-ui|sans-serif|monospace|Menlo|Consolas/i,
     )
-    expect(body).not.toMatch(/client/i)
+    // Narrow brand ban: brand-claiming client language still fails, while
+    // legitimate audience vocabulary (client-side, audience: client) passes.
+    const brandClientBan = /client name/i
+    expect(body).not.toMatch(brandClientBan)
+    expect('client-side readout for audience: client').not.toMatch(brandClientBan)
+    expect('never hard-code a client name in the template').toMatch(brandClientBan)
   })
 })

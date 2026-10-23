@@ -85,10 +85,10 @@ Layout rule: every card renders its context note below table markup, never above
 
 ### Brand defaults (DDTCoreX)
 
-The template ships with DDTCoreX defaults in all three slots, so a default render carries the brand: inline SVG lockup, primary accents, Inter with JetBrains Mono for code. Token copies carry the site source stamp, which tests pin instead of the values, so drift is detected without duplicating ownership.
+The template ships with DDTCoreX defaults in all three slots, so a default render carries the brand: inline SVG lockup, primary accents, Inter with JetBrains Mono for code. Token copies carry the source stamp, which tests pin instead of the values, so drift is detected without duplicating ownership.
 
-`{{brand_logo}}` sits in the header above the title, defaulting to the inline SVG lockup in the template: blue rounded square, white cut, lowercase wordmark in white for the dark header. Default renders drop the marker line and keep the SVG; an overlay fills the marker and drops the default block. Never use an external image reference: single-file HTML stays offline capable with the logo inline.
+`{{brand_logo}}` sits in the header above the title, defaulting to the inline SVG lockup: blue rounded square, white cut, lowercase wordmark in white for the dark header. Default renders keep the SVG, drop the marker line; an overlay fills the marker, drops the default block. Never use an external image reference: single-file HTML stays offline capable with the logo inline.
 
-`{{brand_colors}}` sits on its own line after the `:root` rule and defaults to the DDTCoreX palette already in `:root`. An overlay adds a second `:root` block redefining only the custom properties it needs. Redefine data tokens, not brand-fixed surfaces, and keep header and footer backgrounds fixed in both modes per the theme rule above. Dark pairs (`#0b0f19`, `#151b2b`, `#e2e8f0`, `#94a3b8`, `#2a3242`) stay reserved for a dark variant.
+`{{brand_colors}}` sits on its own line after the `:root` rule and defaults to the DDTCoreX palette already in `:root`. An overlay adds a second `:root` block redefining only the custom properties it needs: data tokens, not brand-fixed surfaces, which stay fixed in both modes per the theme rule above. Dark pairs (`#0b0f19`, `#151b2b`, `#e2e8f0`, `#94a3b8`, `#2a3242`) stay reserved for a dark variant.
 
 `{{brand_font}}` sits on its own line after the `body` rule and defaults to the Inter stack in `body` plus the JetBrains Mono `code` rule. An overlay replaces it with one `body` rule setting only the family stack, leaving size, line height, and spacing untouched.

@@ -5,9 +5,9 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 > **Scope gate:** every report starts with a `Scope: quick` or `Scope: deep` header (see Quick vs Deep in `references/per-page-type-audit.md`: quick 3 pages call-stack false threshold 1 batch govard sh + grep recipes for stats, trap single; deep 7 pages call-stack true threshold 0 two-pass + Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease `artifacts/profiler/profile.csv` SHA). Workflow step 10 is not done until every checkbox below is either checked with evidence or `Skipped: <reason>` — the Skipped Matrix at the end of the template enforces this, no silent omission.
 
 > **Machine-readable sidecar:** every audit writes `audit-data.json` next to `report.md`/`report.html` with this fixed schema — `report.md`/`report.html` render from it, never the other way around (no regex-scraping rendered markdown to recover data):
-> `{scope, generatedAt, urlSet[{label, url, uri}], pages[{label, url, uri, totalQueries, distinctShapes, shapes[{sql, count}]}]}` (`url` = absolute, `uri` = path + query). `urlSet` is a new top level key holding the frozen comparison set recorded at discovery time; readers ignore unknown keys, so older consumers stay backward compatible. Minimal example:
+> `{scope, generatedAt, urlSet[{label, url, uri}], pages[{label, url, uri, totalQueries, distinctShapes, shapes[{sql, count}]}]}` (`url` = absolute, `uri` = path + query). `urlSet` is a new top-level key holding the frozen comparison set recorded at discovery time; readers ignore unknown keys, so older consumers stay backward compatible. Minimal example:
 > ```json
-> {"scope":"deep","generatedAt":"2026-09-21T00:00:00Z","urlSet":[{"label":"home","url":"https://example.test/","uri":"/"},{"label":"category_small","url":"https://example.test/sample-category.html","uri":"/sample-category.html"}],"pages":[{"label":"home","url":"https://example.test/","uri":"/","totalQueries":363,"distinctShapes":42,"shapes":[{"sql":"SELECT ... FROM catalog_product_entity WHERE entity_id IN (...)","count":42},{"sql":"SELECT ... FROM cms_block WHERE block_id=?","count":1}]}]}
+> {"scope":"deep","generatedAt":"2026-09-21T00:00:00Z","urlSet":[{"label":"home","url":"https://example.test/","uri":"/"},{"label":"category_small","url":"https://example.test/sample-category.html","uri":"/sample-category.html"}],"pages":[{"label":"home","url":"https://example.test/","uri":"/","totalQueries":363,"distinctShapes":42,"shapes":[{"sql":"SELECT ... FROM catalog_product_entity WHERE entity_id IN (...)","count":42},{"sql":"SELECT ... FROM cms_block WHERE block_id=?","count":1}]},{"label":"category_small","url":"https://example.test/sample-category.html","uri":"/sample-category.html","totalQueries":221,"distinctShapes":31,"shapes":[{"sql":"SELECT ... FROM catalog_category_product_index WHERE ...","count":18}]}]}
 > ```
 
 > **If the environment supports publishing a rendered page (e.g. Claude Code's `Artifact` tool), publish the report that way instead of — or alongside — raw markdown.** Severity reads as a color-coded chip/pill at a glance instead of a flat checklist, and a published link is easier to share with a team than pasted text. This is optional and environment-dependent (not available in Codex CLI/OpenCode/Copilot) — the markdown template below is the portable baseline every environment can produce, and if you do publish a rendered page, still include everything the template covers (URLs audited, all findings, severities) rather than a lighter summary.
@@ -23,7 +23,7 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 ```markdown
 # Performance Audit Report
 
-Audience: dev — use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (neutral defaults, inject org branding at render time — never hard-code a client name in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`.
+Audience: dev - use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (neutral defaults, inject org branding at render time - never hard-code a client name in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`.
 
 Scope: quick — 3 pages (quick PR, ~5–10m), call-stack false, threshold 1, batch govard sh, grep recipes for stats, trap single
 <!-- For a release audit use: Scope: deep — 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->
@@ -46,17 +46,48 @@ Always state the exact URLs tested, not just "homepage/category/product" — wit
 
 ## Comparison Gate - Frozen URL Set
 
-Before/after comparisons are only valid when both audits measured the same pages. The first audit freezes its URL set into `audit-data.json` under the `urlSet` key, and every later audit reuses that frozen set instead of re-picking URLs. Freeze the set at discovery time, before any capture runs, so mid-audit reselection cannot silently shift the baseline. A later audit that measures different pages and still claims improvement is comparing unrelated work, so the gate is strict: identity is computed on the normalized URI (path plus query, scheme and host ignored, trailing slash normalized), and any divergence between the frozen set and the current set is a hard gate failure without a recorded reason. The single allowed substitution is a 301 redirect target: when a frozen URL now returns 301, the audit may measure the redirect target instead and must mark that row with a dagger footnote naming the original URL. Any other change, added page, dropped page, or swapped sample, fails the step 10 gate unless the report records the explicit reason beside the skipped matrix row. Readers ignore unknown top level keys, so `urlSet` remains fully backward compatible with older consumers.
+Before/after comparisons are only valid when both audits measured the same pages. The first
+audit freezes its URL set into `audit-data.json` under the `urlSet` key, and every later audit
+reuses that frozen set instead of re-picking URLs. Freeze the set at discovery time, before any
+capture runs, so mid-audit reselection cannot silently shift the baseline. A later audit that
+measures different pages and still claims improvement is comparing unrelated work, so the gate
+is strict: identity is computed on the normalized URI
+(path plus query, scheme and host ignored, trailing slash normalized), and any divergence
+between the frozen set and the current set is a hard gate failure without a recorded reason.
+The single allowed substitution is a 301 redirect target: when a frozen URL now returns 301,
+the audit may measure the redirect target instead and must mark that row with a dagger
+footnote naming the original URL. Any other change, added page, dropped page, or swapped
+sample, fails the step 10 gate unless the report records the explicit reason beside the
+skipped matrix row. Readers ignore unknown top-level keys, so `urlSet` remains fully
+backward compatible with older consumers.
 
 ## Comparison Matrix - Same Metrics Before/After
 
-Every before/after report renders one comparison matrix over the frozen URL set from the gate above: one row per page, each cell holding the before value and the after value for the same metric on the same page, so a reader can see at a glance whether each page improved, regressed, or stayed flat. The matrix keeps a closed fixed column set of exactly six metrics: query count, LCP cold, LCP warm, CLS, performance score cold, performance score warm. The column set extends only through a template update, never per report: a report adds rows for its pages but never adds, renames, or drops a metric column, which is what keeps any two reports directly comparable without realigning columns by hand. A metric recorded on one side only is a gate failure, not a blank cell: an empty half hides whether the number improved, regressed, or was never captured, so the step 10 gate fails the matrix until both sides carry a value or an explicit Skipped reason. Legacy `audit-data.json` files captured before warm measurement existed are grandfathered without forcing a re audit: their warm cells read `Skipped: legacy audit, cold only`, and the comparison still gates on the remaining cold columns plus query count and CLS. The CLS column reports the cold value, so both sides stay comparable. The legacy reason applies only to legacy data captured before warm measurement existed; a fresh audit using it for warm cells fails the step 10 gate.
+Every before/after report renders one comparison matrix over the frozen URL set from the gate
+above: one row per page, each cell holding the before value and the after value for the same
+metric on the same page, so a reader can see at a glance whether each page improved, regressed,
+or stayed flat. The matrix keeps a closed fixed column set of exactly six metrics: query count,
+LCP cold, LCP warm, CLS, performance score cold, performance score warm.
+The column set extends only through a template update, never per report: a report adds rows for
+its pages but never adds, renames, or drops a metric column, which is what keeps any two reports
+directly comparable without realigning columns by hand.
+A metric recorded on one side only is a gate failure, not a blank cell: an empty half hides
+whether the number improved, regressed, or was never captured, so the step 10 gate fails the
+matrix until both sides carry a value or an explicit Skipped reason. Legacy `audit-data.json`
+files captured before warm measurement existed are grandfathered without forcing a re-audit:
+their warm cells read `Skipped: legacy audit, cold only`, and the comparison still gates on the
+remaining cold columns plus query count and CLS.
+The CLS column reports the cold value, so both sides stay comparable.
+The legacy reason applies only to legacy data captured before warm measurement existed; a fresh
+audit using it for warm cells fails the step 10 gate.
 
 | Page | Query count | LCP cold | LCP warm | CLS | Performance score cold | Performance score warm |
 |---|---|---|---|---|---|---|
 | home - before/after | 363 → 341 | 3.1s → 2.8s | 1.9s → 1.7s | 0.02 → 0.01 | 71 → 78 | 92 → 94 |
 | category_small - before/after | 221 → 205 | 2.6s → 2.4s | 1.5s → 1.4s | 0.00 → 0.00 | 76 → 81 | 94 → 95 |
-<!-- one row per frozen URL; each cell shows "before → after". Warm cells for legacy audits read `Skipped: legacy audit, cold only` for legacy data only; a fresh audit using it fails the gate. CLS reports the cold value. -->
+<!-- one row per frozen URL; each cell shows "before → after". Warm cells for legacy audits
+read `Skipped: legacy audit, cold only` for legacy data only; a fresh audit using it fails
+the gate. CLS reports the cold value. -->
 
 ## Infrastructure
 - [ ] Application Mode: production
@@ -164,6 +195,7 @@ Shapes table above: an empty table with no comment reads as "not checked."
 | Performance score (performance score cold, performance score warm) | NN | NN | PASS/FAIL |
 | INP | X.Xms | same as cold | PASS/FAIL |
 | CLS | X.XXX | X.XXX | PASS/FAIL |
+
 Cold is the first load after `cache:flush` expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers (see `references/core-web-vitals.md`). When a capture cannot run, use exactly one closed reason: `Skipped: no cache backend`, `Skipped: flush not permitted on this environment`, `Skipped: legacy audit, cold only`.
 
 ## Per-Page Query Detail - deep mandatory gate

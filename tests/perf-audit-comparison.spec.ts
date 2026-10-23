@@ -96,6 +96,31 @@ describe('perf-audit same metrics comparison matrix', () => {
       expect(line).not.toMatch(/[\u2013\u2014]/)
     }
   })
+
+  it('keeps the full new comparison prose and the audience line free of em and en dashes', () => {
+    // The heading scan above misses body prose: the Audience line carries the
+    // same em-dash style the headings once had, so the scan covers it plus
+    // every non-empty line of the gate and matrix sections.
+    const body = template()
+    const audience = body.split('\n').filter((line) => line.startsWith('Audience:'))
+    expect(audience.length).toBeGreaterThanOrEqual(1)
+    const section = body.slice(body.indexOf('## Comparison Gate'), body.indexOf('## Infrastructure'))
+    const proseLines = section.split('\n').filter((line) => line.trim().length > 0)
+    expect(proseLines.length).toBeGreaterThanOrEqual(4)
+    for (const line of [...audience, ...proseLines]) {
+      expect(line).not.toMatch(/[\u2013\u2014]/)
+    }
+  })
+
+  it('hyphenates re-audit and top-level compounds where those words appear', () => {
+    for (const body of [template(), htmlTemplate()]) {
+      expect(body).toMatch(/re-audit/i)
+    }
+    expect(template()).toMatch(/top-level/i)
+    expect(template()).not.toMatch(/re audit/i)
+    expect(template()).not.toMatch(/top level/i)
+    expect(htmlTemplate()).not.toMatch(/re audit/i)
+  })
 })
 
 describe('perf-audit review findings C2 and I4', () => {
