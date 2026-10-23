@@ -85,6 +85,7 @@ ul{margin:8px 0;padding-left:18px}
   </table>
   <div style="font-size:13px;color:var(--muted);margin-top:8px">One row per page, each cell shows the before value and the after value for the same metric. Closed fixed column set: the column set extends only through a template update, never per report. A metric recorded on one side only is a gate failure, not a blank cell. The CLS column reports the cold value, so both sides stay comparable. Warm cells for legacy audits read <code>Skipped: legacy audit, cold only</code>; no re-audit is forced because the reason covers legacy data only. The legacy reason applies only to legacy data captured before warm measurement existed; a fresh audit using it for warm cells fails the gate.</div>
 </div>
+<!-- Baseline mode: with no prior URL set, replace the matrix card above with a note card reading `Baseline recorded: <date> - no prior URL set exists, comparison deferred to the next audit`. The step 10 gate accepts the baseline note in place of the matrix. -->
 
 <div class="card">
   <h2>Infrastructure <span class="badge {{infra_badge}}">{{infra_status}}</span></h2>

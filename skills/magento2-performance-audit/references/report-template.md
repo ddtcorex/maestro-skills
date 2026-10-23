@@ -66,7 +66,11 @@ backward compatible with older consumers.
 Every before/after report renders one comparison matrix over the frozen URL set from the gate
 above: one row per page, each cell holding the before value and the after value for the same
 metric on the same page, so a reader can see at a glance whether each page improved, regressed,
-or stayed flat. The matrix keeps a closed fixed column set of exactly six metrics: query count,
+or stayed flat. Baseline mode: a first audit has no prior URL set to compare against, so it
+omits the matrix card and records a baseline note instead (`Baseline recorded: <date> - no
+prior URL set exists, comparison deferred to the next audit`). The step 10 gate accepts the
+baseline note in place of the matrix; the matrix renders only when both a before and an after
+side exist. The matrix keeps a closed fixed column set of exactly six metrics: query count,
 LCP cold, LCP warm, CLS, performance score cold, performance score warm.
 The column set extends only through a template update, never per report: a report adds rows for
 its pages but never adds, renames, or drops a metric column, which is what keeps any two reports
