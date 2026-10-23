@@ -152,7 +152,7 @@ ul{margin:8px 0;padding-left:18px}
     <tr><th>Metric</th><th>Cold</th><th>Warm</th><th>Status</th></tr>
     {{cwv_rows}}
   </table>
-  <div style="font-size:13px;color:var(--muted);margin-top:8px">Cold is the first load after <code>cache:flush</code> expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers. Columns: LCP cold, LCP warm, performance score cold, performance score warm, INP, CLS.</div>
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">Cold is the first load after <code>cache:flush</code> expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers. Rows cover LCP, performance score, INP, and CLS, each with Cold and Warm columns, so LCP cold, LCP warm, performance score cold, and performance score warm are all recorded; INP is measured once on the cold pass.</div>
 </div>
 
 <div class="card">
