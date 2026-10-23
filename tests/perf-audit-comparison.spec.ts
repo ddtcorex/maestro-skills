@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
 const template = () => readFileSync(join(refs, 'report-template.md'), 'utf-8')
+const htmlTemplate = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
 const perPage = () => readFileSync(join(refs, 'per-page-type-audit.md'), 'utf-8')
 
 describe('perf-audit frozen URL set and comparison gate', () => {
@@ -32,5 +33,43 @@ describe('perf-audit frozen URL set and comparison gate', () => {
     const body = perPage()
     expect(body).toMatch(/frozen/i)
     expect(body).toMatch(/reused for later comparisons/i)
+  })
+})
+
+describe('perf-audit same metrics comparison matrix', () => {
+  const sixColumns = [
+    'query count',
+    'LCP cold',
+    'LCP warm',
+    'CLS',
+    'performance score cold',
+    'performance score warm',
+  ]
+
+  it('documents the before/after matrix with the closed six columns in report-template.md', () => {
+    const body = template()
+    expect(body).toMatch(/before\/after/i)
+    for (const col of sixColumns) {
+      expect(body).toMatch(new RegExp(col, 'i'))
+    }
+    expect(body).toMatch(/column set extends only through .*template update/i)
+  })
+
+  it('renders the same six-column before/after matrix in report.html.template', () => {
+    const body = htmlTemplate()
+    expect(body).toMatch(/before\/after/i)
+    for (const col of sixColumns) {
+      expect(body).toMatch(new RegExp(col, 'i'))
+    }
+  })
+
+  it('states a metric recorded on one side only is a gate failure, not a blank cell', () => {
+    expect(template()).toMatch(/one side only.*gate failure/i)
+    expect(htmlTemplate()).toMatch(/one side only.*gate failure/i)
+  })
+
+  it('grandfathers legacy audits with the exact Skipped reason in both templates', () => {
+    expect(template()).toContain('Skipped: legacy audit, cold only')
+    expect(htmlTemplate()).toContain('Skipped: legacy audit, cold only')
   })
 })

@@ -74,6 +74,15 @@ ul{margin:8px 0;padding-left:18px}
 </div>
 
 <div class="card">
+  <h2>Before/After Comparison Matrix <span class="badge badge-gray">same metrics · frozen URL set</span></h2>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:8px">One row per page, each cell shows the before value and the after value for the same metric. Closed fixed column set: the column set extends only through a template update, never per report. A metric recorded on one side only is a gate failure, not a blank cell. Warm cells for legacy audits read <code>Skipped: legacy audit, cold only</code> with no re audit forced.</div>
+  <table>
+    <tr><th>Page</th><th>Query count</th><th>LCP cold</th><th>LCP warm</th><th>CLS</th><th>Performance score cold</th><th>Performance score warm</th></tr>
+    {{comparison_rows}}
+  </table>
+</div>
+
+<div class="card">
   <h2>Infrastructure <span class="badge {{infra_badge}}">{{infra_status}}</span></h2>
   {{infra_checks}}
   <div style="margin-top:8px;font-size:13px">Verdict: <span class="verdict">{{infra_verdict_text}}</span> — {{infra_verdict_detail}}</div>
