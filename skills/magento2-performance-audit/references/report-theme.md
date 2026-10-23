@@ -77,3 +77,13 @@ ul{margin:8px 0;padding-left:18px}
 - Theme rule: brand-fixed surfaces (header/footer brand background) never invert with dark/light theme — only data tokens do. A brand color used as a header/footer background stays fixed in both modes; inverting it (light header in dark mode) reads as a bug, not theming.
 - Keep `Per-Page Query Detail` for deep as 7 `<details><summary>home — 363 queries, 42 shapes</summary><table>…</table></details>` blocks (see `report-template.md`); quick may use `Skipped: quick — 3 pages only, Per-Page Detail deferred to deep`.
 - PDF via `google-chrome --headless --no-pdf-header-footer --print-to-pdf="report.pdf" "file://$(pwd)/report.html"` — verify with `pdftotext`.
+
+### Brand slots
+
+The template carries three generic slots an overlay fills at render time: `{{brand_logo}}`, `{{brand_colors}}`, and `{{brand_font}}`. Each one ships with neutral defaults, so a report rendered with all three left empty matches the inline style above exactly, with a title-only header.
+
+`{{brand_logo}}` sits inside the header above the title. Leave it empty for the neutral title-only header, or replace it with a single image element pointing at the overlay supplied logo asset. Cap the image height so the header keeps its current rhythm, and always set descriptive alt text so the printed copy stays readable.
+
+`{{brand_colors}}` sits on its own line directly after the `:root` rule. Leave it empty for the neutral palette, or replace it with a second `:root` block that redefines only the custom properties the overlay needs. Redefine data tokens rather than brand-fixed surfaces, and keep header and footer backgrounds fixed in both modes per the theme rule above.
+
+`{{brand_font}}` sits on its own line directly after the `body` rule. Leave it empty for the neutral type stack, or replace it with a single `body` rule that sets the family stack only. Leave size, line height, and spacing untouched so cards and tables keep their measured layout.
