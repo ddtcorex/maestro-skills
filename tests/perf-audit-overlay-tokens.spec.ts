@@ -143,3 +143,25 @@ describe('perf-audit markdown template brand pointer', () => {
     expect(line).toContain('Overlay token map')
   })
 })
+
+describe('perf-audit link decoration token', () => {
+  it('declares --link-decoration with a none default and the a rule reads it', () => {
+    for (const css of [template(), themeStyle()]) {
+      expect(css).toContain('--link-decoration:none')
+      expect(rule(css, 'a')).toContain('text-decoration:var(--link-decoration)')
+    }
+  })
+
+  it('lists --link-decoration in the overlay token map and words the font shape plainly', () => {
+    const map = section(theme(), '### Overlay token map')
+    expect(map).toContain('`--link-decoration`')
+    expect(map).not.toContain('carrying the whole stack')
+    expect(map.replace(/\s+/g, ' ')).toContain('whole family stack')
+  })
+
+  it.skipIf(!hasChrome())('default render leaves links undecorated (needs headless Chrome)', () => {
+    const html = template().replace('{{brand_logo}}', '').replace('{{brand_colors}}', '').replace('{{brand_font}}', '')
+    const styles = renderProbe(html, `({ deco: getComputedStyle(document.querySelector('.footer a')).textDecorationLine })`)
+    expect(styles.deco).toBe('none')
+  }, 120_000)
+})

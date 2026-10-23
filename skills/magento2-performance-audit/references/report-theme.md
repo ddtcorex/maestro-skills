@@ -8,11 +8,11 @@ Standard inline CSS for performance audit HTML reports. Every `report.html` gene
 <style>
 /* Copied from the Maestro design system (design-system/MASTER.md, assets/maestro-logo), verified 2026-10-23 */
 :root{--bg:#f8fafc;--card:#ffffff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--green:#16a34a;--green-bg:#dcfce7;--yellow:#ca8a04;--yellow-bg:#fef9c3;--red:#dc2626;--red-bg:#fee2e2;--blue:#2563eb}
-/* Header surface tokens: an overlay redefines these in its colors slot block */
-:root{--header-bg:linear-gradient(135deg,#0f172a 0%,#1e40af 100%);--header-text:#ffffff;--header-accent:#0a84ff;--header-code-bg:rgba(255,255,255,0.14)}
+/* Surface tokens (header and links): an overlay redefines these in its colors slot block */
+:root{--header-bg:linear-gradient(135deg,#0f172a 0%,#1e40af 100%);--header-text:#ffffff;--header-accent:#0a84ff;--header-code-bg:rgba(255,255,255,0.14);--link-decoration:none}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
 code{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+a{color:var(--blue);text-decoration:var(--link-decoration)}a:hover{text-decoration:underline}
 .header{background:var(--header-bg);color:var(--header-text);padding-block:32px;border-bottom:4px solid var(--header-accent)}
 .header-inner{max-width:1100px;margin:0 auto;padding-inline:24px}
 .header h1{margin:0 0 8px;font-size:28px;letter-spacing:-0.02em}
@@ -112,15 +112,16 @@ An overlay rebrands the report by redefining custom properties, never by overrid
 | `--header-text` | header title and meta text |
 | `--header-accent` | header bottom border |
 | `--header-code-bg` | code chips in the header meta |
+| `--link-decoration` | link underline, `none` or `underline` |
 
-Status colors stay stock: green, yellow, and red mean pass, warn, and fail everywhere.
+Status colors stay stock everywhere.
 
 Each slot takes exactly one construct:
 
 - `{{brand_colors}}` is one `:root{...}` block of tokens from the table above.
-- `{{brand_font}}` is one complete `body{font-family:Inter}` rule carrying the whole stack.
+- `{{brand_font}}` is one complete `body{font-family:Inter}` rule; put the whole family stack in it.
 
-A bare declaration such as `font-family:Inter;` at the top level of the style block merges into the next selector and drops that rule: the font never applies and links lose their style. New properties nothing reads, such as `--brand-primary`, change nothing. Keep text tokens at 4.5:1 contrast against their background; a bright accent belongs on `--header-accent`, not on text.
+A bare declaration such as `font-family:Inter;` at the top level of the style block merges into the next selector and drops that rule: the font never applies and links lose their style. Unread properties such as `--brand-primary` change nothing. Keep text tokens at 4.5:1 contrast against their background; a bright accent belongs on `--header-accent`, not on text.
 
 ```css
 :root{--header-bg:#ffffff;--header-text:#0f172a;--header-accent:#0a84ff;--header-code-bg:#f8fafc;--blue:#2563eb}

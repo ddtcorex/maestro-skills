@@ -8,7 +8,7 @@
 
 - **`magento2-performance-audit` before/after comparison methodology.** A frozen `urlSet` in `audit-data.json` gates every comparison on the same normalized URIs (a 301 target with a dagger footnote is the only substitution), a closed six-column matrix compares query count, LCP cold and warm, CLS, and performance score cold and warm, and Core Web Vitals record a cold pass after `cache:flush` plus an immediate warm repeat with cache status headers. Missing captures use one of three closed `Skipped:` reasons. (#110)
 - **Brand slots in the HTML report template.** `{{brand_logo}}`, `{{brand_colors}}` and `{{brand_font}}`, previously documented only, now exist in `report.html.template`; an overlay replaces all three together. (#110)
-- **Overlay token map for report branding.** The header surface is now four tokens (`--header-bg`, `--header-text`, `--header-accent`, `--header-code-bg`) with Maestro defaults, and `report-theme.md` lists every token an overlay may redefine plus the exact construct each slot takes: one `:root{...}` block for `{{brand_colors}}`, one complete `body{font-family:...}` rule for `{{brand_font}}`.
+- **Overlay token map for report branding.** The header surface is now four tokens (`--header-bg`, `--header-text`, `--header-accent`, `--header-code-bg`) with Maestro defaults, a `--link-decoration` token (default `none`) lets an overlay underline links, and `report-theme.md` lists every token an overlay may redefine plus the exact construct each slot takes: one `:root{...}` block for `{{brand_colors}}`, one complete `body{font-family:...}` rule for `{{brand_font}}`.
 
 ### Changed
 
