@@ -806,7 +806,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 - `magento2-linter`: new **Real CI Verification Is Mandatory Before Pushing** section — running a
-  project's real CI lint wrapper (e.g. Sutunam's `magelint`) is now a required step before
+  project's real CI lint wrapper (e.g. a team's `magelint`) is now a required step before
   pushing or opening a PR/MR, not an optional nice-to-have. A local approximation is a fast
   pre-check only; it must never be presented as proof the branch is clean.
 - `magento2-linter`: new callout — when a standalone package uses a `src/`-rooted PSR-4 layout,
