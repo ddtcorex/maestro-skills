@@ -86,7 +86,8 @@ const fontSystem = new Set([
   'monospace',
 ])
 // Absolute sample hosts in the Task 1 files: placeholders or the token source.
-const hostAllow = /(example\.test|ddtcorex\.com)$/i
+// Anchored full match: a suffix pin would let outside hosts through.
+const hostAllow = /^(example\.test|([a-z0-9-]+\.)?ddtcorex\.com)$/i
 const dashPattern = /[\u2013\u2014]/
 
 function walkFiles(dir: string): string[] {
@@ -152,13 +153,26 @@ describe('perf-audit brand allowlist gate', () => {
 
   it('keeps absolute hosts in the Task 1 files on the placeholder allowlist', () => {
     for (const file of brandFiles) {
-      const hosts = [...readFileSync(file, 'utf-8').matchAll(/https?:\/\/([^/\s"'`]+)/gi)].map(
-        (m) => m[1].toLowerCase(),
+      const text = readFileSync(file, 'utf-8')
+      const schemeHosts = [...text.matchAll(/https?:\/\/([^/\s"'`]+)/gi)].map((m) =>
+        m[1].toLowerCase(),
       )
-      for (const host of hosts) {
+      // Bare www hosts carry no scheme (token source stamp), so scan them too.
+      const bareHosts = [...text.matchAll(/(?<![/:@\w.-])www\.[^\s"'`\/]+/gi)].map((m) =>
+        m[0].toLowerCase().replace(/[.,;:!?]+$/, ''),
+      )
+      for (const host of [...schemeHosts, ...bareHosts]) {
         expect(host).toMatch(hostAllow)
       }
     }
+  })
+
+  it('anchors the brand match so lookalike suffixes do not pass', () => {
+    expect('www.ddtcorex.com').toMatch(hostAllow)
+    expect('ddtcorex.com').toMatch(hostAllow)
+    expect('example.test').toMatch(hostAllow)
+    expect('evil-ddtcorex.com').not.toMatch(hostAllow)
+    expect('notexample.test').not.toMatch(hostAllow)
   })
 
   // Spec files carry the allowlist itself, so they must stay within it: no

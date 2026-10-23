@@ -23,7 +23,7 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 ```markdown
 # Performance Audit Report
 
-Audience: dev - use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (neutral defaults, inject org branding at render time - never hard-code a client name in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`.
+Audience: dev - use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (DDTCoreX defaults, replace all three together for an overlay - never hard-code another brand in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`.
 
 Scope: quick — 3 pages (quick PR, ~5–10m), call-stack false, threshold 1, batch govard sh, grep recipes for stats, trap single
 <!-- For a release audit use: Scope: deep — 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->

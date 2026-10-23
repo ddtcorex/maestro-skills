@@ -99,4 +99,28 @@ describe('perf-audit review finding I5 legacy scope', () => {
     expect(gateFails({ isLegacy: false, warmReason: legacyReason })).toBe(true)
     expect(gateFails({ isLegacy: true, warmReason: legacyReason })).toBe(false)
   })
+
+  it('proves the documented gate rejects a fresh-audit fixture citing the legacy reason', () => {
+    // Fresh-audit fixture: cites the legacy reason without legacy provenance.
+    const legacyReason = 'Skipped: legacy audit, cold only'
+    const freshAuditFixture = {
+      isLegacy: false,
+      provenance: 'fresh capture with warm measurement available',
+      warmReason: legacyReason,
+    }
+    const legacyAuditFixture = {
+      isLegacy: true,
+      provenance: 'legacy capture before warm measurement existed',
+      warmReason: legacyReason,
+    }
+    // Tied to the scope sentence already in the refs (whitespace tolerant:
+    // the markdown template wraps the sentence across two lines).
+    for (const body of [template(), htmlTemplate(), cwv()]) {
+      expect(body).toMatch(/fresh\s+audit\s+using\s+it\s+for\s+warm\s+cells\s+fails/i)
+    }
+    const gateRejectsWarm = (fixture: { isLegacy: boolean; warmReason: string }) =>
+      fixture.warmReason === legacyReason && !fixture.isLegacy
+    expect(gateRejectsWarm(freshAuditFixture)).toBe(true)
+    expect(gateRejectsWarm(legacyAuditFixture)).toBe(false)
+  })
 })

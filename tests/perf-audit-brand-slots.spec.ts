@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
 const template = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
 const theme = () => readFileSync(join(refs, 'report-theme.md'), 'utf-8')
+const mdTemplate = () => readFileSync(join(refs, 'report-template.md'), 'utf-8')
 // Prose only: fenced code blocks carry the token values verbatim, so the
 // allowlist wording rule applies to the text outside them.
 const prose = (text: string) => text.replace(/```[\s\S]*?```/g, '')
@@ -54,12 +55,21 @@ describe('perf-audit brand slots', () => {
   })
 
   it('documents all three slots with DDTCoreX defaults and allowlisted prose', () => {
-    expect(theme()).toContain('{{brand_logo}}')
-    expect(theme()).toContain('{{brand_colors}}')
-    expect(theme()).toContain('{{brand_font}}')
+    for (const body of [theme(), mdTemplate()]) {
+      expect(body).toContain('{{brand_logo}}')
+      expect(body).toContain('{{brand_colors}}')
+      expect(body).toContain('{{brand_font}}')
+    }
     const body = prose(theme())
     expect(body).toMatch(/ddtcorex/i)
     expect(body).not.toMatch(/neutral defaults?/i)
+    // The markdown template carries the same DDTCoreX defaults wording, so
+    // both templates are guarded against a neutral-defaults regression.
+    // Raw text: the Audience line lives inside the fenced markdown block,
+    // so prose() stripping would remove the very line being pinned.
+    const mdRaw = mdTemplate()
+    expect(mdRaw).toMatch(/ddtcorex/i)
+    expect(mdRaw).not.toMatch(/neutral defaults?/i)
     // Token values live in fenced code blocks: any hex in prose must be listed.
     for (const h of body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []) {
       expect(proseHexAllow.has(h.toLowerCase())).toBe(true)

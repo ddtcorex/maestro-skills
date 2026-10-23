@@ -112,6 +112,26 @@ describe('perf-audit same metrics comparison matrix', () => {
     }
   })
 
+  it('keeps the rewritten HTML comparison prose free of em and en dashes', () => {
+    // Mirrors the markdown scan above for the rewritten HTML prose line
+    // (report.html.template:86 area): the same no-em-en-dash rule applies.
+    const html = htmlTemplate()
+    const start = html.indexOf('Before/After Comparison Matrix')
+    expect(start).toBeGreaterThan(-1)
+    const after = html.slice(start)
+    const nextCard = after.indexOf('<div class="card">', 1)
+    const section = nextCard === -1 ? after : after.slice(0, nextCard)
+    const proseLines = section.split('\n').filter((line) => line.trim().length > 0)
+    expect(proseLines.length).toBeGreaterThanOrEqual(4)
+    for (const line of proseLines) {
+      expect(line).not.toMatch(/[\u2013\u2014]/)
+    }
+    const proseLine = section.split('\n').find((line) => line.includes('One row per page'))
+    expect(proseLine).toBeDefined()
+    expect(proseLine as string).toContain('Closed fixed column set')
+    expect(proseLine as string).not.toMatch(/[\u2013\u2014]/)
+  })
+
   it('hyphenates re-audit and top-level compounds where those words appear', () => {
     for (const body of [template(), htmlTemplate()]) {
       expect(body).toMatch(/re-audit/i)
