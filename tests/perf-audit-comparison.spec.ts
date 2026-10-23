@@ -6,6 +6,7 @@ const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'refe
 const template = () => readFileSync(join(refs, 'report-template.md'), 'utf-8')
 const htmlTemplate = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
 const perPage = () => readFileSync(join(refs, 'per-page-type-audit.md'), 'utf-8')
+const cwvText = () => readFileSync(join(refs, 'core-web-vitals.md'), 'utf-8')
 
 describe('perf-audit frozen URL set and comparison gate', () => {
   it('documents the urlSet schema block in the sidecar section', () => {
@@ -94,5 +95,34 @@ describe('perf-audit same metrics comparison matrix', () => {
     for (const line of targets) {
       expect(line).not.toMatch(/[\u2013\u2014]/)
     }
+  })
+})
+
+describe('perf-audit review findings C2 and I4', () => {
+  it('uses only sample placeholder paths with no French taxonomy path', () => {
+    expect(template()).toContain('sample-')
+    expect(cwvText()).toContain('sample-')
+    for (const body of [template(), htmlTemplate(), cwvText()]) {
+      expect(body).not.toContain('eveil')
+      expect(body).not.toContain('livre-sonore')
+    }
+    expect(template()).not.toContain('store.test')
+    expect(cwvText()).not.toContain('your-store.test')
+  })
+
+  it('keeps every example.test sample path on sample-', () => {
+    for (const body of [template(), cwvText()]) {
+      const urls = [...body.matchAll(/example\.test(\/\S*)/gi)].map((m) => m[1])
+      const paths = urls.filter((p) => p && p !== '/' && p.includes('.html'))
+      expect(paths.length).toBeGreaterThan(0)
+      for (const p of paths) {
+        expect(p).toMatch(/sample-/)
+      }
+    }
+  })
+
+  it('states the matrix CLS column reports the cold value', () => {
+    expect(template()).toMatch(/CLS column reports the cold value/i)
+    expect(htmlTemplate()).toMatch(/CLS column reports the cold value/i)
   })
 })

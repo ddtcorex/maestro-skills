@@ -155,3 +155,27 @@ describe('perf-audit report layout', () => {
     expect(text).toContain('context annotates data the reader has already seen')
   })
 })
+
+describe('perf-audit markdown note order', () => {
+  const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+  const template = () => readFileSync(join(refs, 'report-template.md'), 'utf-8')
+
+  it('renders the CWV table before its context note', () => {
+    const body = template()
+    expect(body.indexOf('| Metric | Cold | Warm | Status |')).toBeLessThan(
+      body.indexOf('Cold is the first load'),
+    )
+  })
+
+  it('renders per-page details before their context note', () => {
+    const body = template()
+    expect(body.indexOf('<details><summary>home')).toBeLessThan(
+      body.indexOf('Deep (`Scope: deep`) must populate'),
+    )
+  })
+
+  it('renders the comparison table before its context note', () => {
+    const body = template()
+    expect(body.indexOf('| Page | Query count |')).toBeLessThan(body.indexOf('one row per frozen URL'))
+  })
+})

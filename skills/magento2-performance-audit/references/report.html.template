@@ -83,7 +83,7 @@ ul{margin:8px 0;padding-left:18px}
     <tr><th>Page</th><th>Query count</th><th>LCP cold</th><th>LCP warm</th><th>CLS</th><th>Performance score cold</th><th>Performance score warm</th></tr>
     {{comparison_rows}}
   </table>
-  <div style="font-size:13px;color:var(--muted);margin-top:8px">One row per page, each cell shows the before value and the after value for the same metric. Closed fixed column set: the column set extends only through a template update, never per report. A metric recorded on one side only is a gate failure, not a blank cell. Warm cells for legacy audits read <code>Skipped: legacy audit, cold only</code> with no re audit forced.</div>
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">One row per page, each cell shows the before value and the after value for the same metric. Closed fixed column set: the column set extends only through a template update, never per report. A metric recorded on one side only is a gate failure, not a blank cell. The CLS column reports the cold value, so both sides stay comparable. Warm cells for legacy audits read <code>Skipped: legacy audit, cold only</code> with no re audit forced for legacy data only. The legacy reason applies only to legacy data captured before warm measurement existed; a fresh audit using it for warm cells fails the gate.</div>
 </div>
 
 <div class="card">

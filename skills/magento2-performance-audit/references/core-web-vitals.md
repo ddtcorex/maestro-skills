@@ -13,7 +13,7 @@ When a Chrome DevTools MCP server is connected, `performance_start_trace` (with 
 npm install -g @lhci/cli
 
 # Run audit
-lhci autorun --collect.url=https://your-store.test \
+lhci autorun --collect.url=https://example.test/sample-page.html \
              --collect.numberOfRuns=3 \
              --assert.preset=desktop
 ```
@@ -28,6 +28,7 @@ Every page type is measured twice, once cold and once warm, so cache effects sta
   - `Skipped: no cache backend`
   - `Skipped: flush not permitted on this environment`
   - `Skipped: legacy audit, cold only`
+- The legacy reason applies only to legacy data captured before warm measurement existed; a fresh audit using it for warm cells fails the gate.
 
 ## Core Web Vitals Thresholds
 

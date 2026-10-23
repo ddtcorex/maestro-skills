@@ -78,3 +78,21 @@ describe('perf-audit CWV cold/warm column split', () => {
     expect(section).toMatch(/performance score warm/i)
   })
 })
+
+describe('perf-audit review finding I5 legacy scope', () => {
+  it('scopes the legacy reason to legacy data only', () => {
+    for (const body of [template(), htmlTemplate(), cwv()]) {
+      expect(body).toMatch(/legacy reason applies only to legacy data/i)
+    }
+  })
+
+  it('rejects a fresh audit that reuses the legacy reason for warm cells', () => {
+    const legacyReason = 'Skipped: legacy audit, cold only'
+    const gateFails = (fixture: { isLegacy: boolean; warmReason: string }) =>
+      fixture.warmReason === legacyReason && !fixture.isLegacy
+    const fresh = { isLegacy: false, warmReason: legacyReason }
+    const legacy = { isLegacy: true, warmReason: legacyReason }
+    expect(gateFails(fresh)).toBe(true)
+    expect(gateFails(legacy)).toBe(false)
+  })
+})
