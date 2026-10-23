@@ -24,7 +24,8 @@ h2 .badge{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:up
 .badge-yellow{background:var(--yellow-bg);color:var(--yellow);border-color:#fde68a}
 .badge-red{background:var(--red-bg);color:var(--red);border-color:#fecaca}
 .badge-gray{background:#f5f5f7;color:var(--muted)}
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+@media (max-width:640px){.kpi{grid-template-columns:1fr}}
 .kpi .box{border:1px solid var(--border);border-radius:12px;padding:12px;background:#ffffff}
 .kpi .box .label{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
 .kpi .box .value{font-size:20px;font-weight:700;margin-top:4px}
