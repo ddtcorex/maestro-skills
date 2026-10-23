@@ -7,11 +7,11 @@
 ### Added
 
 - **`magento2-performance-audit` before/after comparison methodology.** A frozen `urlSet` in `audit-data.json` gates every comparison on the same normalized URIs (a 301 target with a dagger footnote is the only substitution), a closed six-column matrix compares query count, LCP cold and warm, CLS, and performance score cold and warm, and Core Web Vitals record a cold pass after `cache:flush` plus an immediate warm repeat with cache status headers. Missing captures use one of three closed `Skipped:` reasons. (#110)
-- **Overlay token map for report branding.** The header surface is now four tokens (`--header-bg`, `--header-text`, `--header-accent`, `--header-code-bg`) with unchanged DDTCoreX defaults, and `report-theme.md` lists every token an overlay may redefine plus the exact construct each slot takes: one `:root{...}` block for `{{brand_colors}}`, one complete `body{font-family:...}` rule for `{{brand_font}}`. Before this, an overlay could recolor links but never the header.
+- **Overlay token map for report branding.** The header surface is now four tokens (`--header-bg`, `--header-text`, `--header-accent`, `--header-code-bg`) with Maestro defaults, and `report-theme.md` lists every token an overlay may redefine plus the exact construct each slot takes: one `:root{...}` block for `{{brand_colors}}`, one complete `body{font-family:...}` rule for `{{brand_font}}`. Before this, an overlay could recolor links but never the header.
 
 ### Changed
 
-- **Report defaults carry the DDTCoreX brand** (inline SVG lockup, primary accents, Inter with JetBrains Mono) instead of a neutral theme, through the same three slots overlays fill. (#110)
+- **Report defaults carry the Maestro brand** instead of a neutral theme, through the same three slots overlays fill: the inline Maestro lockup (white M on a `#0a84ff` tile), links in `#2563eb`, an `#0a84ff` header accent, Inter with JetBrains Mono, palette copied from the Maestro design system. Standalone `maestro-mark.svg`, `maestro-lockup.svg` and `maestro-lockup-dark.svg` ship beside the template. (#110)
 - **KPI grid renders in two rows of three on desktop**, one column below 640px. (#111)
 
 ### Removed

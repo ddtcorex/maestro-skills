@@ -31,26 +31,22 @@ const sixColumns = [
   'performance score warm',
 ]
 
-// DDTCoreX-positive allowlist: the only brand tokens permitted in skill
+// Maestro-positive allowlist: the only brand tokens permitted in skill
 // references, case insensitive throughout. Sample placeholders round it out:
 // every absolute sample host uses example.test, every sample path uses sample-*.
 // The gate is positive on purpose, so no outside brand term is ever needed as
 // a test literal.
-const brandTerm = /ddtcorex/i
+const brandTerm = /maestro/i
 const hexAllow = new Set(
   [
-    '#3b82f6',
+    '#2563eb',
+    '#0a84ff',
     '#1e40af',
     '#0f172a',
     '#64748b',
     '#ffffff',
-    '#f5f5f7',
-    '#e5e7eb',
-    '#0b0f19',
-    '#151b2b',
+    '#f8fafc',
     '#e2e8f0',
-    '#94a3b8',
-    '#2a3242',
   ].map((h) => h.toLowerCase()),
 )
 // Stock severity tokens: not brand, kept so pass/warn/fail chips keep their
@@ -87,7 +83,7 @@ const fontSystem = new Set([
 ])
 // Absolute sample hosts in the Task 1 files: placeholders or the token source.
 // Anchored full match: a suffix pin would let outside hosts through.
-const hostAllow = /^(example\.test|([a-z0-9-]+\.)?ddtcorex\.com)$/i
+const hostAllow = /^example\.test$/i
 const dashPattern = /[\u2013\u2014]/
 
 function walkFiles(dir: string): string[] {
@@ -119,6 +115,12 @@ describe('perf-audit brand allowlist gate', () => {
   it('defaults the Task 1 references to the allowlisted brand term', () => {
     for (const file of brandFiles) {
       expect(readFileSync(file, 'utf-8')).toMatch(brandTerm)
+    }
+  })
+
+  it('carries no DDTCoreX brand in the skill', () => {
+    for (const file of walkFiles(skillDir)) {
+      expect(readFileSync(file, 'utf-8'), file).not.toMatch(/ddtcorex/i)
     }
   })
 
@@ -168,10 +170,8 @@ describe('perf-audit brand allowlist gate', () => {
   })
 
   it('anchors the brand match so lookalike suffixes do not pass', () => {
-    expect('www.ddtcorex.com').toMatch(hostAllow)
-    expect('ddtcorex.com').toMatch(hostAllow)
     expect('example.test').toMatch(hostAllow)
-    expect('evil-ddtcorex.com').not.toMatch(hostAllow)
+    expect('www.example.test').not.toMatch(hostAllow)
     expect('notexample.test').not.toMatch(hostAllow)
   })
 

@@ -12,23 +12,19 @@ const prose = (text: string) => text.replace(/```[\s\S]*?```/g, '')
 
 // Token source stamp: every token copy states where it was copied from and
 // when the copy was verified. Tests pin the stamp, not the values.
-const stamp = 'Copied from www.ddtcorex.com/src/styles/tokens.css, verified 2026-10-23'
-// DDTCoreX hex allowlist for prose: token values live in fenced code blocks,
+const stamp = 'Copied from the Maestro design system (design-system/MASTER.md, assets/maestro-logo), verified 2026-10-23'
+// Maestro hex allowlist for prose: token values live in fenced code blocks,
 // so any hex outside them must be a listed brand token.
 const proseHexAllow = new Set(
   [
-    '#3b82f6',
+    '#2563eb',
+    '#0a84ff',
     '#1e40af',
     '#0f172a',
     '#64748b',
     '#ffffff',
-    '#f5f5f7',
-    '#e5e7eb',
-    '#0b0f19',
-    '#151b2b',
+    '#f8fafc',
     '#e2e8f0',
-    '#94a3b8',
-    '#2a3242',
   ].map((h) => h.toLowerCase()),
 )
 
@@ -42,7 +38,7 @@ describe('perf-audit brand slots', () => {
   it('renders the header logo as inline SVG carrying the brand wordmark', () => {
     const html = template()
     expect(html).toMatch(/<div class="header">[\s\S]*?<svg[\s\S]*?<h1>/)
-    expect(html).toMatch(/<svg[\s\S]*?ddtcorex/i)
+    expect(html).toMatch(/<svg[^>]*aria-label="Maestro logo"[\s\S]*?>Maestro<\/text>/)
   })
 
   it('stamps every token copy with its source in both reference files', () => {
@@ -50,25 +46,25 @@ describe('perf-audit brand slots', () => {
     expect(theme()).toContain(stamp)
   })
 
-  it('accents the header with the DDTCoreX primary', () => {
-    expect(template()).toContain('--header-accent:#3b82f6')
+  it('accents the header with the Maestro tile blue', () => {
+    expect(template()).toContain('--header-accent:#0a84ff')
   })
 
-  it('documents all three slots with DDTCoreX defaults and allowlisted prose', () => {
+  it('documents all three slots with Maestro defaults and allowlisted prose', () => {
     for (const body of [theme(), mdTemplate()]) {
       expect(body).toContain('{{brand_logo}}')
       expect(body).toContain('{{brand_colors}}')
       expect(body).toContain('{{brand_font}}')
     }
     const body = prose(theme())
-    expect(body).toMatch(/ddtcorex/i)
+    expect(body).toMatch(/maestro/i)
     expect(body).not.toMatch(/neutral defaults?/i)
-    // The markdown template carries the same DDTCoreX defaults wording, so
+    // The markdown template carries the same Maestro defaults wording, so
     // both templates are guarded against a neutral-defaults regression.
     // Raw text: the Audience line lives inside the fenced markdown block,
     // so prose() stripping would remove the very line being pinned.
     const mdRaw = mdTemplate()
-    expect(mdRaw).toMatch(/ddtcorex/i)
+    expect(mdRaw).toMatch(/Maestro defaults/)
     expect(mdRaw).not.toMatch(/neutral defaults?/i)
     // Token values live in fenced code blocks: any hex in prose must be listed.
     for (const h of body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []) {

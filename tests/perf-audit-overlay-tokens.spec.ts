@@ -9,12 +9,12 @@ const template = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
 const theme = () => readFileSync(join(refs, 'report-theme.md'), 'utf-8')
 const themeStyle = () => theme().match(/<style>[\s\S]*?<\/style>/)?.[0] ?? ''
 
-// Header surface tokens and their DDTCoreX defaults: an overlay redefines
+// Header surface tokens and their Maestro defaults: an overlay redefines
 // these in its {{brand_colors}} block instead of overriding `.header` rules.
 const headerDefaults = [
   '--header-bg:linear-gradient(135deg,#0f172a 0%,#1e40af 100%)',
   '--header-text:#ffffff',
-  '--header-accent:#3b82f6',
+  '--header-accent:#0a84ff',
   '--header-code-bg:rgba(255,255,255,0.14)',
 ]
 
@@ -52,7 +52,7 @@ function renderProbe(html: string, probe: string): Record<string, string> {
 }
 
 describe('perf-audit header surface tokens', () => {
-  it('declares header tokens with DDTCoreX defaults', () => {
+  it('declares header tokens with Maestro defaults', () => {
     for (const body of [template(), themeStyle()]) {
       for (const token of headerDefaults) expect(body, token).toContain(token)
     }
@@ -77,7 +77,7 @@ describe('perf-audit header surface tokens', () => {
     expect(html.indexOf('--header-bg:')).toBeLessThan(html.indexOf('{{brand_colors}}'))
   })
 
-  it.skipIf(!hasChrome())('default render keeps the DDTCoreX header (needs headless Chrome)', () => {
+  it.skipIf(!hasChrome())('default render keeps the Maestro header (needs headless Chrome)', () => {
     const html = template()
       .replace('{{brand_logo}}', '')
       .replace('{{brand_colors}}', '')
@@ -86,7 +86,7 @@ describe('perf-audit header surface tokens', () => {
     const styles = renderProbe(html, probe)
     expect(styles.bg.startsWith('linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 64, 175)')).toBe(true)
     expect(styles.color).toBe('rgb(255, 255, 255)')
-    expect(styles.border).toBe('rgb(59, 130, 246)')
+    expect(styles.border).toBe('rgb(10, 132, 255)')
   }, 120_000)
 })
 
@@ -130,7 +130,7 @@ describe('perf-audit overlay token map', () => {
   })
 
   it('brand defaults stays within the lesson budget', () => {
-    const count = words(section(theme(), '### Brand defaults (DDTCoreX)'))
+    const count = words(section(theme(), '### Brand defaults (Maestro)'))
     expect(count).toBeGreaterThanOrEqual(170)
     expect(count).toBeLessThanOrEqual(220)
   })
@@ -139,7 +139,7 @@ describe('perf-audit overlay token map', () => {
 describe('perf-audit markdown template brand pointer', () => {
   it('points overlay authors at the token map', () => {
     const md = readFileSync(join(refs, 'report-template.md'), 'utf-8')
-    const line = md.split('\n').find((l) => l.includes('Brand slots (DDTCoreX defaults')) ?? ''
+    const line = md.split('\n').find((l) => l.includes('Brand slots (Maestro defaults')) ?? ''
     expect(line).toContain('Overlay token map')
   })
 })
