@@ -158,11 +158,13 @@ template timer exceeded the threshold on any captured page`) — same rule as th
 Shapes table above: an empty table with no comment reads as "not checked."
 
 ## Core Web Vitals
-| Metric | Value | Status |
-|--------|-------|--------|
-| LCP | X.Xs | PASS/FAIL |
-| INP | X.Xms | PASS/FAIL |
-| CLS | X.XXX | PASS/FAIL |
+Cold is the first load after `cache:flush` expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers (see `references/core-web-vitals.md`). When a capture cannot run, use exactly one closed reason: `Skipped: no cache backend`, `Skipped: flush not permitted on this environment`, `Skipped: legacy audit, cold only`.
+| Metric | Cold | Warm | Status |
+|--------|------|------|--------|
+| LCP (LCP cold, LCP warm) | X.Xs | X.Xs | PASS/FAIL |
+| Performance score (performance score cold, performance score warm) | NN | NN | PASS/FAIL |
+| INP | X.Xms | same as cold | PASS/FAIL |
+| CLS | X.XXX | X.XXX | PASS/FAIL |
 
 ## Per-Page Query Detail — deep mandatory gate
 

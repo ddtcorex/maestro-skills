@@ -140,8 +140,9 @@ ul{margin:8px 0;padding-left:18px}
 
 <div class="card">
   <h2>Core Web Vitals <span class="badge {{cwv_badge}}">{{cwv_status}}</span></h2>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Cold is the first load after <code>cache:flush</code> expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers. Columns: LCP cold, LCP warm, performance score cold, performance score warm, INP, CLS.</div>
   <table>
-    <tr><th>Metric</th><th>Value</th><th>Status</th></tr>
+    <tr><th>Metric</th><th>Cold</th><th>Warm</th><th>Status</th></tr>
     {{cwv_rows}}
   </table>
 </div>
