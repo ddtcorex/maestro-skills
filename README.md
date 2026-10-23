@@ -174,17 +174,20 @@ Updates: `codex plugin marketplace upgrade ddtcorex`.
 
 ---
 
-### 4. OpenCode & GitHub Copilot, or Direct Skill Files
+### 4. OpenCode & GitHub Copilot — loose skill files (no plugin loader there)
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/install.sh | bash
 ```
 
 | Tool | Scans (project scope) | Scans (personal scope) |
 |------|------------------------|--------------------------|
-| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
 | OpenCode | `.opencode/skills/` | `~/.config/opencode/skills/` |
-| Codex CLI | `.agents/skills/` | `~/.agents/skills/` |
 | GitHub Copilot | `.github/skills/` | `~/.copilot/skills/` |
+
+> The installer only serves tools without a plugin loader. On Claude Code,
+> Codex CLI and DSH, install the plugin (sections 1–3 above) instead of
+> linking loose files: a loose copy shadows the plugin with a stale cache.
 
 ---
 

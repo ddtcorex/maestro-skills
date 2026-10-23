@@ -6,7 +6,12 @@
 # NOTE: on DeepSeek Harness you do NOT need this script -- add the package as a
 # plugin and it serves all skills itself and installs its agent preset:
 #   dsh plugin --profile web add github:ddtcorex/maestro-skills
-# This installer is for loose (non-plugin) skill files on any tool.
+# This installer is for loose (non-plugin) skill files, and only on tools
+# without a plugin loader (OpenCode, GitHub Copilot). Tools that already
+# support plugins (Claude Code, Codex CLI, DeepSeek Harness) are
+# intentionally NOT targets: a loose copy linked beside a plugin install
+# shadows it with a stale cache and drifts on every release. Install the
+# plugin on those tools instead (see README).
 #
 # Re-running this script (locally, or via the same one-liner) updates the
 # cached clone and re-links everything -- that IS the update path, there is
@@ -15,20 +20,18 @@
 # Each supported tool scans its own directory name for SKILL.md folders and
 # none of them can be pointed at an arbitrary path, so this script places a
 # real symlink (or copy, with --mode copy) per tool:
-#   claude    -> .claude/skills          (~/.claude/skills for personal scope)
 #   opencode  -> .opencode/skills        (~/.config/opencode/skills)
-#   codex     -> .agents/skills          (~/.agents/skills)
 #   copilot   -> .github/skills          (~/.copilot/skills)
-# NOTE: DeepSeek Harness (DSH) is intentionally NOT a target: on DSH the
-# Cordis plugin serves the packaged skills itself, and a second copy linked
-# into ~/.dsh/skills shadows the plugin via the preset-layer skill-filesystem
-# provider (stale cache wins duplicate names outright). Use
-# `dsh plugin --profile web add github:ddtcorex/maestro-skills` instead.
+# NOTE: Claude Code, Codex CLI and DeepSeek Harness (DSH) are intentionally
+# NOT targets (see above). On DSH the Cordis plugin serves the packaged
+# skills itself, and a second copy linked into ~/.dsh/skills shadows the
+# plugin via the preset-layer skill-filesystem provider (stale cache wins
+# duplicate names outright).
 set -euo pipefail
 
 REPO_URL="https://github.com/ddtcorex/maestro-skills.git"
 CACHE_DIR="${MAESTRO_SKILLS_HOME:-$HOME/.maestro-skills}"
-ALL_TOOLS="claude opencode codex copilot"
+ALL_TOOLS="opencode copilot"
 
 scope="project"
 targets="all"
@@ -43,7 +46,7 @@ usage() {
 Usage: install.sh [options]
 
   --scope <project|personal>  Where to link skills (default: project; prompted if interactive)
-  --target <list|all>         Comma list of: claude,opencode,codex,copilot (default: all)
+  --target <list|all>         Comma list of: opencode,copilot (default: all)
   --skills <list|all>         Comma list of skill names to install (default: all)
   --mode <symlink|copy>       How to place files in the target dirs (default: symlink)
   --force                     Overwrite existing paths not created by this installer
@@ -118,7 +121,7 @@ if [ "$do_uninstall" = "yes" ]; then
 fi
 
 ask scope "Install scope -- 'project' (current dir) or 'personal' (all projects, ~)?" "$scope"
-ask targets "Target tools -- comma list of claude,opencode,codex,copilot, or 'all'" "$targets"
+ask targets "Target tools -- comma list of opencode,copilot, or 'all'" "$targets"
 
 case "$scope" in
   project|personal) ;;
@@ -143,10 +146,10 @@ fi
 
 target_dir_for() {
   case "$1" in
-    claude)   [ "$scope" = personal ] && echo "$HOME/.claude/skills"          || echo "$PWD/.claude/skills" ;;
     opencode) [ "$scope" = personal ] && echo "$HOME/.config/opencode/skills" || echo "$PWD/.opencode/skills" ;;
-    codex)    [ "$scope" = personal ] && echo "$HOME/.agents/skills"          || echo "$PWD/.agents/skills" ;;
     copilot)  [ "$scope" = personal ] && echo "$HOME/.copilot/skills"        || echo "$PWD/.github/skills" ;;
+    claude) echo "Target 'claude' was removed: Claude Code supports plugins, so install the plugin instead (/plugin marketplace add ddtcorex/maestro-skills, then /plugin install maestro-skills@ddtcorex). A loose copy linked into .claude/skills shadows the plugin with a stale cache." >&2; return 1 ;;
+    codex) echo "Target 'codex' was removed: Codex CLI supports plugins, so install the plugin instead (codex plugin marketplace add ddtcorex/maestro-skills, then codex plugin add maestro-skills@ddtcorex). A loose copy linked into .agents/skills shadows the plugin with a stale cache." >&2; return 1 ;;
     dsh) echo "Target 'dsh' was removed: on DeepSeek Harness install the Cordis plugin instead (dsh plugin --profile web add github:ddtcorex/maestro-skills). A copy linked into ~/.dsh/skills shadows the plugin with a stale cache." >&2; return 1 ;;
     *) echo "Unknown target: $1" >&2; return 1 ;;
   esac
