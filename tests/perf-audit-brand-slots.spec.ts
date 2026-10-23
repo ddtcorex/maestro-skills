@@ -51,7 +51,7 @@ describe('perf-audit brand slots', () => {
   })
 
   it('accents the header with the DDTCoreX primary', () => {
-    expect(template()).toMatch(/\.header[^{]*\{[^}]*#3b82f6/i)
+    expect(template()).toContain('--header-accent:#3b82f6')
   })
 
   it('documents all three slots with DDTCoreX defaults and allowlisted prose', () => {

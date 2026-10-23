@@ -8,14 +8,16 @@ Standard inline CSS for performance audit HTML reports. Every `report.html` gene
 <style>
 /* Copied from www.ddtcorex.com/src/styles/tokens.css, verified 2026-10-23 */
 :root{--bg:#f5f5f7;--card:#ffffff;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--green:#16a34a;--green-bg:#dcfce7;--yellow:#ca8a04;--yellow-bg:#fef9c3;--red:#dc2626;--red-bg:#fee2e2;--blue:#3b82f6}
+/* Header surface tokens: an overlay redefines these in its colors slot block */
+:root{--header-bg:linear-gradient(135deg,#0f172a 0%,#1e40af 100%);--header-text:#ffffff;--header-accent:#3b82f6;--header-code-bg:rgba(255,255,255,0.14)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
 code{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
-.header{background:linear-gradient(135deg,#0f172a 0%,#1e40af 100%);color:#ffffff;padding-block:32px;border-bottom:4px solid #3b82f6}
+.header{background:var(--header-bg);color:var(--header-text);padding-block:32px;border-bottom:4px solid var(--header-accent)}
 .header-inner{max-width:1100px;margin:0 auto;padding-inline:24px}
 .header h1{margin:0 0 8px;font-size:28px;letter-spacing:-0.02em}
 .header .meta{opacity:0.85;font-size:13px;line-height:1.7}
-.header .meta code{background:rgba(255,255,255,0.14);padding:2px 6px;border-radius:6px;font-size:12px}
+.header .meta code{background:var(--header-code-bg);padding:2px 6px;border-radius:6px;font-size:12px}
 .container{max-width:1100px;margin:0 auto;padding:24px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 1px 2px rgba(15,23,42,0.04)}
 .card h2{margin:0 0 12px;font-size:16px;letter-spacing:-0.01em;display:flex;align-items:center;gap:8px}
