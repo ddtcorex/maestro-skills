@@ -72,4 +72,27 @@ describe('perf-audit same metrics comparison matrix', () => {
     expect(template()).toContain('Skipped: legacy audit, cold only')
     expect(htmlTemplate()).toContain('Skipped: legacy audit, cold only')
   })
+
+  it('uses plain hyphens in the comparison gate headings and sample matrix rows', () => {
+    const body = template()
+    expect(body).toContain('## Comparison Gate - Frozen URL Set')
+    expect(body).toContain('## Comparison Matrix - Same Metrics Before/After')
+    expect(body).toContain('home - before/after')
+    expect(body).toContain('category_small - before/after')
+  })
+
+  it('keeps the comparison gate headings and sample matrix rows free of em and en dashes', () => {
+    const lines = template().split('\n')
+    const targets = lines.filter(
+      (line) =>
+        line.startsWith('## Comparison Gate') ||
+        line.startsWith('## Comparison Matrix') ||
+        line.startsWith('| home') ||
+        line.startsWith('| category_small'),
+    )
+    expect(targets.length).toBeGreaterThanOrEqual(4)
+    for (const line of targets) {
+      expect(line).not.toMatch(/[\u2013\u2014]/)
+    }
+  })
 })

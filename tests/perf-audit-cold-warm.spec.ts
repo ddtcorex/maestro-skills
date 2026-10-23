@@ -36,6 +36,12 @@ describe('perf-audit cold plus warm capture protocol', () => {
     }
   })
 
+  it('records INP on the cold pass and reports the same value for warm unless re-measured', () => {
+    const body = cwv()
+    expect(body).toMatch(/- Cold:[^\n]*INP/)
+    expect(body).toMatch(/same value is reported for warm unless re-measured/i)
+  })
+
   it('lists the exact three Skipped reasons in report-template.md', () => {
     for (const reason of skippedReasons) {
       expect(template()).toContain(reason)
