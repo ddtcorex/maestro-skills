@@ -9,12 +9,22 @@ import { fileURLToPath } from 'node:url'
 import { REPORT_CONTRACT } from './lib/contract.mjs'
 import { dropBrandMarkers, fillTemplate, toFragment } from './lib/html.mjs'
 import { renderMarkdown } from './lib/markdown.mjs'
+import { buildFindings } from './lib/findings-layout.mjs'
 import { buildPerf } from './lib/perf-layout.mjs'
+import { validateFindings, validatePerf } from './lib/validate.mjs'
 
 const refs = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'references')
 
 const LAYOUTS = {
-  perf: { template: 'report-perf.html.template', build: buildPerf },
+  perf: { template: 'report-perf.html.template', build: buildPerf, validate: validatePerf },
+  findings: { template: 'report-findings.html.template', build: buildFindings, validate: validateFindings },
+}
+
+export class ValidationError extends Error {
+  constructor(errors) {
+    super(errors.join('; '))
+    this.errors = errors
+  }
 }
 
 export function loadTemplate(name) {
@@ -26,6 +36,8 @@ export function loadTemplate(name) {
 export async function renderReport({ layout, audience = 'dev', data, outDir }) {
   const spec = LAYOUTS[layout]
   if (!spec) throw new Error(`unknown layout: ${layout}`)
+  const errors = spec.validate(data)
+  if (errors.length > 0) throw new ValidationError(errors)
   const built = spec.build(data, audience)
   const html = fillTemplate(dropBrandMarkers(loadTemplate(spec.template)), { ...built.slots, contract: String(REPORT_CONTRACT) })
   mkdirSync(outDir, { recursive: true })
