@@ -1,12 +1,26 @@
 #!/usr/bin/env node
 // Performance audit CLI. Each subcommand reads and writes one run directory
 // and ends with a single JSON status line (see lib/status.mjs).
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ClosedReason, closed, usage } from './lib/status.mjs'
+import { analyzeRun } from './analyze.mjs'
+import { loadConfig } from './lib/config.mjs'
+import { ClosedReason, closed, done, usage } from './lib/status.mjs'
 
 const USAGE = 'usage: perf-audit.mjs <discover|switch|capture|analyze|cwv|invalidate|render|run> [options]'
 
-export const COMMANDS = {}
+function requireRun(args, stage) {
+  if (!args._[0] || !args.run) throw new ClosedReason(stage, `usage: ${stage} <config> --run <dir>`)
+  return { config: loadConfig(args._[0]), runDir: args.run, scope: args.scope ?? 'deep' }
+}
+
+export const COMMANDS = {
+  async analyze(args) {
+    const { config, runDir, scope } = requireRun(args, 'analyze')
+    analyzeRun(runDir, config, { scope })
+    done('analyze', [join(runDir, 'audit-data.json')])
+  },
+}
 
 export function parseArgs(argv) {
   const args = { _: [] }

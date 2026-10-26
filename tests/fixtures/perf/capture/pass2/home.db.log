@@ -1,0 +1,18 @@
+## 2026-10-26 00:00:00
+## 41 ## QUERY
+SQL: SELECT * FROM t WHERE id IN (1, 2, 3)
+AFF: 0
+TIME: 0.0010
+
+## 2026-10-26 00:00:00
+## 41 ## QUERY
+SQL: SELECT * FROM t WHERE id IN (4, 5)
+AFF: 0
+TIME: 0.0020
+
+## 2026-10-26 00:00:00
+## 41 ## QUERY
+SQL: SELECT * FROM cms WHERE note = '## not a header TIME: 9'
+AFF: 0
+TIME: 0.0005
+
