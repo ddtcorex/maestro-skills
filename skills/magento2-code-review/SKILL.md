@@ -112,6 +112,17 @@ Full mechanics, exact commands, and the remote-fetch limitation:
    discipline `magento2-performance-audit` already requires of its own
    report.
 
+## Findings report
+
+Each trio skill (and the performance audit, when it ran) leaves a `findings.json` in the shared schema (`magento2-dev-core/references/findings-schema.md`). Merge them, then render the merged file:
+
+```bash
+node <skills>/magento2-code-review/scripts/merge-findings.mjs --out findings.json linter/findings.json security/findings.json perf/findings.json
+node <skills>/magento2-dev-core/scripts/report/render.mjs render --layout findings --audience dev --data findings.json --out <report-dir>
+```
+
+`merge-findings.mjs` keeps one finding per code (or rule), file and line, at the highest severity any input gave it, and recomputes the summary, so the counts in the report always match the findings. Dev-core anti-pattern findings found by hand go into their own `findings.json` with `tool: "magento2-dev-core"` before the merge.
+
 ## Report template
 
 ```markdown

@@ -668,6 +668,16 @@ fi
 echo "Code quality checks passed!"
 ```
 
+## Findings report
+
+PHPCS, PHPStan and the custom pattern greps feed one report. Write every finding to `findings.json` in the shared schema (`magento2-dev-core/references/findings-schema.md`): `tool: "magento2-linter"`, the four severities only, a code from `severity-and-codes.md` (or `code: null` with the tool's rule id in `rule`), and `summary` counts that match the findings. Then render it:
+
+```bash
+node <skills>/magento2-dev-core/scripts/report/render.mjs render --layout findings --audience dev --data findings.json --out <report-dir>
+```
+
+The engine writes `report.md`, `report.html` and `report.body.html` with the shared theme and report contract, so a brand overlay works on this report the same way as on a performance audit. It refuses mismatched counts and unknown codes with exit 1; fix the data, never the rendered file.
+
 ## Exit Codes
 
 These are the exit codes of the **shell/PHPCS/PHPStan snippet below**, not of
