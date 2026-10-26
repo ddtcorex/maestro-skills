@@ -4,6 +4,7 @@
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { analyzeRun } from './analyze.mjs'
+import { capture } from './capture.mjs'
 import { loadConfig } from './lib/config.mjs'
 import { ClosedReason, closed, done, usage } from './lib/status.mjs'
 
@@ -15,6 +16,11 @@ function requireRun(args, stage) {
 }
 
 export const COMMANDS = {
+  async capture(args) {
+    const { config, runDir, scope } = requireRun(args, 'capture')
+    await capture(config, runDir, { scope })
+    done('capture', [join(runDir, 'capture', 'summary.csv')])
+  },
   async analyze(args) {
     const { config, runDir, scope } = requireRun(args, 'analyze')
     analyzeRun(runDir, config, { scope })

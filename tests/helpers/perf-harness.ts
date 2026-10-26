@@ -12,6 +12,7 @@ export interface FakePage {
   html?: string
   headers?: Record<string, string>
   dbLog?: string
+  destroy?: boolean
 }
 
 export interface FakeProject {
@@ -48,6 +49,7 @@ export async function makeProject(config: Record<string, unknown> = {}): Promise
     const uri = req.url ?? '/'
     requests.push(uri)
     const page = pages.get(uri) ?? { status: 404, html: 'not found' }
+    if (page.destroy) return req.socket.destroy()
     if (page.dbLog !== undefined) writeFileSync(join(root, 'var', 'debug', 'db.log'), page.dbLog)
     res.writeHead(page.status, { 'content-type': 'text/html', ...(page.headers ?? {}) })
     res.end(page.html ?? '<html></html>')
