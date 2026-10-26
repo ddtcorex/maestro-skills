@@ -18,7 +18,6 @@
   <div class="meta">
     <div>Date: <b>{{date}}</b> · Govard <code>{{govard_version}}</code> · <code>{{host}}</code> · profile <code>{{profile}}</code></div>
     <div>Magento <code>{{magento_version}}</code> · PHP <code>{{php_version}}</code> · MariaDB <code>{{mariadb_version}}</code> · Redis <code>{{redis_version}}</code> · OpenSearch <code>{{opensearch_version}}</code> · {{fpc}}</div>
-    <div>Lint audit <code>{{lint_session}}</code> · <b>{{lint_findings}}</b> findings · <b>{{lint_duration}}</b> · {{lint_size}}</div>
   </div>
 </div></div>
 <div class="container">
@@ -28,8 +27,6 @@
   <div class="box"><div class="label">Cache</div><div class="value">{{cache_verdict}}</div><div class="sub">{{cache_sub}}</div></div>
   <div class="box"><div class="label">Indexer</div><div class="value">{{indexer_verdict}}</div><div class="sub">{{indexer_sub}}</div></div>
   <div class="box"><div class="label">Cron</div><div class="value">{{cron_verdict}}</div><div class="sub">{{cron_sub}}</div></div>
-  <div class="box"><div class="label">DB slow ≥1s</div><div class="value">{{db_slow}}</div><div class="sub">{{db_slow_sub}}</div></div>
-  <div class="box"><div class="label">Lint findings</div><div class="value">{{lint_findings}}</div><div class="sub">{{lint_sub}}</div></div>
 </div>
 
 <div class="card">
@@ -43,7 +40,6 @@
     <tr><th>Type</th><th>URL</th><th>Queries</th></tr>
     {{urls_rows}}
   </table>
-  <div style="color:var(--muted);font-size:12px;margin-top:6px">{{urls_note}}</div>
 </div>
 
 <div class="card">
@@ -55,7 +51,6 @@
 <div class="card">
   <h2>Infrastructure <span class="badge {{infra_badge}}">{{infra_status}}</span></h2>
   {{infra_checks}}
-  <div style="margin-top:8px;font-size:13px">Verdict: <span class="verdict">{{infra_verdict_text}}</span> - {{infra_verdict_detail}}</div>
 </div>
 
 <div class="card">
@@ -104,22 +99,12 @@
 </div>
 
 <div class="card">
-  <h2>Top Timers <span class="badge {{timers_badge}}">{{timers_status}}</span></h2>
-  {{timers_content}}
-</div>
-
-<div class="card">
   <h2>Core Web Vitals <span class="badge {{cwv_badge}}">{{cwv_status}}</span></h2>
   <table>
     <tr><th>Page</th><th>Score</th><th>LCP</th><th>CLS</th><th>TTFB (warm)</th><th>Spread</th><th>HIT proof</th></tr>
     {{cwv_rows}}
   </table>
   <div style="font-size:13px;color:var(--muted);margin-top:8px">Warm only: each page is primed, then measured 3 times (deep) from the full page cache with <code>--throttling-method=devtools</code>; the table shows the median and the spread (max minus min). Every run proves its HIT from the document response headers in its own devtools log.</div>
-</div>
-
-<div class="card">
-  <h2>Code-Level Performance Patterns</h2>
-  <ul>{{code_patterns}}</ul>
 </div>
 
 <div class="card" style="border-left:4px solid var(--red)">
@@ -132,7 +117,7 @@
   <div style="font-size:13px;color:var(--muted)">{{coverage_note}}</div>
 </div>
 
-<div class="footer">Generated {{date}} from live govard captures on <code>{{host}}</code> (audit <code>{{lint_session}}</code> + per-page <code>{{perpage_session}}</code>). Logs retained <code>{{logs}}</code>. <a href="report.md">Markdown</a> · <a href="report.pdf">PDF via Print</a></div>
+<div class="footer">Generated {{date}} from live govard captures on <code>{{host}}</code>. <a href="report.md">Markdown</a> · <a href="report.pdf">PDF via Print</a></div>
 
 </div>
 </body>

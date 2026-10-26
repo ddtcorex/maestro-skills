@@ -19,9 +19,7 @@ export const PERF_SECTIONS = [
   'Database',
   'Per-Page Query Detail',
   'Top Repeated Query Shapes',
-  'Top Timers',
   'Core Web Vitals',
-  'Code-Level Performance Patterns',
   'Recommendations',
   'Coverage Note',
 ]
