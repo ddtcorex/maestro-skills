@@ -30,6 +30,7 @@ const fakeMagento = `#!/bin/sh
 echo "magento: $*" >> "$PERF_SHIM_LOG"
 case "$1" in
   module:status) printf '%s\\n' $PERF_FAKE_MODULES ;;
+  cache:status) printf '%s\\n' "$PERF_FAKE_CACHE_STATUS" ;;
 esac
 exit 0
 `

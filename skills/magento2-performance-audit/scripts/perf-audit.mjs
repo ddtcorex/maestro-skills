@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { analyzeRun } from './analyze.mjs'
 import { capture } from './capture.mjs'
+import { cwv } from './cwv.mjs'
 import { loadConfig } from './lib/config.mjs'
 import { ClosedReason, closed, done, usage } from './lib/status.mjs'
 
@@ -16,6 +17,11 @@ function requireRun(args, stage) {
 }
 
 export const COMMANDS = {
+  async cwv(args) {
+    const { config, runDir, scope } = requireRun(args, 'cwv')
+    await cwv(config, runDir, { scope })
+    done('cwv', [join(runDir, 'cwv', 'cwv.json')])
+  },
   async capture(args) {
     const { config, runDir, scope } = requireRun(args, 'capture')
     await capture(config, runDir, { scope })
