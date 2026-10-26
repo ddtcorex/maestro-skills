@@ -17,7 +17,10 @@ export function resolveCaFile(config = {}, env = process.env) {
 }
 
 // One GET without following redirects. TLS verification always stays on.
+// `timeoutMs` (default 60 s) bounds a hung backend so one wedged page
+// cannot stall a whole capture run without a reason.
 export function fetchPage(url, config = {}) {
+  const timeoutMs = config.timeoutMs ?? 60000
   const client = url.startsWith('https:') ? https : http
   const caFile = url.startsWith('https:') ? resolveCaFile(config) : undefined
   const ca = caFile ? readFileSync(caFile) : undefined
@@ -33,6 +36,7 @@ export function fetchPage(url, config = {}) {
       res.on('error', reject)
     })
     req.on('error', reject)
+    req.setTimeout(timeoutMs, () => req.destroy(new Error(`GET ${url} timed out after ${timeoutMs} ms`)))
   })
 }
 
