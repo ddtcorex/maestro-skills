@@ -85,6 +85,11 @@
 </div>
 
 <div class="card">
+  <h2>Slow Queries <span class="badge {{slow_queries_badge}}">{{slow_queries_status}}</span></h2>
+  {{slow_queries_checks}}
+</div>
+
+<div class="card">
   <h2>Per-Page Query Detail <span class="badge {{perpage_badge}}">{{perpage_status}}</span></h2>
   {{perpage_details}}
   <div style="font-size:13px;color:var(--muted);margin-top:8px">Deep: 7 pages unfiltered per-page tables (mandatory). Quick: Skipped matrix entry only. Each <code>&lt;details&gt;</code> shows total queries + distinct-shape count; tables are <code>Count | SQL (normalized)</code>.</div>
@@ -111,6 +116,11 @@
     {{cwv_rows}}
   </table>
   <div style="font-size:13px;color:var(--muted);margin-top:8px">Warm only: each page is primed, then measured 3 times (deep) from the full page cache with <code>--throttling-method=devtools</code>; the table shows the median and the spread (max minus min). Every run proves its HIT from the document response headers in its own devtools log.</div>
+</div>
+
+<div class="card">
+  <h2>Code-Level Performance Patterns <span class="badge {{code_patterns_badge}}">{{code_patterns_status}}</span></h2>
+  {{code_patterns_checks}}
 </div>
 
 <div class="card" style="border-left:4px solid var(--red)">

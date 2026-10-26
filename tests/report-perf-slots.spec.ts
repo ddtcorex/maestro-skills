@@ -61,6 +61,16 @@ const PRODUCERS = new Set([
   'cron_verdict',
   'cron_sub',
   'timers_content',
+  'slow_queries_badge',
+  'slow_queries_status',
+  'slow_queries_checks',
+  'slow_queries_verdict',
+  'slow_queries_sub',
+  'code_patterns_badge',
+  'code_patterns_status',
+  'code_patterns_checks',
+  'code_patterns_verdict',
+  'code_patterns_sub',
   'cwv_badge',
   'cwv_status',
 ])
@@ -84,9 +94,69 @@ describe('perf template slot coverage', () => {
 
     it('renders no legacy card left empty by a missing producer', () => {
       const html = readFileSync(join(out, 'report.html'), 'utf-8')
-      expect(html).not.toContain('Code-Level Performance Patterns')
       expect(html).not.toContain('DB slow')
       expect(html).not.toContain('(audit')
+    })
+
+    it('renders agent slow-query and code-pattern sections with an explicit skip when absent', () => {
+      const html = readFileSync(join(out, 'report.html'), 'utf-8')
+      for (const title of ['Slow Queries', 'Code-Level Performance Patterns']) {
+        expect(html).toContain(title)
+        const card = html.slice(html.indexOf(title))
+        expect(card).toContain('Skipped: no data')
+      }
+    })
+
+    it('renders provided slow-query and code-pattern checks instead of the skip text', async () => {
+      const engine = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
+      const { renderReport } = await import(engine)
+      const dir = mkdtempSync(join(tmpdir(), 'report-perf-agent-sections-'))
+      try {
+        await renderReport({
+          layout: 'perf',
+          audience: 'dev',
+          outDir: dir,
+          data: {
+            meta: { title: 'Sections', date: '2026-10-26' },
+            verdict: 'v',
+            scope: 'deep',
+            urlSet: [],
+            pages: [],
+            recommendations: [],
+            coverageNote: 'n',
+            sections: {
+              slow_queries: {
+                status: 'warn',
+                statusText: 'one full scan found',
+                verdict: 'One EXPLAINed scan',
+                sub: 'cms_page on every CMS hit',
+                checks: [{ state: 'fail', text: 'cms_page full scan type ALL' }],
+                evidence: { command: 'EXPLAIN SELECT', excerpt: 'type ALL' },
+              },
+              code_patterns: {
+                status: 'warn',
+                statusText: 'one per-item loop found',
+                verdict: 'One batchable loop',
+                sub: 'rule load per order item',
+                checks: [{ state: 'fail', text: 'Octipas per-rule load' }],
+                evidence: { command: 'grep foreach', excerpt: 'Order.php' },
+              },
+            },
+          },
+        })
+        const html = readFileSync(join(dir, 'report.html'), 'utf-8')
+        for (const needle of ['Slow Queries', 'one full scan found', 'cms_page full scan type ALL', 'Code-Level Performance Patterns', 'Octipas per-rule load']) {
+          expect(html).toContain(needle)
+        }
+        const card = (title: string) => {
+          const start = html.indexOf(title)
+          return html.slice(start, html.indexOf('<div class="card">', start + title.length))
+        }
+        expect(card('Slow Queries')).not.toContain('Skipped: no data')
+        expect(card('Code-Level Performance Patterns')).not.toContain('Skipped: no data')
+      } finally {
+        rmSync(dir, { recursive: true, force: true })
+      }
     })
 
     it('renders the Top Timers card from stored profiler data', async () => {

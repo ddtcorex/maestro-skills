@@ -17,10 +17,12 @@ export const PERF_SECTIONS = [
   'Client-Side AJAX Load',
   'Indexer Configuration',
   'Database',
+  'Slow Queries',
   'Per-Page Query Detail',
   'Top Repeated Query Shapes',
   'Top Timers',
   'Core Web Vitals',
+  'Code-Level Performance Patterns',
   'Recommendations',
   'Coverage Note',
 ]
@@ -206,13 +208,13 @@ export function buildPerf(data, audience) {
     coverage_note: e(data.coverageNote ?? SKIP),
     timers_content: timersContent(pages),
   }
-  for (const name of ['infra', 'cache', 'cache_inv', 'ajax', 'timers', 'cwv']) {
+  for (const name of ['infra', 'cache', 'cache_inv', 'ajax', 'timers', 'cwv', 'slow_queries', 'code_patterns']) {
     const s = st(name)
     slots[`${name}_badge`] = s.badge
     slots[`${name}_status`] = e(s.text)
   }
-  for (const name of ['infra', 'cache', 'cache_inv', 'ajax', 'indexer']) slots[`${name}_checks`] = checksHtml(sec(name))
-  for (const name of ['infra', 'cache', 'indexer', 'cron']) {
+  for (const name of ['infra', 'cache', 'cache_inv', 'ajax', 'indexer', 'slow_queries', 'code_patterns']) slots[`${name}_checks`] = checksHtml(sec(name))
+  for (const name of ['infra', 'cache', 'indexer', 'cron', 'slow_queries', 'code_patterns']) {
     slots[`${name}_verdict`] = e(sec(name)?.verdict ?? 'Skipped')
     slots[`${name}_sub`] = e(sec(name)?.sub ?? '')
   }
@@ -230,7 +232,9 @@ export function buildPerf(data, audience) {
   const mdSections = {
     Verdict: data.verdict ?? SKIP,
     'Before/After Comparison Matrix': matrixMd(data.matrix, meta.date ?? ''),
+    'Top Timers': timersMd(pages),
     'Core Web Vitals': mdTable(['Page', 'Score', 'LCP', 'CLS', 'TTFB (warm)', 'Spread', 'HIT proof'], cwvRows(data.cwv, data.urlSet)),
+    'Code-Level Performance Patterns': checksMd(sec('code_patterns')),
     'URLs Audited': mdTable(['Type', 'URL', 'Queries'], pages.map((p) => [p.label, pageLink(p, audience), p.totalQueries])),
     Infrastructure: checksMd(sec('infra')),
     'Cache Status': checksMd(sec('cache')),
@@ -238,6 +242,7 @@ export function buildPerf(data, audience) {
     'Client-Side AJAX Load': checksMd(sec('ajax')),
     'Indexer Configuration': checksMd(sec('indexer')),
     Database: [mdTable(['Page', 'Queries', 'DB time (s)'], pages.map((p) => [p.label, p.totalQueries, p.dbTime ?? ''])), ...(data.dbBullets ?? []).map((b) => `- ${b}`)].join('\n'),
+    'Slow Queries': checksMd(sec('slow_queries')),
     'Per-Page Query Detail': pages
       .map((p) => `<details><summary>${p.label} - ${p.totalQueries} queries, ${p.distinctShapes} shapes</summary>\n\n${mdTable(['Count', 'SQL (normalized)'], (p.shapes ?? []).map((s) => [s.count, s.sql]))}\n\n</details>`)
       .join('\n\n'),
