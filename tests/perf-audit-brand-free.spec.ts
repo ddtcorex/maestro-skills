@@ -1,13 +1,15 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
 const skillDir = join(__dirname, '..', 'skills', 'magento2-performance-audit')
 const refsDir = join(skillDir, 'references')
 // Task 1 files: the only references carrying brand defaults.
 const brandFiles = [
-  join(refsDir, 'report.html.template'),
-  join(refsDir, 'report-theme.md'),
+  join(devCoreRefs, 'report-perf.html.template'),
+  join(devCoreRefs, 'report-theme.css'),
+  join(devCoreRefs, 'report-theme.md'),
 ]
 const fixturesDir = join(__dirname, 'fixtures')
 const beforePath = join(fixturesDir, 'perf-comparison-before.json')
@@ -119,14 +121,14 @@ describe('perf-audit brand allowlist gate', () => {
   })
 
   it('carries no DDTCoreX brand in the skill', () => {
-    for (const file of walkFiles(skillDir)) {
+    for (const file of [...walkFiles(skillDir), ...walkFiles(devCoreRefs)]) {
       expect(readFileSync(file, 'utf-8'), file).not.toMatch(/ddtcorex/i)
     }
   })
 
   it('allows only listed hexes in skill references', () => {
     const bad: string[] = []
-    for (const file of walkFiles(skillDir)) {
+    for (const file of [...walkFiles(skillDir), ...walkFiles(devCoreRefs)]) {
       for (const h of hexes(readFileSync(file, 'utf-8'))) {
         if (!hexAllow.has(h) && !stockHexAllow.has(h)) bad.push(`${file}: ${h}`)
       }
@@ -136,13 +138,13 @@ describe('perf-audit brand allowlist gate', () => {
 
   it('allows only listed fonts and ships the code face', () => {
     const bad: string[] = []
-    for (const file of walkFiles(skillDir)) {
+    for (const file of [...walkFiles(skillDir), ...walkFiles(devCoreRefs)]) {
       for (const name of families(readFileSync(file, 'utf-8'))) {
         if (!fontAllow.has(name) && !fontSystem.has(name)) bad.push(`${file}: ${name}`)
       }
     }
     expect(bad).toEqual([])
-    expect(readFileSync(brandFiles[0], 'utf-8')).toMatch(/JetBrains Mono/)
+    expect(loadPerfTemplate()).toMatch(/JetBrains Mono/)
   })
 
   it('keeps the logo inline, never an external reference', () => {

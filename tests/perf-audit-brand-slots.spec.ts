@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
 const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
-const template = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
-const theme = () => readFileSync(join(refs, 'report-theme.md'), 'utf-8')
+const template = () => loadPerfTemplate()
+const theme = () => loadThemeDoc()
 const mdTemplate = () => readFileSync(join(refs, 'report-template.md'), 'utf-8')
 // Prose only: fenced code blocks carry the token values verbatim, so the
 // allowlist wording rule applies to the text outside them.

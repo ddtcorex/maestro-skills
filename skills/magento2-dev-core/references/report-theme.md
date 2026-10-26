@@ -78,7 +78,7 @@ Layout rule: every card renders its context note below table markup, never above
 
 ## Usage
 
-- Copy `report.html.template` and replace `{{title}}`, `{{date}}`, `{{meta}}`, `{{kpi}}`, `{{urls}}`, `{{sections}}`, `{{host}}`, `{{session}}` from the same data that populates `report.md`.
+- Copy `report-perf.html.template` (with `{{theme_css}}` replaced by `report-theme.css`) and replace `{{title}}`, `{{date}}`, `{{meta}}`, `{{kpi}}`, `{{urls}}`, `{{sections}}`, `{{host}}`, `{{session}}` from the same data that populates `report.md`.
 - Render every audited URL as `<td class="url"><code>…</code></td>` (bare `<td>` does not pick up the wrapping rule below); long URLs wrap via `.url,td.url{overflow-wrap:anywhere;word-break:break-all}` instead of overflowing.
 - Brand slots `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}` default to the Maestro values below; an overlay replaces all three together, never one alone.
 - Header layout: the gradient is full-bleed, but its text lives in `.header-inner`, which uses the same `max-width:1100px` and `24px` side padding as `.container`, so header and card left edges align at every viewport width. Keep both rules in sync if either changes.

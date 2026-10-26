@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
 const SKILL = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'SKILL.md')
 function skill() { return readFileSync(SKILL, 'utf-8') }
@@ -61,7 +62,7 @@ describe('perf-audit feedback P5', () => {
   it('adds a generic client-facing variant without private branding', () => {
     const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
     const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
-    const theme = readFileSync(join(base, 'report-theme.md'), 'utf-8')
+    const theme = loadThemeDoc()
     expect(template).toContain('audience: dev | client')
     expect(template).toContain('{{brand_logo}}')
     expect(theme).toContain('brand-fixed surfaces')
@@ -72,7 +73,7 @@ describe('perf-audit feedback P6', () => {
   it('requires full URL for dev and full URI for client', () => {
     const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
     const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
-    const theme = readFileSync(join(base, 'report-theme.md'), 'utf-8')
+    const theme = loadThemeDoc()
     expect(template).toContain('never truncate')
     expect(template).toContain('path + query')
     expect(theme).toContain('overflow-wrap:anywhere')
@@ -125,8 +126,8 @@ describe('review fix pass', () => {
 
 describe('perf-audit report layout', () => {
   const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
-  const template = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
-  const theme = () => readFileSync(join(refs, 'report-theme.md'), 'utf-8')
+  const template = () => loadPerfTemplate()
+  const theme = () => loadThemeDoc()
 
   it('aligns header content with the container on wide screens', () => {
     // Full-bleed gradient, but the text sits in the same 1100px column as the cards,

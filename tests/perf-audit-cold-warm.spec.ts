@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
 const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
 const cwv = () => readFileSync(join(refs, 'core-web-vitals.md'), 'utf-8')
 const template = () => readFileSync(join(refs, 'report-template.md'), 'utf-8')
-const htmlTemplate = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
+const htmlTemplate = () => loadPerfTemplate()
 
 const skippedReasons = [
   'Skipped: no cache backend',
