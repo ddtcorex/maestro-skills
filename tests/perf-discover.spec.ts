@@ -20,6 +20,32 @@ describe('pickUrlSet', () => {
       { label: 'product_3', uri: '/b1.html' },
     ])
   })
+
+  it('emits only small when a single non-empty category exists', async () => {
+    const { pickUrlSet } = await lib()
+    const set = pickUrlSet({
+      categories: [{ url: 'https://example.test/only.html', productCount: 9 }],
+      products: [{ url: 'https://example.test/p.html', type: 'simple', sku: 'P-1' }],
+    })
+    expect(set).toEqual([
+      { label: 'home', uri: '/' },
+      { label: 'category_small', uri: '/only.html', productCount: 9 },
+      { label: 'product_1', uri: '/p.html' },
+    ])
+  })
+
+  it('emits small and large with no medium when two non-empty categories exist', async () => {
+    const { pickUrlSet } = await lib()
+    const set = pickUrlSet({
+      categories: [
+        { url: 'https://example.test/a.html', productCount: 3 },
+        { url: 'https://example.test/b.html', productCount: 40 },
+      ],
+      products: [{ url: 'https://example.test/p.html', type: 'simple', sku: 'P-1' }],
+    })
+    expect(set.map((u) => u.label)).toEqual(['home', 'category_small', 'category_large', 'product_1'])
+    expect(new Set(set.map((u) => u.uri)).size).toBe(set.length)
+  })
 })
 
 describe('discover', () => {

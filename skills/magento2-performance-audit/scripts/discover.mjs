@@ -19,9 +19,10 @@ export function pickUrlSet(candidates) {
   const categories = candidates.categories.filter((c) => c.productCount > 0).sort((a, b) => a.productCount - b.productCount)
   const set = [{ label: 'home', uri: '/' }]
   if (categories.length > 0) {
-    set.push({ label: 'category_small', uri: toUri(categories[0].url), productCount: categories[0].productCount })
-    set.push({ label: 'category_medium', uri: toUri(categories[Math.floor(categories.length / 2)].url), productCount: categories[Math.floor(categories.length / 2)].productCount })
-    set.push({ label: 'category_large', uri: toUri(categories[categories.length - 1].url), productCount: categories[categories.length - 1].productCount })
+    const cat = (label, c) => ({ label, uri: toUri(c.url), productCount: c.productCount })
+    set.push(cat('category_small', categories[0]))
+    if (categories.length > 2) set.push(cat('category_medium', categories[Math.floor(categories.length / 2)]))
+    if (categories.length > 1) set.push(cat('category_large', categories[categories.length - 1]))
   }
   const byType = []
   const seen = new Set()
