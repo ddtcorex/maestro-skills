@@ -19,6 +19,7 @@ export const PERF_SECTIONS = [
   'Database',
   'Per-Page Query Detail',
   'Top Repeated Query Shapes',
+  'Top Timers',
   'Core Web Vitals',
   'Recommendations',
   'Coverage Note',
@@ -123,6 +124,35 @@ function perPageDetails(pages) {
     .join('\n  ')
 }
 
+// Timers past the report threshold (>5% of the page total, or Cnt 10+).
+// Pages with none still render an explicit line, never an empty card.
+function timersContent(pages) {
+  return pages
+    .map((p) => {
+      const total = p.profilerRoot ?? (p.profiler ?? []).reduce((s, t) => s + (t.time ?? 0), 0)
+      const rows = (p.profiler ?? [])
+        .filter((t) => t.time >= 0.05 * total || (t.count ?? 0) >= 10)
+        .map((t) => `<tr><td><code>${e(t.timer)}</code></td><td>${(t.time ?? 0).toFixed(3)}</td><td>${t.avg?.toFixed(3) ?? ''}</td><td>${t.count ?? ''}</td></tr>`)
+        .join('')
+      const body = rows
+        ? `<table><tr><th>Timer</th><th>Time (s)</th><th>Avg (s)</th><th>Cnt</th></tr>${rows}</table>`
+        : 'No timer past the threshold on this page.'
+      return `<details><summary>${e(p.label)}</summary>${body}</details>`
+    })
+    .join('\n  ')
+}
+
+function timersMd(pages) {
+  const rows = []
+  for (const p of pages) {
+    const total = p.profilerRoot ?? (p.profiler ?? []).reduce((s, t) => s + (t.time ?? 0), 0)
+    for (const t of p.profiler ?? []) {
+      if (t.time >= 0.05 * total || (t.count ?? 0) >= 10) rows.push([p.label, t.timer, (t.time ?? 0).toFixed(3), t.count ?? ''])
+    }
+  }
+  return rows.length ? mdTable(['Page', 'Timer', 'Time (s)', 'Cnt'], rows) : 'No timer past the threshold on any captured page.'
+}
+
 function section(data, name) {
   return data.sections?.[name]
 }
@@ -174,6 +204,7 @@ export function buildPerf(data, audience) {
     db_bullets: (data.dbBullets ?? []).map((b) => `<li>${e(b)}</li>`).join('\n    '),
     rec_count: String(rec.length),
     coverage_note: e(data.coverageNote ?? SKIP),
+    timers_content: timersContent(pages),
   }
   for (const name of ['infra', 'cache', 'cache_inv', 'ajax', 'timers', 'cwv']) {
     const s = st(name)
@@ -211,6 +242,7 @@ export function buildPerf(data, audience) {
       .map((p) => `<details><summary>${p.label} - ${p.totalQueries} queries, ${p.distinctShapes} shapes</summary>\n\n${mdTable(['Count', 'SQL (normalized)'], (p.shapes ?? []).map((s) => [s.count, s.sql]))}\n\n</details>`)
       .join('\n\n'),
     'Top Repeated Query Shapes': mdTable(['Shape (normalized)', 'Count', 'Pages'], repeated.map((r) => [r.sql, r.count, r.pages.join(', ')])),
+    'Top Timers': timersMd(pages),
     Recommendations: rec.map((r, i) => `${i + 1}. ${r}`).join('\n'),
     'Coverage Note': data.coverageNote ?? SKIP,
   }

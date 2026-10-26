@@ -60,8 +60,7 @@ const PRODUCERS = new Set([
   'indexer_sub',
   'cron_verdict',
   'cron_sub',
-  'timers_badge',
-  'timers_status',
+  'timers_content',
   'cwv_badge',
   'cwv_status',
 ])
@@ -85,10 +84,50 @@ describe('perf template slot coverage', () => {
 
     it('renders no legacy card left empty by a missing producer', () => {
       const html = readFileSync(join(out, 'report.html'), 'utf-8')
-      expect(html).not.toContain('Top Timers')
       expect(html).not.toContain('Code-Level Performance Patterns')
       expect(html).not.toContain('DB slow')
       expect(html).not.toContain('(audit')
+    })
+
+    it('renders the Top Timers card from stored profiler data', async () => {
+      const engine = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
+      const { renderReport } = await import(engine)
+      const dir = mkdtempSync(join(tmpdir(), 'report-perf-timers-'))
+      try {
+        await renderReport({
+          layout: 'perf',
+          audience: 'dev',
+          outDir: dir,
+          data: {
+            meta: { title: 'Timers', date: '2026-10-26' },
+            verdict: 'v',
+            scope: 'deep',
+            urlSet: [],
+            pages: [
+              {
+                label: 'a',
+                profilerRoot: 10,
+                profiler: [
+                  { timer: 'magento->BLOCK->Foo::_toHtml', time: 1.2, avg: 1.2, count: 1 },
+                  { timer: 'magento->tiny', time: 0.01, avg: 0.01, count: 1 },
+                  { timer: 'magento->chatty', time: 0.01, avg: 0.001, count: 12 },
+                ],
+              },
+              { label: 'b', profilerRoot: 1, profiler: [] },
+            ],
+            recommendations: [],
+            coverageNote: 'n',
+          },
+        })
+        const html = readFileSync(join(dir, 'report.html'), 'utf-8')
+        expect(html).toContain('Top Timers')
+        expect(html).toContain('Foo::_toHtml')
+        expect(html).toContain('chatty')
+        expect(html).not.toContain('tiny')
+        expect(html).toContain('No timer past the threshold')
+      } finally {
+        rmSync(dir, { recursive: true, force: true })
+      }
     })
   })
 })
