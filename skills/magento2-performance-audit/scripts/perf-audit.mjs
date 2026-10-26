@@ -11,6 +11,7 @@ import { invalidate } from './invalidate.mjs'
 import { loadConfig } from './lib/config.mjs'
 import { ClosedReason, closed, done, usage } from './lib/status.mjs'
 import { renderRun } from './render.mjs'
+import { runAudit } from './run.mjs'
 import { switchBranch } from './switch.mjs'
 
 const USAGE = 'usage: perf-audit.mjs <discover|switch|capture|analyze|cwv|invalidate|render|run> [options]'
@@ -21,6 +22,12 @@ function requireRun(args, stage) {
 }
 
 export const COMMANDS = {
+  async run(args) {
+    if (!args._[0] || typeof args.out !== 'string') throw new ClosedReason('run', 'usage: run <config> --out <dir> [--branch <b>] [--run-name <n>] [--compare <before-run-dir>] [--scope deep|quick] [--audience dev|client]')
+    const str = (v) => (typeof v === 'string' ? v : undefined)
+    const result = await runAudit(loadConfig(args._[0]), { out: args.out, branch: str(args.branch), runName: str(args['run-name']), compare: str(args.compare), scope: args.scope ?? 'deep', audience: args.audience ?? 'dev' })
+    done('run', [result.runDir])
+  },
   async render(args) {
     const { config, runDir } = requireRun(args, 'render')
     const result = await renderRun(runDir, config, { compare: typeof args.compare === 'string' ? args.compare : undefined, audience: args.audience ?? 'dev' })
