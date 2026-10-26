@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -29,6 +29,16 @@ describe('query log parsing', () => {
     expect(records).toHaveLength(2)
     expect(records[0].sql).toBe("SELECT 'a\n## b\nTIME: c'")
     expect(records[0].time).toBe(0.03)
+  })
+})
+
+describe('query log as Magento writes it', () => {
+  it('accepts the CRLF Magento writes after the date header', async () => {
+    const { parseQueryLog } = await lib('querylog')
+    // Magento\Framework\DB\Logger\File writes "## <date>\r\n" before each record.
+    const text = '## 2026-10-26 08:54:17\r\n## 1823 ## CONNECT\nTIME: 0.0006\n\n## 2026-10-26 08:54:17\r\n## 1823 ## QUERY\nSQL: SET NAMES utf8\nAFF: 0\nTIME: 0.0001\n\n## 2026-10-26 08:54:17\r\n## 1823 ## QUERY\nSQL: SELECT 1\nAFF: 3\nTIME: 0.0003\n\n'
+    const records = parseQueryLog(text)
+    expect(records.map((r: { sql: string }) => r.sql)).toEqual(['SET NAMES utf8', 'SELECT 1'])
   })
 })
 
@@ -81,6 +91,20 @@ describe('analyzeRun', () => {
     const cat = data.pages.find((p: any) => p.label === 'category_small')
     expect(cat.template).toBe('app/design/frontend/Acme/child/Magento_Catalog/templates/product/list.phtml')
     expect(data.urlSet.find((u: any) => u.label === 'category_small').template).toBe(cat.template)
+  })
+
+  it('counts pass 2 and trace queries from the logs, not the capture summary', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'perf-analyze-recount-'))
+    try {
+      cpSync(fixtures, join(dir, 'capture'), { recursive: true })
+      const csv = join(dir, 'capture', 'summary.csv')
+      writeFileSync(csv, readFileSync(csv, 'utf-8').replace(/,\d+\n/g, ',0\n'))
+      const { analyzeRun } = await import(join(perfScripts, 'analyze.mjs'))
+      const data = analyzeRun(dir, { baseUrl: 'https://example.test', urlSet: [{ label: 'home', uri: '/' }] })
+      expect(data.pages.find((p: any) => p.label === 'home')).toMatchObject({ totalQueries: 3, pass2Queries: 3, traceQueries: 3 })
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   it('flags a page whose pass 1 and pass 2 counts differ', () => {

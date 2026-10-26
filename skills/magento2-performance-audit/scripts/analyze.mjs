@@ -36,7 +36,13 @@ function analyzePage(captureDir, row, rows, config) {
   const htmlFile = join(captureDir, 'pass1', `${row.label}.html`)
   const profiler = existsSync(htmlFile) ? parseProfiler(readFileSync(htmlFile, 'utf-8')) : []
   const pattern = templatePattern(row.label)
-  const other = (pass) => rows.find((r) => r.pass === pass && r.label === row.label)
+  // Counted from the logs themselves, so a run captured by an older parser
+  // can be re-analyzed without re-measuring.
+  const countPass = (pass) => {
+    if (!rows.some((r) => r.pass === pass && r.label === row.label)) return null
+    const file = join(captureDir, pass, `${row.label}.db.log`)
+    return existsSync(file) ? parseQueryLog(readFileSync(file, 'utf-8')).length : null
+  }
   const times = records.map((r) => r.time)
   return {
     label: row.label,
@@ -44,8 +50,8 @@ function analyzePage(captureDir, row, rows, config) {
     uri: row.uri,
     http: Number(row.http),
     totalQueries: records.length,
-    pass2Queries: other('pass2') ? Number(other('pass2').queries) : null,
-    traceQueries: other('trace') ? Number(other('trace').queries) : null,
+    pass2Queries: countPass('pass2'),
+    traceQueries: countPass('trace'),
     distinctShapes: shapes.size,
     dbTime: round(times.reduce((a, b) => a + b, 0)),
     maxTime: times.length ? Math.max(...times) : 0,
