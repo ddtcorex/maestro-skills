@@ -41,6 +41,20 @@ describe('cacheTargets', () => {
   })
 })
 
+describe('enabledInConfig', () => {
+  it('reads multi-segment module names enabled with => 1, skipping disabled ones', async () => {
+    const { enabledInConfig } = await lib()
+    const root = mkdtempSync(join(tmpdir(), 'perf-modules-'))
+    try {
+      mkdirSync(join(root, 'app', 'etc'), { recursive: true })
+      writeFileSync(join(root, 'app', 'etc', 'config.php'), "<?php return ['modules' => ['Acme_Foo' => 1, 'Acme_Bar_Baz' => 1, 'Acme_Off' => 0]];")
+      expect(enabledInConfig(root)).toEqual(['Acme_Foo', 'Acme_Bar_Baz'])
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+})
+
 describe('switchBranch', () => {
   let project: FakeProject
   let origin: string

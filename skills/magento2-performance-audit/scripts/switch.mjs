@@ -41,9 +41,9 @@ async function sh(root, cmd) {
   return res.stdout
 }
 
-function enabledInConfig(root) {
+export function enabledInConfig(root) {
   const text = readFileSync(join(root, 'app', 'etc', 'config.php'), 'utf-8')
-  return [...text.matchAll(/'([A-Za-z0-9]+_[A-Za-z0-9]+)'\s*=>\s*1\b/g)].map((m) => m[1])
+  return [...text.matchAll(/'([^']+)'\s*=>\s*1\b/g)].map((m) => m[1])
 }
 
 // Switches the checkout to <branch> and rebuilds what a module or lock change
