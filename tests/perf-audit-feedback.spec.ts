@@ -20,11 +20,11 @@ describe('perf-audit feedback P2', () => {
     const dir = join(__dirname, '..', 'skills', 'magento2-performance-audit')
     const perPage = readFileSync(join(dir, 'references', 'per-page-type-audit.md'), 'utf-8')
     const template = readFileSync(join(dir, 'references', 'report-template.md'), 'utf-8')
-    expect(skill()).toContain('20–30m')
+    expect(skill()).toContain('30-45m')
     expect(skill()).toContain('144 tool calls')
-    expect(perPage).toContain('20–30 min')
-    expect(template).toContain('5–10m')
-    expect(template).not.toContain('3–5m')
+    expect(perPage).toContain('30-45 min')
+    expect(template).toContain('5-10m')
+    expect(template).not.toContain('3-5m')
   })
 
   it('stamps the observed floor so the number cannot rot silently', () => {
@@ -85,11 +85,11 @@ describe('review fix pass', () => {
   const read = (rel: string) => readFileSync(join(__dirname, '..', 'skills', rel), 'utf-8')
 
   it('labels the 22m floor as whole-audit time, distinct from capture time', () => {
-    // The reviewer caught "~22m observed floor" sitting next to a "20–30m" deep cap
+    // The reviewer caught "~22m observed floor" sitting next to a "20-30m" deep cap
     // while the reference file said captures cost ~2.5-3 min. Both numbers are real
     // but measure different scopes; the text must say so.
     expect(skill()).toContain('for the **whole audit**')
-    expect(skill()).toContain('Captures alone are only ~2.5–3 min')
+    expect(skill()).toContain('Captures alone are only ~2.5-3 min')
     expect(skill()).toContain('~2.5-3 min **on their own**')
     expect(read('magento2-performance-audit/references/per-page-type-audit.md')).toContain('**for the captures only**')
   })

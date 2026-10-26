@@ -20,18 +20,18 @@ This skill performs security scanning for vulnerabilities, misconfigurations, an
 ## Govard-Native Audit Coverage
 
 `govard audit run` executes PHPCS and PHPStan through Govard's pinned lint
-toolchain image — it covers coding-standard and static-analysis findings only.
+toolchain image, it covers coding-standard and static-analysis findings only.
 As of Govard v1.64.0 no `security` audit check exists:
 `govard audit run --checks security` fails with "audit check ... is not
-implemented". The lint run does include a pub/media PHP guard since v1.64.0 — every PHP file
-under `pub/media` is flagged (`M2-LINT-MEDIA`) — so a lint pass also covers that specific
+implemented". The lint run does include a pub/media PHP guard since v1.64.0, every PHP file
+under `pub/media` is flagged (`M2-LINT-MEDIA`), so a lint pass also covers that specific
 file-drop attack surface, but it is still not a vulnerability scan. Run this skill's manual
 checklist yourself and treat `govard audit run --checks lint` as the shared lint gate. Never
 present a lint-only pass as a security verdict.
 
 ## Related Skills
 
-**REQUIRED BACKGROUND:** Load `magento2-dev-core` first — this skill scans for violations of the security patterns it defines (escaping, discouraged functions, ObjectManager misuse), and its patterns are what you fix findings with.
+**REQUIRED BACKGROUND:** Load `magento2-dev-core` first, this skill scans for violations of the security patterns it defines (escaping, discouraged functions, ObjectManager misuse), and its patterns are what you fix findings with.
 
 Part of the QA trio with `magento2-linter` (style/static analysis) and `magento2-performance-audit` (runtime/infrastructure). Re-check API/resolver-specific findings against `magento2-backend-dev`.
 
@@ -120,20 +120,20 @@ done
 ```
 
 `magento2-code-review` derives this file list from a git diff or an MR fetch
-and calls this skill with it directly — the git/glab mechanics themselves
+and calls this skill with it directly, the git/glab mechanics themselves
 live there, not here.
 
-### Environment-level checks — scope boundary
+### Environment-level checks: scope boundary
 
 Authentication & Authorization, Data Exposure, and CSP Configuration
-(sections 2-4 above) are not file-list-scoped at all — they check the
+(sections 2-4 above) are not file-list-scoped at all, they check the
 running environment (`env.php`, a live URL, `bin/magento config:get`), not
 specific files. They cannot run against a PR/MR diff or remote fetch (no
 checked-out environment to query there) and, even at project/module scope,
 run once per audit rather than once per file. `magento2-code-review`
 states explicitly in its Coverage note whether these ran (project/module/
 theme scope, live environment available) or were skipped (PR/MR scope, or
-no environment access this session) — this is never left for whoever's
+no environment access this session), this is never left for whoever's
 running the review to decide silently.
 
 ## XSS Prevention Checklist

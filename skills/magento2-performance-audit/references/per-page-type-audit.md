@@ -2,35 +2,35 @@
 
 Full detail for Workflow step 3.
 
-A single-page spot check isn't representative — different page types have very different bottleneck shapes (a CMS-heavy homepage vs. a layout-heavy product page vs. a grid-heavy category page). Audit at least one of each of these three page types, using both the HTML profiler (`references/html-profiler-audit.md`) and the query log (`references/database-query-profiling.md`) together, with `full_page`, `block_html`, and `layout` caches **disabled** so you're measuring true cache-miss cost (the worst case every real cache-miss/deploy/flush pays) rather than a warm-cache request that tells you almost nothing.
+A single-page spot check isn't representative, different page types have very different bottleneck shapes (a CMS-heavy homepage vs. a layout-heavy product page vs. a grid-heavy category page). Audit at least one of each of these three page types, using both the HTML profiler (`references/html-profiler-audit.md`) and the query log (`references/database-query-profiling.md`) together, with `full_page`, `block_html`, and `layout` caches **disabled** so you're measuring true cache-miss cost (the worst case every real cache-miss/deploy/flush pays) rather than a warm-cache request that tells you almost nothing.
 
-**Sample 3 URLs per page type, not 1 — except homepage, which is usually singular** (unless the store has multiple storefront views, in which case sample those too). One category and one product tells you *a* number; it can't tell you whether that number is representative of the type or an artifact of the one page you happened to pick, and it can't catch a bug whose cost only becomes visible at scale (see "Interpreting results correctly" below — it needs at least 3 differently-sized samples of the same type to work at all). Three samples per type is enough to show a pattern without turning the audit into a full crawl.
+**Sample 3 URLs per page type, not 1, except homepage, which is usually singular** (unless the store has multiple storefront views, in which case sample those too). One category and one product tells you *a* number; it can't tell you whether that number is representative of the type or an artifact of the one page you happened to pick, and it can't catch a bug whose cost only becomes visible at scale (see "Interpreting results correctly" below, it needs at least 3 differently-sized samples of the same type to work at all). Three samples per type is enough to show a pattern without turning the audit into a full crawl.
 
 > **Frozen URL set:** the URLs picked during discovery are frozen for later comparisons. Record each chosen page with its label, absolute URL, and normalized URI in the `urlSet` block of `audit-data.json` at discovery time, before any capture runs, so the baseline cannot shift mid-audit. A follow-up audit does not re-pick URLs from scratch: the audited URL set is frozen and reused for later comparisons. Re-running discovery risks auditing different category or product samples, which makes query-count and timing deltas meaningless because the pages differ, not the code. When a frozen URL no longer resolves, check for a redirect first and follow the 301 substitution rule in the report template; otherwise record the reason beside the affected row and keep the remaining set intact. Store the discovery commands and their output alongside the frozen set so a later session can verify why each sample was chosen without repeating the full investigation. The frozen set is what turns isolated audits into a comparable series, so later reports can state improvement or regression against the same pages with evidence rather than assumption.
 
-> **Expected capture cost on a real store like reference project (3.2G/60k files in `pub/media`):** homepage 50k queries (with call-stack) → 16-26s per capture, 7 pages → ~110-140s for captures alone + 31s setup + 10s restore ≈ 2.5-3 min **for the captures only**. The end-to-end deep audit is far longer — ~22m observed on a reference large project, because analysis and report writing dominate (see the observed floor in `SKILL.md`). The harness `tools.bash` default 60s will kill a capture — run with `timeout 300` or `run_in_background` with polling, and always trap restore (see “Always restore” below). Keep all 7 pages; this cost is intentional — a single-category spot check cannot reveal per-item N+1s that only become visible across small/medium/large.
+> **Expected capture cost on a real store like reference project (3.2G/60k files in `pub/media`):** homepage 50k queries (with call-stack) → 16-26s per capture, 7 pages → ~110-140s for captures alone + 31s setup + 10s restore ≈ 2.5-3 min **for the captures only**. The end-to-end deep audit is far longer, ~22m observed on a reference large project, because analysis and report writing dominate (see the observed floor in `SKILL.md`). The harness `tools.bash` default 60s will kill a capture, run with `timeout 300` or `run_in_background` with polling, and always trap restore (see “Always restore” below). Keep all 7 pages; this cost is intentional, a single-category spot check cannot reveal per-item N+1s that only become visible across small/medium/large.
 
-## Quick vs Deep — pages, instrumentation, and transport
+## Quick vs Deep: pages, instrumentation, and transport
 
-This reference supports both **quick** (5–10 min PR check) and **deep** (20–30 min release audit) modes. Pick the mode before starting and keep every parameter in the same row — do not mix quick pages with deep call-stack settings.
+This reference supports both **quick** (5-10 min PR check) and **deep** (30-45 min release audit) modes. Pick the mode before starting and keep every parameter in the same row, do not mix quick pages with deep call-stack settings.
 
 | Mode | Pages | Query-log call-stack | Query-time threshold | govard sh transport | Stats | Restore trap | Govard-native profiler lease |
 |------|-------|----------------------|----------------------|---------------------|-------|--------------|------------------------------|
-| quick | 3 pages (1 home + 1 category + 1 product) | `--include-call-stack=false` | `--query-time-threshold=1` (1s, only slow queries) | batch govard sh — setup + warmup + 3 captures in **1 cmd** where possible | `grep -c '## QUERY'` recipes | trap single — one `trap '... restore ...' EXIT` for the entire session | `govard audit run --checks lint,profiler --url <absolute http(s) url>` quick single-URL lease (`artifacts/profiler/profile.csv` SHA) as complement, not replacement |
-| deep | 7 pages (1 home + 3 category small/medium/large + 3 product) | `--include-call-stack=true` | `--query-time-threshold=0` (all queries) | batch govard sh where possible, but per-page captures stay sequential under single lock | `grep -c '## QUERY'` recipes, then two-pass re-capture for 1–2 N+1 candidates with call-stack=true | trap single — same one trap, covers both passes | same Govard-native profiler lease for all 7 pages when `--url` is provided; captures `artifacts/profiler/profile.csv` per URL with `Accept: text/html` so stock Magento enables the CSV |
+| quick | 3 pages (1 home + 1 category + 1 product) | `--include-call-stack=false` | `--query-time-threshold=1` (1s, only slow queries) | batch govard sh, setup + warmup + 3 captures in **1 cmd** where possible | `grep -c '## QUERY'` recipes | trap single, one `trap '... restore ...' EXIT` for the entire session | `govard audit run --checks lint,profiler --url <absolute http(s) url>` quick single-URL lease (`artifacts/profiler/profile.csv` SHA) as complement, not replacement |
+| deep | 7 pages (1 home + 3 category small/medium/large + 3 product) | `--include-call-stack=true` | `--query-time-threshold=0` (all queries) | batch govard sh where possible, but per-page captures stay sequential under single lock | `grep -c '## QUERY'` recipes, then two-pass re-capture for 1-2 N+1 candidates with call-stack=true | trap single, same one trap, covers both passes | same Govard-native profiler lease for all 7 pages when `--url` is provided; captures `artifacts/profiler/profile.csv` per URL with `Accept: text/html` so stock Magento enables the CSV |
 
 Notes:
-- **Query-log stats:** there is no stats tool; use the local `grep -c '## QUERY'` recipes in `references/database-query-profiling.md` instead of hand-reading 16–50k lines of `var/debug/db.log`.
-- **Batch govard sh** means collapsing multiple container-local setup lines (`mkdir lock`, `bin/magento dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup discard) into a single `govard sh -c "..."` where sequencing allows — one round-trip instead of five. Captures themselves stay sequential (one `curl` + `cat var/debug/db.log` per page) under the same lock.
-- **Govard-native profiler lease** (`govard audit run --checks lint,profiler --url https://example.test/<path>.html --format json`) is a quick complement — machine-captured single URL into `artifacts/profiler/profile.csv` with SHA in `audit-result.json`. It ships no query log and no cross-page matrix — keep the manual per-page query-log captures above as the primary evidence.
+- **Query-log stats:** there is no stats tool; use the local `grep -c '## QUERY'` recipes in `references/database-query-profiling.md` instead of hand-reading 16-50k lines of `var/debug/db.log`.
+- **Batch govard sh** means collapsing multiple container-local setup lines (`mkdir lock`, `bin/magento dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup discard) into a single `govard sh -c "..."` where sequencing allows, one round-trip instead of five. Captures themselves stay sequential (one `curl` + `cat var/debug/db.log` per page) under the same lock.
+- **Govard-native profiler lease** (`govard audit run --checks lint,profiler --url https://example.test/<path>.html --format json`) is a quick complement, machine-captured single URL into `artifacts/profiler/profile.csv` with SHA in `audit-result.json`. It ships no query log and no cross-page matrix, keep the manual per-page query-log captures above as the primary evidence.
 
-## 0. Pick genuinely representative pages first — host-first discovery (5s max)
+## 0. Pick genuinely representative pages first: host-first discovery (5s max)
 
-Before measuring anything, verify the specific URLs you're about to test aren't degenerate cases — this is the single easiest way to get a misleading audit. Discovery is **host-first, 5s max per URL** — host curl is the primary transport; container curl is fallback only.
+Before measuring anything, verify the specific URLs you're about to test aren't degenerate cases, this is the single easiest way to get a misleading audit. Discovery is **host-first, 5s max per URL**: host curl is the primary transport; container curl is fallback only.
 
 > **Resolve the table prefix before running any query below.** Magento 2 supports an optional
 > table prefix (`db.table_prefix` in `app/etc/env.php`, set via `bin/magento setup:install
-> --db-prefix=...` or inherited from a prefixed remote sync) — every bare table name in this file
+> --db-prefix=...` or inherited from a prefixed remote sync), every bare table name in this file
 > (`catalog_category_product`, `catalog_category_entity`, `catalog_product_website`,
 > `url_rewrite`, `eav_attribute`, etc.) assumes no prefix. Resolve it first:
 > ```bash
@@ -40,30 +40,30 @@ Before measuring anything, verify the specific URLs you're about to test aren't 
 > govard db query "SHOW TABLES LIKE '%url_rewrite'"
 > ```
 > If either returns a non-empty prefix, prepend it to every table name in every query in this file (and anywhere else
-> in this audit you write ad hoc SQL against app tables — this does not apply to MySQL system
+> in this audit you write ad hoc SQL against app tables, this does not apply to MySQL system
 > tables/variables in `references/database-query-profiling.md`'s slow-query checks, or to
 > `EXPLAIN`ing SQL already captured from the query log, since that SQL already has the real prefix
 > baked in). A query against the bare name on a prefixed install fails loudly ("table doesn't
-> exist"), which at least isn't silent — but don't just retry with a guessed prefix, confirm it
+> exist"), which at least isn't silent, but don't just retry with a guessed prefix, confirm it
 > from `env.php` / `SHOW TABLES` first. All examples below use `<prefix>` as placeholder for that resolved prefix (empty string when no prefix).
 
-> **Check `is_active` column existence via `information_schema` — not hard-coded.** Some installs
+> **Check `is_active` column existence via `information_schema`, not hard-coded.** Some installs
 > (or custom entity setups) may lack `is_active` on `catalog_category_entity`. Do not assume it exists:
 > ```bash
 > govard db query "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='<prefix>catalog_category_entity' AND COLUMN_NAME='is_active'"
 > ```
-> If the column exists, filter candidates with `WHERE is_active=1` (or the EAV `catalog_category_entity_int` join below); if it doesn't exist, omit the `is_active` filter entirely and rely on HTTP 200 reachability instead. Never hard-code a `magento` database name — use `DATABASE()`.
+> If the column exists, filter candidates with `WHERE is_active=1` (or the EAV `catalog_category_entity_int` join below); if it doesn't exist, omit the `is_active` filter entirely and rely on HTTP 200 reachability instead. Never hard-code a `magento` database name, use `DATABASE()`.
 
 ### Discovery: DB candidates → host-first 5s curl → fallback `Skipped: no 200 URL`
 
 ```bash
-# 1. DB candidates — pull request_path for category/product url_rewrites (limit 20) and a spread
+# 1. DB candidates: pull request_path for category/product url_rewrites (limit 20) and a spread
 #    of category sizes (small/medium/large), not just one:
 govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN ('category','product') LIMIT 20"
 govard db query "SELECT category_id, COUNT(*) cnt FROM <prefix>catalog_category_product GROUP BY category_id ORDER BY cnt LIMIT 200"
 # then pick 3 across that range, e.g. one ~10, one ~50-100, one ~200+
 
-# Category is_active gate — only when information_schema confirms the column exists:
+# Category is_active gate: only when information_schema confirms the column exists:
 # (a) information_schema check above → if present, use EAV or flat column filter:
 govard db query "SELECT cce.entity_id, cv.value AS is_active FROM <prefix>catalog_category_entity cce
   LEFT JOIN <prefix>catalog_category_entity_int cv ON cv.entity_id=cce.entity_id
@@ -71,16 +71,16 @@ govard db query "SELECT cce.entity_id, cv.value AS is_active FROM <prefix>catalo
       AND entity_type_id=(SELECT entity_type_id FROM <prefix>eav_entity_type WHERE entity_type_code='catalog_category'))
     AND cv.store_id=0
   WHERE cce.entity_id IN (<candidate ids>)"
-# (b) if information_schema returned 0 rows for is_active, skip this filter — rely on curl 200 below.
+# (b) if information_schema returned 0 rows for is_active, skip this filter: rely on curl 200 below.
 
 # Product: confirm each candidate is assigned to a website (unassigned products 404 / aren't routable)
 govard db query "SELECT * FROM <prefix>catalog_product_website WHERE product_id=<id>"
 
-# 2. Host-first reachability — 5s max per URL, --connect-timeout 3, sequential, stop when quota met.
+# 2. Host-first reachability: 5s max per URL, --connect-timeout 3, sequential, stop when quota met.
 #    Quick: stop when 1 category + 1 product reach 200 (≤15s total, 3 pages: 1 home + 1 cat + 1 product).
 #    Deep:  stop when 3 category + 3 product reach 200 (≤30s total, 7 pages: 1 home + 3 cat + 3 product).
 #    Transports: host curl where reachable (primary), container curl as fallback.
-#    Do NOT blindly -L through 301/302 — check for redirects to live production domains first.
+#    Do NOT blindly -L through 301/302: check for redirects to live production domains first.
 
 # Host curl where reachable (primary):
 for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN ('category','product') LIMIT 20" | tail -n +2); do
@@ -90,21 +90,21 @@ for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHER
 done
 # quick must finish host discovery in ≤15s (3 URLs × 5s), deep in ≤30s (6 URLs × 5s); abort early on quota.
 
-# Fallback — container curl (same 5s budget, same sequential quota):
+# Fallback: container curl (same 5s budget, same sequential quota):
 govard sh -c 'for path in $(govard db query "SELECT request_path FROM <prefix>url_rewrite WHERE entity_type IN (\"category\",\"product\") LIMIT 20" | tail -n +2); do curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} %{redirect_url}\n" "https://store.test/$path"; done'
 
-# Product redirect guard — follow redirects manually first, don't blindly -L into production:
+# Product redirect guard: follow redirects manually first, don't blindly -L into production:
 curl -sk --max-time 5 --connect-timeout 3 -o /dev/null -w "%{http_code} -> %{redirect_url}\n" https://store.test/<product-url>.html
 
-# 3. Fallback — if host curl yields insufficient 200s, try one govard sh curl pass; if still
+# 3. Fallback: if host curl yields insufficient 200s, try one govard sh curl pass; if still
 #    insufficient, record Skipped: no 200 URL and audit continues with DB-derived paths as
 #    best-effort (do not block the audit, do not invent URLs):
-#    Skipped: no 200 URL — using DB paths, audit continues with DB paths
+#    Skipped: no 200 URL: using DB paths, audit continues with DB paths
 ```
 
-Pick 3 categories spanning small/medium/large product counts (quick: 1 category; deep: 3 categories) — not the single largest root category, not an edge case, confirmed `is_active` only when `information_schema` confirms the column exists — and products that each resolve 200 directly (quick: 1 product; deep: 3 products) — varying product type (simple/configurable) if the catalog has both. Quick 3 pages vs deep 7 pages preserved; 7 details gate unchanged (deep: 7 `<details>` mandatory, quick: `Skipped: quick — 3 pages only`).
+Pick 3 categories spanning small/medium/large product counts (quick: 1 category; deep: 3 categories), not the single largest root category, not an edge case, confirmed `is_active` only when `information_schema` confirms the column exists, and products that each resolve 200 directly (quick: 1 product; deep: 3 products), varying product type (simple/configurable) if the catalog has both. Quick 3 pages vs deep 7 pages preserved; 7 details gate unchanged (deep: 7 `<details>` mandatory, quick: `Skipped: quick, 3 pages only`).
 
-> **Transport:** host curl where reachable, container curl as fallback. If the container cannot resolve `*.test` (proxy/DNS), log `Skipped: container cannot resolve *.test proxy — use host curl` and retry on the host; do not move captures into the container to work around a host routing problem.
+> **Transport:** host curl where reachable, container curl as fallback. If the container cannot resolve `*.test` (proxy/DNS), log `Skipped: container cannot resolve *.test proxy, use host curl` and retry on the host; do not move captures into the container to work around a host routing problem.
 
 ## 1. Set up the uncached measurement environment
 
@@ -113,7 +113,7 @@ Pick 3 categories spanning small/medium/large product counts (quick: 1 category;
 # Full lock semantics and owner checks: references/database-query-profiling.md.
 audit_token="$(date +%s)-$$"
 govard sh -c "lock=var/debug/.performance-audit.lock; mkdir \"\$lock\" || { echo 'SKIPPED: query-log capture already owned'; exit 1; }; printf '%s\\n' '$audit_token' > \"\$lock/owner\""
-# Batch govard sh (quick: 1 cmd) — deep keeps the same 1-cmd batch but with call-stack true / threshold 0.
+# Batch govard sh (quick: 1 cmd): deep keeps the same 1-cmd batch but with call-stack true / threshold 0.
 # Quick: --include-call-stack=false --query-time-threshold=1  | Deep: --include-call-stack=true --query-time-threshold=0
 govard sh -c "
   set -e
@@ -127,18 +127,17 @@ govard sh -c "
 # Deep alternative (7 pages, full fidelity): replace the line above with:
 # bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0
 
-# One throwaway homepage request first (discard its output/log) — this lets config/eav/
-# compiled_config caches rebuild after the flush. Confirm it's actually 200 before proceeding —
-# a broken warmup means every capture after it is measuring a failure, not a page.
+# One throwaway homepage request first (discard its output/log): this lets config/eav/
+# compiled_config caches rebuild after the flush. Confirm it's actually 200 before proceeding: # a broken warmup means every capture after it is measuring a failure, not a page.
 curl -sk -H "Accept: $ACCEPT" -A "$UA" -o /dev/null -w "warmup: %{http_code}\n" https://store.test/
 govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; : > var/debug/db.log"
 ```
 
-> **This one homepage warmup is not enough on its own — every sample URL needs its own warmup too.** It only rebuilds *global* caches (config/eav/compiled_config); it does nothing for the layered-nav attribute metadata, category-specific EAV lookups, and other page-type-specific data that only get computed and cached the first time that *specific* URL is actually requested. Visiting the homepage first does not pay that cost on a category or product page's behalf — each one pays its own first-visit tax independently, regardless of what else was hit before it. Step 2 below folds a per-URL warmup into the same loop as the real capture — don't skip it and reuse just the homepage warmup for all 7 pages.
+> **This one homepage warmup is not enough on its own, every sample URL needs its own warmup too.** It only rebuilds *global* caches (config/eav/compiled_config); it does nothing for the layered-nav attribute metadata, category-specific EAV lookups, and other page-type-specific data that only get computed and cached the first time that *specific* URL is actually requested. Visiting the homepage first does not pay that cost on a category or product page's behalf, each one pays its own first-visit tax independently, regardless of what else was hit before it. Step 2 below folds a per-URL warmup into the same loop as the real capture, don't skip it and reuse just the homepage warmup for all 7 pages.
 
 ## 2. Capture each page type separately
 
-For each of the (typically 7: 1 home + 3 category + 3 product) URLs: **warm that specific URL first** (throwaway request, discard — see the callout above), then clear the query log, fetch with a realistic `Accept`/User-Agent (see warning in `references/database-query-profiling.md`), save the HTML (for the profiler table) and a copy of the query log, then clear the log again before the next page — **checking the HTTP status every time**, since a non-200 response still produces a plausible-looking HTML file and query log that will silently corrupt every number downstream if you don't check:
+For each of the (typically 7: 1 home + 3 category + 3 product) URLs: **warm that specific URL first** (throwaway request, discard, see the callout above), then clear the query log, fetch with a realistic `Accept`/User-Agent (see warning in `references/database-query-profiling.md`), save the HTML (for the profiler table) and a copy of the query log, then clear the log again before the next page, **checking the HTTP status every time**, since a non-200 response still produces a plausible-looking HTML file and query log that will silently corrupt every number downstream if you don't check:
 
 ```bash
 declare -A urls=(
@@ -152,13 +151,13 @@ declare -A urls=(
 )
 for name in "${!urls[@]}"; do
   url="${urls[$name]}"
-  # Per-page warmup (discard) — this specific URL's own first-visit cold cost, not covered
+  # Per-page warmup (discard), this specific URL's own first-visit cold cost, not covered
   # by the single homepage warmup in step 1.
   curl -sk -H "Accept: $ACCEPT" -A "$UA" -o /dev/null -w "warmup ($name): %{http_code}\n" "https://store.test$url"
   govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; : > var/debug/db.log"
   code=$(curl -sk -H "Accept: $ACCEPT" -A "$UA" -o "${name}.html" -w "%{http_code}" "https://store.test$url")
   echo "$name ($url): HTTP $code"
-  [ "$code" = "200" ] || echo "  ^ NOT 200 — discard this capture, do not analyze ${name}.html/${name}.db.log"
+  [ "$code" = "200" ] || echo "  ^ NOT 200, discard this capture, do not analyze ${name}.html/${name}.db.log"
   govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; cat var/debug/db.log" > "${name}.db.log"
   govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; : > var/debug/db.log"
 done
@@ -168,9 +167,9 @@ done
 >
 > The capture boundary is deliberate: host-side `curl` warms and requests each storefront URL; `govard sh -c` clears, snapshots, and reads `var/debug/db.log` inside the application container. Treat a curl transport error, HTTP `000`, or empty response as an invalid page capture, not a zero-query result. Record the URL and error, fix the host DNS/hosts or proxy path, then repeat that page in isolation before including it in a comparison. Do not move curl into the container merely to avoid the host problem. If the host cannot reach the declared URL during this session, mark that page `Skipped: host cannot reach <url> (<error>)`; the profiler and query-log artifacts for that failed request are not evidence. Keep the second pass on the same host URLs and in the same order once reachability is restored.
 
-After this loop completes, re-run it a second time in full (same URLs, same order) without an additional flush and diff the counts against the first pass — per-URL-warmed numbers should match exactly. If any page still doesn't reproduce, treat it per item 4 in `references/database-query-profiling.md` (re-run that one page in isolation before trusting the number).
+After this loop completes, re-run it a second time in full (same URLs, same order) without an additional flush and diff the counts against the first pass, per-URL-warmed numbers should match exactly. If any page still doesn't reproduce, treat it per item 4 in `references/database-query-profiling.md` (re-run that one page in isolation before trusting the number).
 
-Analyze each page's `*.html` for its profiler table (see `references/html-profiler-audit.md` for what each column means and how to trace custom-code cost) and each `*.db.log` for total query count, repeated/duplicate query shapes (candidate N+1s), and — using the call stack in each entry — the exact file:line responsible for the worst offenders.
+Analyze each page's `*.html` for its profiler table (see `references/html-profiler-audit.md` for what each column means and how to trace custom-code cost) and each `*.db.log` for total query count, repeated/duplicate query shapes (candidate N+1s), and, using the call stack in each entry, the exact file:line responsible for the worst offenders.
 
 ## 3. Always restore state afterward
 
@@ -178,22 +177,22 @@ Analyze each page's `*.html` for its profiler table (see `references/html-profil
 govard sh -c "lock=var/debug/.performance-audit.lock; test \"\$(cat \"\$lock/owner\" 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && : > var/debug/db.log && rm \"\$lock/owner\" && rmdir \"\$lock\""
 ```
 
-If the harness kills the script mid-capture (timeout, Ctrl+C), caches and `dev:profiler`/`dev:query-log` stay enabled and the `var/debug/.performance-audit.lock` remains. Always trap restore — **trap single**: one `trap` for the entire session, not per-page:
+If the harness kills the script mid-capture (timeout, Ctrl+C), caches and `dev:profiler`/`dev:query-log` stay enabled and the `var/debug/.performance-audit.lock` remains. Always trap restore, **trap single**: one `trap` for the entire session, not per-page:
 
 ```bash
 trap 'govard sh -c "bin/magento cache:enable full_page block_html layout && bin/magento cache:flush && bin/magento dev:profiler:disable && bin/magento dev:query-log:disable && rm -rf var/debug/.performance-audit.lock"' EXIT
 ```
 
-This single trap covers setup + all captures + both passes. Do not add a second trap inside the loop — the last trap wins and would drop the restore. For Govard-native `audit --checks profiler`, clean a stale `diagnostics` lease with `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `rm .govard/apache/custom/govard-audit-profiler-*.conf` if `is already held` appears. For post-capture analysis use the `grep -c '## QUERY'` recipes in `database-query-profiling.md` (no spreadsheet open of 50k lines).
+This single trap covers setup + all captures + both passes. Do not add a second trap inside the loop, the last trap wins and would drop the restore. For Govard-native `audit --checks profiler`, clean a stale `diagnostics` lease with `rm ~/.govard/audit/<project>/leases/diagnostics.json` and `rm .govard/apache/custom/govard-audit-profiler-*.conf` if `is already held` appears. For post-capture analysis use the `grep -c '## QUERY'` recipes in `database-query-profiling.md` (no spreadsheet open of 50k lines).
 
-Don't leave a target environment with caches disabled and full query logging on — this is a diagnostic state, not a normal running state, and matters especially if the target is shared with other developers or is staging rather than a disposable local box.
+Don't leave a target environment with caches disabled and full query logging on, this is a diagnostic state, not a normal running state, and matters especially if the target is shared with other developers or is staging rather than a disposable local box.
 
 ## Interpreting results correctly
 
-- **A `curl` wall-clock time captured while the profiler and call-stack query logging are both active is not representative of real page load time** — the instrumentation itself (especially `--include-call-stack=true`, which walks and serializes a full PHP stack on every single query) adds real overhead, sometimes an order of magnitude. Use this setup to get query counts, repeated shapes, and file:line traces — not to report "the homepage takes N seconds." For actual load-time numbers, use the Core Web Vitals Audit (`references/core-web-vitals.md`) on the same pages with instrumentation off.
-- **Query count vs. query time are different signals.** A small/fast local DB can show trivial total query *time* (tens of ms) even when the query *count* is 3–5x over budget — don't dismiss a high count just because local timing looks fine; the count is what will hurt on production's real network round-trips and larger tables.
-- **Not every slow section benefits from the caches you just disabled.** `layout` cache only skips re-parsing/merging layout XML — it does NOT skip instantiating the PHP block objects for every declared block (that happens fresh on every request regardless of cache, since live objects can't be cached across requests). If a page's time is dominated by layout *generation* rather than block *rendering*, re-enabling `layout`/`block_html` cache won't fix it — the real lever is reducing how many blocks/modules contribute to that page's layout.
-- **A query shape repeated with near-identical counts across all 3 page types** (not just one) is a strong signal it comes from a globally-rendered block (header/footer/cart-drawer widget), not something page-specific — prioritize fixing that over a page-specific N+1, since it's paid on every single page view site-wide.
-- **A query shape whose count scales with the grid size, across your 3 category (or product-list) samples, is a separate signal from the one above — and needs at least 3 differently-sized samples to see at all.** Compare total query count and specific shape counts across the small/medium/large category samples: a shape whose count tracks the product count roughly 1:1 (e.g. ~10 on the 10-product category, ~200 on the 200-product one) is a per-item loop that isn't using the collection's already-batched data — a real N+1 that gets *worse as the catalog grows*, not a fixed per-page cost. This is exactly the kind of bug a single-category spot check cannot reveal: on a 9-product category it might add an invisible ~10 queries; on a 200-product one it's ~1,000+. Trace it with a call-stack-enabled re-capture of the largest sample (see the two-pass note in `references/database-query-profiling.md`) — common culprits are a rich-snippets/structured-data block, a review-summary widget, or a price/label renderer that calls a per-product model method (e.g. `ReviewSummary::load($id)`, a pricing `Price::getValue()` behind a custom `around` plugin) instead of pre-loading via the collection (`addSummaryData()`, `addFinalPrice()`, etc.).
-- **This query count is only the initial server-rendered request** — a page that looks cheap here can still defer real work to its own client-side AJAX/GraphQL calls (see `references/ajax-load-audit.md`), which this count never sees. Don't report a low DB query count as "this page is lightweight" without also checking what it fetches after the HTML loads.
-- **The same two cross-page-type signals apply to the HTML profiler, not just the query log** — a slow block/template timer repeated across all 7 pages is a global-block problem (fix once, site-wide impact); one whose `Cnt`/`Time` scales with the small/medium/large category samples is a per-item render loop that gets worse as the catalog grows. See `references/html-profiler-audit.md` for how to read the profiler table and trace either pattern to custom code.
+- **A `curl` wall-clock time captured while the profiler and call-stack query logging are both active is not representative of real page load time**: the instrumentation itself (especially `--include-call-stack=true`, which walks and serializes a full PHP stack on every single query) adds real overhead, sometimes an order of magnitude. Use this setup to get query counts, repeated shapes, and file:line traces, not to report "the homepage takes N seconds." For actual load-time numbers, use the Core Web Vitals Audit (`references/core-web-vitals.md`) on the same pages with instrumentation off.
+- **Query count vs. query time are different signals.** A small/fast local DB can show trivial total query *time* (tens of ms) even when the query *count* is 3-5x over budget, don't dismiss a high count just because local timing looks fine; the count is what will hurt on production's real network round-trips and larger tables.
+- **Not every slow section benefits from the caches you just disabled.** `layout` cache only skips re-parsing/merging layout XML, it does NOT skip instantiating the PHP block objects for every declared block (that happens fresh on every request regardless of cache, since live objects can't be cached across requests). If a page's time is dominated by layout *generation* rather than block *rendering*, re-enabling `layout`/`block_html` cache won't fix it, the real lever is reducing how many blocks/modules contribute to that page's layout.
+- **A query shape repeated with near-identical counts across all 3 page types** (not just one) is a strong signal it comes from a globally-rendered block (header/footer/cart-drawer widget), not something page-specific, prioritize fixing that over a page-specific N+1, since it's paid on every single page view site-wide.
+- **A query shape whose count scales with the grid size, across your 3 category (or product-list) samples, is a separate signal from the one above, and needs at least 3 differently-sized samples to see at all.** Compare total query count and specific shape counts across the small/medium/large category samples: a shape whose count tracks the product count roughly 1:1 (e.g. ~10 on the 10-product category, ~200 on the 200-product one) is a per-item loop that isn't using the collection's already-batched data, a real N+1 that gets *worse as the catalog grows*, not a fixed per-page cost. This is exactly the kind of bug a single-category spot check cannot reveal: on a 9-product category it might add an invisible ~10 queries; on a 200-product one it's ~1,000+. Trace it with a call-stack-enabled re-capture of the largest sample (see the two-pass note in `references/database-query-profiling.md`), common culprits are a rich-snippets/structured-data block, a review-summary widget, or a price/label renderer that calls a per-product model method (e.g. `ReviewSummary::load($id)`, a pricing `Price::getValue()` behind a custom `around` plugin) instead of pre-loading via the collection (`addSummaryData()`, `addFinalPrice()`, etc.).
+- **This query count is only the initial server-rendered request**: a page that looks cheap here can still defer real work to its own client-side AJAX/GraphQL calls (see `references/ajax-load-audit.md`), which this count never sees. Don't report a low DB query count as "this page is lightweight" without also checking what it fetches after the HTML loads.
+- **The same two cross-page-type signals apply to the HTML profiler, not just the query log**: a slow block/template timer repeated across all 7 pages is a global-block problem (fix once, site-wide impact); one whose `Cnt`/`Time` scales with the small/medium/large category samples is a per-item render loop that gets worse as the catalog grows. See `references/html-profiler-audit.md` for how to read the profiler table and trace either pattern to custom code.

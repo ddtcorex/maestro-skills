@@ -2,23 +2,23 @@
 
 Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification gate).
 
-> **Scope gate:** every report starts with a `Scope: quick` or `Scope: deep` header (see Quick vs Deep in `references/per-page-type-audit.md`: quick 3 pages call-stack false threshold 1 batch govard sh + grep recipes for stats, trap single; deep 7 pages call-stack true threshold 0 two-pass + Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease `artifacts/profiler/profile.csv` SHA). Workflow step 10 is not done until every checkbox below is either checked with evidence or `Skipped: <reason>` — the Skipped Matrix at the end of the template enforces this, no silent omission.
+> **Scope gate:** every report starts with a `Scope: quick` or `Scope: deep` header (see Quick vs Deep in `references/per-page-type-audit.md`: quick 3 pages call-stack false threshold 1 batch govard sh + grep recipes for stats, trap single; deep 7 pages call-stack true threshold 0 two-pass + Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease `artifacts/profiler/profile.csv` SHA). Workflow step 10 is not done until every checkbox below is either checked with evidence or `Skipped: <reason>`, the Skipped Matrix at the end of the template enforces this, no silent omission.
 
-> **Machine-readable sidecar:** every audit writes `audit-data.json` next to `report.md`/`report.html` with this fixed schema — `report.md`/`report.html` render from it, never the other way around (no regex-scraping rendered markdown to recover data):
+> **Machine-readable sidecar:** every audit writes `audit-data.json` next to `report.md`/`report.html` with this fixed schema, `report.md`/`report.html` render from it, never the other way around (no regex-scraping rendered markdown to recover data):
 > `{scope, generatedAt, urlSet[{label, url, uri}], pages[{label, url, uri, totalQueries, distinctShapes, shapes[{sql, count}]}]}` (`url` = absolute, `uri` = path + query). `urlSet` is a new top-level key holding the frozen comparison set recorded at discovery time; readers ignore unknown keys, so older consumers stay backward compatible. Minimal example:
 > ```json
 > {"scope":"deep","generatedAt":"2026-09-21T00:00:00Z","urlSet":[{"label":"home","url":"https://example.test/","uri":"/"},{"label":"category_small","url":"https://example.test/sample-category.html","uri":"/sample-category.html"}],"pages":[{"label":"home","url":"https://example.test/","uri":"/","totalQueries":363,"distinctShapes":42,"shapes":[{"sql":"SELECT ... FROM catalog_product_entity WHERE entity_id IN (...)","count":42},{"sql":"SELECT ... FROM cms_block WHERE block_id=?","count":1}]},{"label":"category_small","url":"https://example.test/sample-category.html","uri":"/sample-category.html","totalQueries":221,"distinctShapes":31,"shapes":[{"sql":"SELECT ... FROM catalog_category_product_index WHERE ...","count":18}]}]}
 > ```
 
-> **If the environment supports publishing a rendered page (e.g. Claude Code's `Artifact` tool), publish the report that way instead of — or alongside — raw markdown.** Severity reads as a color-coded chip/pill at a glance instead of a flat checklist, and a published link is easier to share with a team than pasted text. This is optional and environment-dependent (not available in Codex CLI/OpenCode/Copilot) — the markdown template below is the portable baseline every environment can produce, and if you do publish a rendered page, still include everything the template covers (URLs audited, all findings, severities) rather than a lighter summary.
+> **If the environment supports publishing a rendered page (e.g. Claude Code's `Artifact` tool), publish the report that way instead of, or alongside, raw markdown.** Severity reads as a color-coded chip/pill at a glance instead of a flat checklist, and a published link is easier to share with a team than pasted text. This is optional and environment-dependent (not available in Codex CLI/OpenCode/Copilot), the markdown template below is the portable baseline every environment can produce, and if you do publish a rendered page, still include everything the template covers (URLs audited, all findings, severities) rather than a lighter summary.
 >
-> **A PDF copy can be produced from that same rendered HTML** — either the person viewing a published artifact link uses the browser's own Print → Save as PDF, or, from the CLI, headless Chrome renders it identically since the page is self-contained (inline CSS, no external fonts/CDN calls to fail mid-render):
+> **A PDF copy can be produced from that same rendered HTML**: either the person viewing a published artifact link uses the browser's own Print → Save as PDF, or, from the CLI, headless Chrome renders it identically since the page is self-contained (inline CSS, no external fonts/CDN calls to fail mid-render):
 > ```bash
 > google-chrome --headless --disable-gpu --no-sandbox --no-pdf-header-footer \
 >   --print-to-pdf="report.pdf" "file://$(pwd)/report.html"
 > ```
-> The flag that suppresses Chrome's own injected header/footer (timestamp, page title, URL, page number) is `--no-pdf-header-footer` — a similarly-named `--print-to-pdf-no-header` does not exist in current Chrome and is silently ignored, so verify the output (e.g. `pdftotext -f 1 -l 1 report.pdf -` and check for a stray date/URL line) rather than assuming the flag took effect.
-> This is a rendering convenience, not a substitute for keeping the markdown/HTML source — don't generate a PDF as the only copy of a report.
+> The flag that suppresses Chrome's own injected header/footer (timestamp, page title, URL, page number) is `--no-pdf-header-footer`, a similarly-named `--print-to-pdf-no-header` does not exist in current Chrome and is silently ignored, so verify the output (e.g. `pdftotext -f 1 -l 1 report.pdf -` and check for a stray date/URL line) rather than assuming the flag took effect.
+> This is a rendering convenience, not a substitute for keeping the markdown/HTML source, don't generate a PDF as the only copy of a report.
 
 ```markdown
 # Performance Audit Report
@@ -27,24 +27,24 @@ Audience: dev - use for engineering (full file:line traces inline). For a stakeh
 
 > **Agent sections and evidence:** the steps the scripts do not measure (infra, cache, indexer, cron, slow queries, AJAX load, code-level patterns) and the recommendations go into `<run-dir>/sections.json`. Every number in a section needs `evidence: {command, excerpt}` (the command run and its raw output excerpt); `render` refuses a section number without evidence. Verdict, KPI subtitles and query bullets come from sentence templates over the data.
 
-Scope: quick — 3 pages (quick PR, ~5–10m), call-stack false, threshold 1, batch govard sh, grep recipes for stats, trap single
-<!-- For a release audit use: Scope: deep — 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->
-<!-- The Scope line above is mandatory — every report must start with either `Scope: quick` or `Scope: deep` so a reader can tell PR vs release coverage at a glance. Keep the rest of the template unchanged; do not silently mix quick pages with deep thresholds. -->
+Scope: quick, 3 pages (quick PR, ~5-10m), call-stack false, threshold 1, batch govard sh, grep recipes for stats, trap single
+<!-- For a release audit use: Scope: deep, 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->
+<!-- The Scope line above is mandatory, every report must start with either `Scope: quick` or `Scope: deep` so a reader can tell PR vs release coverage at a glance. Keep the rest of the template unchanged; do not silently mix quick pages with deep thresholds. -->
 
 ## Scope Detail
 
 Scope: quick - use for PRs: 3 pages (1 home + 1 category + 1 product), `--include-call-stack=false` `--query-time-threshold=1`, single batch `govard sh` setup, grep recipes for query-log stats, Govard-native `govard audit run --checks lint,profiler --url https://example.test/sample-page.html` single-URL profiler lease where needed. Every checkbox below either `checked` with evidence or `Skipped: <reason>` - no silent omission.
 
-Scope: deep — use for release: 7 pages (1 home + 3 category small/medium/large + 3 product), `--include-call-stack=true` `--query-time-threshold=0`, two-pass call-stack (pass 1 false for counts, pass 2 true for 1–2 N+1 traces), same batch `govard sh` + `trap single`, same grep recipes, plus `EXPLAIN` on prod-sized tables (200k+ rows) and `pt-query-digest` when available. Same gate: every checkbox checked or explicitly Skipped.
+Scope: deep, use for release: 7 pages (1 home + 3 category small/medium/large + 3 product), `--include-call-stack=true` `--query-time-threshold=0`, two-pass call-stack (pass 1 false for counts, pass 2 true for 1-2 N+1 traces), same batch `govard sh` + `trap single`, same grep recipes, plus `EXPLAIN` on prod-sized tables (200k+ rows) and `pt-query-digest` when available. Same gate: every checkbox checked or explicitly Skipped.
 
 ## URLs Audited
 - Homepage: <actual URL> (usually one; list more only if the store has multiple storefront views)
-- Category (small/medium/large): <3 actual URLs with their product counts> (note why each is representative — spanning the catalog's real size range, not 3 edge cases)
+- Category (small/medium/large): <3 actual URLs with their product counts> (note why each is representative, spanning the catalog's real size range, not 3 edge cases)
 - Product ×3: <3 actual URLs> (note if any candidate 301-redirected and which URL actually resolved 200)
 
-URL form by audience — never truncate with `…` in either: dev (`audience: dev`) shows the full absolute URL (scheme + host + path + query); client (`audience: client`) shows the full URI (path + query, no scheme/host required) — enough to identify the page without leaking hostnames. No bare `[link](…)` that hides the target. The same rule applies to Per-Page Detail summaries and `audit-data.json` (`url` + `uri` keys).
+URL form by audience, never truncate with `…` in either: dev (`audience: dev`) shows the full absolute URL (scheme + host + path + query); client (`audience: client`) shows the full URI (path + query, no scheme/host required), enough to identify the page without leaking hostnames. No bare `[link](…)` that hides the target. The same rule applies to Per-Page Detail summaries and `audit-data.json` (`url` + `uri` keys).
 
-Always state the exact URLs tested, not just "homepage/category/product" — without them the report isn't reproducible or independently verifiable later. Testing 3 samples per type (not 1) is what lets a finding be reported as "confirmed across all samples of this type" rather than "seen on the one page tested."
+Always state the exact URLs tested, not just "homepage/category/product", without them the report isn't reproducible or independently verifiable later. Testing 3 samples per type (not 1) is what lets a finding be reported as "confirmed across all samples of this type" rather than "seen on the one page tested."
 
 ## Comparison Gate - Frozen URL Set
 
@@ -118,35 +118,35 @@ that cannot be compared:
 - [ ] Same-origin (Magento) AJAX/XHR count on a fresh/anonymous page load noted as baseline
 - [ ] No wildcard (`<action name="*">`) Customer Data invalidation rules in `sections.xml`
 - [ ] No redundant `customerData.reload()` calls duplicating invalidation-rule-driven reloads
-- [ ] Uncacheable (session/customer-scoped) AJAX endpoints identified — these are what crawler/bot JS execution multiplies under load, independent of FPC hit rate
+- [ ] Uncacheable (session/customer-scoped) AJAX endpoints identified, these are what crawler/bot JS execution multiplies under load, independent of FPC hit rate
 
 ## Indexer Configuration
 - [ ] All indexers on "Update by Schedule"
 - [ ] Cron running properly
 
 ## Database
-- [ ] Query count recorded for homepage/category/product (uncached — see Per-Page-Type Audit) and compared against this project's baseline if one exists, or the tier table under Query Count: Tiers, Not a Pass/Fail Gate if this is the first audit
-- [ ] Repeated Query Shapes table below is populated — every shape appearing more than ~5 times on any single page load is listed, not just the ones already confirmed as bugs (or explicitly stated: none found)
-- [ ] Per-Page Query Detail below is populated — the *complete* normalized query breakdown for every captured page, not filtered to the >5 threshold (this is a standing report component, not optional)
-- [ ] Note: on a small/fast local DB, absolute query time can look fine even when count is over budget — flag on count, not just time
-- [ ] Note: this count only covers the initial server-rendered HTML request — it does not include the page's own client-side AJAX/GraphQL follow-up calls (see Client-Side AJAX Load above). A low DB query count does not mean low total backend cost if the page defers real work to those follow-up requests instead of the initial render — report both together, not the DB count in isolation.
-- [ ] Slow Query Analysis run (app-level `TIME:` sort and/or MySQL slow_query_log) — any query found `EXPLAIN`ed to confirm `type: ALL`/missing index before reporting it as a real finding, and slow_query_log turned back off afterward if it was enabled for this audit
+- [ ] Query count recorded for homepage/category/product (uncached, see Per-Page-Type Audit) and compared against this project's baseline if one exists, or the tier table under Query Count: Tiers, Not a Pass/Fail Gate if this is the first audit
+- [ ] Repeated Query Shapes table below is populated, every shape appearing more than ~5 times on any single page load is listed, not just the ones already confirmed as bugs (or explicitly stated: none found)
+- [ ] Per-Page Query Detail below is populated, the *complete* normalized query breakdown for every captured page, not filtered to the >5 threshold (this is a standing report component, not optional)
+- [ ] Note: on a small/fast local DB, absolute query time can look fine even when count is over budget, flag on count, not just time
+- [ ] Note: this count only covers the initial server-rendered HTML request, it does not include the page's own client-side AJAX/GraphQL follow-up calls (see Client-Side AJAX Load above). A low DB query count does not mean low total backend cost if the page defers real work to those follow-up requests instead of the initial render, report both together, not the DB count in isolation.
+- [ ] Slow Query Analysis run (app-level `TIME:` sort and/or MySQL slow_query_log), any query found `EXPLAIN`ed to confirm `type: ALL`/missing index before reporting it as a real finding, and slow_query_log turned back off afterward if it was enabled for this audit
 
 ### Repeated Query Shapes
 
 List every normalized query shape (ignore literal values, same shape = same normalized SQL) that
-repeats more than ~5 times on any single captured page load — even ones that turn out to be
+repeats more than ~5 times on any single captured page load, even ones that turn out to be
 legitimate. A high repeat count alone isn't proof of a bug, but leaving a repeated shape out of
 the report because it "probably isn't a bug" is exactly the silent judgment call this table
-exists to prevent — the reader should see the evidence and be able to judge it themselves.
+exists to prevent, the reader should see the evidence and be able to judge it themselves.
 
 | Shape (normalized) | Page(s) seen on | Count (per page) | Traced to (file:line) | Assessment |
 |---|---|---|---|---|
-| `SELECT * FROM catalog_product_entity_varchar WHERE ...` | category_large only | 210 | `Vendor/Module/Block/Reviews.php:82` | Scales with grid size across the 3 category samples — real N+1, see Per-Page-Type Audit |
-| `SELECT * FROM cms_block WHERE identifier = ?` | all 7 pages | 3 each | `Vendor/Widget/Block/Footer.php:41` | Same shape on every page type — global block, fix once for site-wide impact |
+| `SELECT * FROM catalog_product_entity_varchar WHERE ...` | category_large only | 210 | `Vendor/Module/Block/Reviews.php:82` | Scales with grid size across the 3 category samples, real N+1, see Per-Page-Type Audit |
+| `SELECT * FROM cms_block WHERE identifier = ?` | all 7 pages | 3 each | `Vendor/Widget/Block/Footer.php:41` | Same shape on every page type, global block, fix once for site-wide impact |
 
 If no shape repeats more than the threshold on any captured page, state that explicitly here
-(`No query shape repeated more than 5 times on any captured page`) — an empty table with no
+(`No query shape repeated more than 5 times on any captured page`), an empty table with no
 comment reads as "not checked," not as "checked, found nothing."
 
 Cross-reference the two diagnostic signals from `references/per-page-type-audit.md`
@@ -157,12 +157,11 @@ to a per-item loop that gets worse as the catalog grows.
 
 ### Per-Page Query Detail
 
-A **standing, mandatory part of every database-profiling report** — not something to add only
+A **standing, mandatory part of every database-profiling report**: not something to add only
 when specifically asked for. The Repeated Query Shapes table above is filtered to a >5 threshold
 and exists to surface likely N+1 candidates; this section is the unfiltered complement: for each
 of the 7 captured pages, the complete list of every distinct normalized query shape that ran on
-that page load, with its count. It's what turns a one-off audit into reference documentation —
-a later audit (or a teammate) can diff against it to see exactly what changed, rather than relying
+that page load, with its count. It's what turns a one-off audit into reference documentation, a later audit (or a teammate) can diff against it to see exactly what changed, rather than relying
 on memory of "roughly what a category page used to query."
 
 For each page:
@@ -180,20 +179,20 @@ the same way in GitHub-flavored Markdown; fall back to one table per page under 
 subheading if the renderer doesn't support it.
 
 ## Block/Template Rendering (HTML Profiler)
-- [ ] Slowest Blocks/Templates table below is populated for every captured page — every timer using more than ~5% of that page's total time, or firing double-digit-or-higher `Cnt`, is listed (or explicitly stated: none found)
+- [ ] Slowest Blocks/Templates table below is populated for every captured page, every timer using more than ~5% of that page's total time, or firing double-digit-or-higher `Cnt`, is listed (or explicitly stated: none found)
 
 ### Slowest Blocks/Templates
 
-List every profiler timer that meets the threshold above — see `references/html-profiler-audit.md`
+List every profiler timer that meets the threshold above, see `references/html-profiler-audit.md`
 for what each column means and how to trace a timer to custom code.
 
 | Timer Id | Page(s) | Time | Cnt | Custom code? | Assessment |
 |---|---|---|---|---|---|
-| `...->Vendor\Module\Block\Reviews::_toHtml` | product_2, product_3 | 1.2s | 1 | Yes (`app/code`) | Single expensive call, `Cnt: 1` — heavy constructor or synchronous API call, see Code-Level Performance Patterns |
-| `...->Magento\Catalog\Block\Product\ListProduct::_toHtml` | category_large | 0.4s | 24 | No (core, but `Cnt` is high) | Per-item render loop — check for a plugin adding per-product work |
+| `...->Vendor\Module\Block\Reviews::_toHtml` | product_2, product_3 | 1.2s | 1 | Yes (`app/code`) | Single expensive call, `Cnt: 1`, heavy constructor or synchronous API call, see Code-Level Performance Patterns |
+| `...->Magento\Catalog\Block\Product\ListProduct::_toHtml` | category_large | 0.4s | 24 | No (core, but `Cnt` is high) | Per-item render loop, check for a plugin adding per-product work |
 
 If no timer meets the threshold on any captured page, state that explicitly here (`No block/
-template timer exceeded the threshold on any captured page`) — same rule as the Repeated Query
+template timer exceeded the threshold on any captured page`), same rule as the Repeated Query
 Shapes table above: an empty table with no comment reads as "not checked."
 
 ## Core Web Vitals
@@ -229,9 +228,9 @@ Warm only: each page is primed, then measured with a median of 3 Lighthouse runs
 2. ...
 3. ...
 
-## Skipped Matrix — every unchecked box needs a reason
+## Skipped Matrix: every unchecked box needs a reason
 
-Every checkbox in the report must be either `[x]` with evidence visible above, or `- [ ] Skipped: <reason>`. A box that is simply absent is unfinished per Workflow step 10 gate. Copy this matrix and fill each row — do not delete rows to hide uncovered work.
+Every checkbox in the report must be either `[x]` with evidence visible above, or `- [ ] Skipped: <reason>`. A box that is simply absent is unfinished per Workflow step 10 gate. Copy this matrix and fill each row, do not delete rows to hide uncovered work.
 
 | Section | Checkbox | Status | Evidence or Skipped: <reason> |
 |---------|----------|--------|-------------------------------|
@@ -242,8 +241,8 @@ Every checkbox in the report must be either `[x]` with evidence visible above, o
 | Cache Invalidation | No unexplained flushes / targeted tag / ban.list | [ ] | `varnishadm ban.list` / `grep -rn "clean()" app/code` → ... / Skipped: <reason> |
 | Client-Side AJAX | Baseline XHR / sections.xml / reload storms | [ ] | Network tab XHR count + `grep -rn "sections.xml"` → ... / Skipped: <reason> |
 | Indexer/Cron | Update by Schedule / cron draining | [ ] | `bin/magento indexer:status` + `cron_schedule` → ... / Skipped: <reason> |
-| Database | Query count / Repeated Shapes / Per-Page Detail / Slow Query EXPLAIN | [ ] | `grep -c '## QUERY'` / `pt-query-digest` / `EXPLAIN` prod 200k → ... / Skipped: quick — 3 pages only, Per-Page Detail deferred to deep |
-| Per-Page Query Detail | 7 pages unfiltered tables (deep) | [ ] | 7 × `<details>` Count|SQL tables above — see Per-Page Query Detail section / Skipped: quick — 3 pages only, Per-Page Detail deferred to deep |
+| Database | Query count / Repeated Shapes / Per-Page Detail / Slow Query EXPLAIN | [ ] | `grep -c '## QUERY'` / `pt-query-digest` / `EXPLAIN` prod 200k → ... / Skipped: quick, 3 pages only, Per-Page Detail deferred to deep |
+| Per-Page Query Detail | 7 pages unfiltered tables (deep) | [ ] | 7 × `<details>` Count|SQL tables above, see Per-Page Query Detail section / Skipped: quick, 3 pages only, Per-Page Detail deferred to deep |
 | Block/Template | Slowest Blocks/Templates (>5% or Cnt≥10) | [ ] | `artifacts/profiler/profile.csv` SHA + HTML profiler table → ... / Skipped: DB user lacks SUPER / profiler lease `is already held` / host cannot reach URL |
 | Core Web Vitals | LCP/INP/CLS | [ ] | Chrome DevTools MCP trace / Lighthouse → ... / Skipped: no Chrome MCP this session |
 

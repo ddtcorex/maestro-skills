@@ -40,13 +40,13 @@ When a Chrome DevTools MCP server is connected, `performance_start_trace` (with 
 
 ## Reading an LCP breakdown when render delay dominates
 
-The phase breakdown (TTFB / load delay / load duration / render delay) tells you *where* LCP time actually goes, not just the total. If **render delay is the overwhelming majority** of LCP — the image/resource itself loads fast, but the browser doesn't paint it until long after — the fix isn't in the network or image pipeline, it's client-side JS gating visibility. This is common on JS-driven themes (Hyvä + Alpine.js, PWA/React storefronts):
+The phase breakdown (TTFB / load delay / load duration / render delay) tells you *where* LCP time actually goes, not just the total. If **render delay is the overwhelming majority** of LCP, the image/resource itself loads fast, but the browser doesn't paint it until long after, the fix isn't in the network or image pipeline, it's client-side JS gating visibility. This is common on JS-driven themes (Hyvä + Alpine.js, PWA/React storefronts):
 
-- Check whether the LCP element (or its container) starts hidden behind a reactive class/directive — Alpine's `x-cloak`, a `:class` binding that includes `opacity-0`/`hidden`/`invisible`, or an equivalent framework pattern — and only becomes visible once the framework finishes hydrating. That decouples "resource ready" from "actually painted" by however long hydration takes across the whole page, not just this element.
-- Cross-check against the `DOMSize` insight: a large/deep DOM (more elements for the framework to walk and bind reactivity to) makes this worse — hydration time scales with page complexity, not just the LCP element's own markup.
+- Check whether the LCP element (or its container) starts hidden behind a reactive class/directive, Alpine's `x-cloak`, a `:class` binding that includes `opacity-0`/`hidden`/`invisible`, or an equivalent framework pattern, and only becomes visible once the framework finishes hydrating. That decouples "resource ready" from "actually painted" by however long hydration takes across the whole page, not just this element.
+- Cross-check against the `DOMSize` insight: a large/deep DOM (more elements for the framework to walk and bind reactivity to) makes this worse, hydration time scales with page complexity, not just the LCP element's own markup.
 - Fix: render the LCP candidate visible by default in the server-rendered HTML (plain CSS/HTML, no JS-gated class) and let the framework take over only for *subsequent* state changes (slide switching, tab changes, etc.), not the initial paint.
 
-This is typically page-type-specific, not global — compare the LCP breakdown across all 3 page types (see `references/per-page-type-audit.md`), since the component causing it (a gallery, a carousel) often lives on only one page type, which is exactly the kind of thing a homepage-only spot check would miss.
+This is typically page-type-specific, not global, compare the LCP breakdown across all 3 page types (see `references/per-page-type-audit.md`), since the component causing it (a gallery, a carousel) often lives on only one page type, which is exactly the kind of thing a homepage-only spot check would miss.
 
 ## Manual Testing
 
