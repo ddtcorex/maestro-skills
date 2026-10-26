@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+// Test shim for php. Records the piped script and its arguments, then prints
+// the canned output named by PERF_FAKE_PHP_OUT (a file path), if any.
+import { appendFileSync, readFileSync, existsSync } from 'node:fs'
+const args = process.argv.slice(2)
+let stdin = ''
+try { stdin = readFileSync(0, 'utf-8') } catch {}
+if (process.env.PERF_SHIM_LOG) appendFileSync(process.env.PERF_SHIM_LOG, `php: ${args.join(' ')}\n`)
+if (process.env.PERF_PHP_STDIN_LOG) appendFileSync(process.env.PERF_PHP_STDIN_LOG, stdin)
+const out = process.env.PERF_FAKE_PHP_OUT
+if (out && existsSync(out)) process.stdout.write(readFileSync(out, 'utf-8'))
