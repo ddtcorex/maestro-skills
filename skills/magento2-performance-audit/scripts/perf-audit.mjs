@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { analyzeRun } from './analyze.mjs'
 import { capture } from './capture.mjs'
 import { cwv } from './cwv.mjs'
+import { invalidate } from './invalidate.mjs'
 import { loadConfig } from './lib/config.mjs'
 import { ClosedReason, closed, done, usage } from './lib/status.mjs'
 
@@ -17,6 +18,11 @@ function requireRun(args, stage) {
 }
 
 export const COMMANDS = {
+  async invalidate(args) {
+    const { config, runDir } = requireRun(args, 'invalidate')
+    await invalidate(config, runDir)
+    done('invalidate', [join(runDir, 'invalidation.json')])
+  },
   async cwv(args) {
     const { config, runDir, scope } = requireRun(args, 'cwv')
     await cwv(config, runDir, { scope })
