@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { analyzeRun } from './analyze.mjs'
 import { capture } from './capture.mjs'
 import { cwv } from './cwv.mjs'
+import { discover } from './discover.mjs'
 import { invalidate } from './invalidate.mjs'
 import { loadConfig } from './lib/config.mjs'
 import { ClosedReason, closed, done, usage } from './lib/status.mjs'
@@ -19,6 +20,11 @@ function requireRun(args, stage) {
 }
 
 export const COMMANDS = {
+  async discover(args) {
+    if (!args.root || typeof args['base-url'] !== 'string' || typeof args.out !== 'string') throw new ClosedReason('discover', 'usage: discover --root <project> --base-url <url> --out <perf-audit.config.json> [--refresh]')
+    await discover(args.root, args['base-url'], args.out, { refresh: args.refresh === true })
+    done('discover', [args.out])
+  },
   async switch(args) {
     if (!args._[0] || typeof args.branch !== 'string') throw new ClosedReason('switch', 'usage: switch <config> --branch <branch>')
     const result = await switchBranch(loadConfig(args._[0]), args.branch)
