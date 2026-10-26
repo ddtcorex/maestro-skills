@@ -9,6 +9,7 @@ import { cwv } from './cwv.mjs'
 import { invalidate } from './invalidate.mjs'
 import { loadConfig } from './lib/config.mjs'
 import { ClosedReason, closed, done, usage } from './lib/status.mjs'
+import { switchBranch } from './switch.mjs'
 
 const USAGE = 'usage: perf-audit.mjs <discover|switch|capture|analyze|cwv|invalidate|render|run> [options]'
 
@@ -18,6 +19,11 @@ function requireRun(args, stage) {
 }
 
 export const COMMANDS = {
+  async switch(args) {
+    if (!args._[0] || typeof args.branch !== 'string') throw new ClosedReason('switch', 'usage: switch <config> --branch <branch>')
+    const result = await switchBranch(loadConfig(args._[0]), args.branch)
+    done('switch', result.steps)
+  },
   async invalidate(args) {
     const { config, runDir } = requireRun(args, 'invalidate')
     await invalidate(config, runDir)
