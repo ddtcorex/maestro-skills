@@ -38,7 +38,7 @@ describe('perf-audit brand slots', () => {
 
   it('renders the header logo as inline SVG carrying the brand wordmark', () => {
     const html = template()
-    expect(html).toMatch(/<div class="header">[\s\S]*?<svg[\s\S]*?<h1>/)
+    expect(html).toMatch(/<div class="header">[\s\S]*?<svg[\s\S]*?<h1[^>]*>/)
     expect(html).toMatch(/<svg[^>]*aria-label="Maestro logo"[\s\S]*?>Maestro<\/text>/)
   })
 

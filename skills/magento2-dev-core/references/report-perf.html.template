@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="maestro-report-contract" content="{{contract}}">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{title}} - {{date}}</title>
 <style>
@@ -13,7 +14,7 @@
   {{brand_logo}}
   <!-- Default logo when the marker is left empty: Maestro lockup. An overlay fills the marker and deletes the default block below. -->
   <svg viewBox="0 0 232 48" style="height:32px" role="img" aria-label="Maestro logo"><rect x="2" y="8" width="32" height="32" rx="9" fill="#0a84ff"/><path d="M2 11 L5 4 L8 9 L11 4 L14 11" transform="translate(2 8) scale(2)" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><text x="42" y="32" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="24" letter-spacing="-0.5" fill="#ffffff">Maestro</text></svg>
-  <h1>{{title}}</h1>
+  <h1 data-report-title>{{title}}</h1>
   <div class="meta">
     <div>Date: <b>{{date}}</b> · Govard <code>{{govard_version}}</code> · <code>{{host}}</code> · profile <code>{{profile}}</code></div>
     <div>Magento <code>{{magento_version}}</code> · PHP <code>{{php_version}}</code> · MariaDB <code>{{mariadb_version}}</code> · Redis <code>{{redis_version}}</code> · OpenSearch <code>{{opensearch_version}}</code> · {{fpc}}</div>
@@ -29,6 +30,11 @@
   <div class="box"><div class="label">Cron</div><div class="value">{{cron_verdict}}</div><div class="sub">{{cron_sub}}</div></div>
   <div class="box"><div class="label">DB slow ≥1s</div><div class="value">{{db_slow}}</div><div class="sub">{{db_slow_sub}}</div></div>
   <div class="box"><div class="label">Lint findings</div><div class="value">{{lint_findings}}</div><div class="sub">{{lint_sub}}</div></div>
+</div>
+
+<div class="card">
+  <h2>Verdict</h2>
+  <p class="verdict" data-report-verdict>{{verdict}}</p>
 </div>
 
 <div class="card">

@@ -1,0 +1,32 @@
+{
+  "scope": "deep",
+  "generatedAt": "2026-10-26T00:00:00Z",
+  "templateVersion": 1,
+  "skillVersion": "0.0.0-test",
+  "meta": {
+    "title": "Performance Audit - acme-shop",
+    "date": "2026-10-26",
+    "host": "example.test",
+    "govardVersion": "v0.0.0",
+    "profile": "magento2",
+    "magentoVersion": "2.4.7",
+    "phpVersion": "8.3",
+    "mariadbVersion": "10.11",
+    "redisVersion": "7.2",
+    "opensearchVersion": "2.12",
+    "fpc": "built-in FPC"
+  },
+  "verdict": "Uncached queries drop on every comparable page.",
+  "urlSet": [
+    {"label": "home", "url": "https://example.test/", "uri": "/"},
+    {"label": "category_small", "url": "https://example.test/sample-category.html", "uri": "/sample-category.html"}
+  ],
+  "pages": [
+    {"label": "home", "url": "https://example.test/", "uri": "/", "http": 200, "totalQueries": 363, "pass2Queries": 363, "distinctShapes": 2, "dbTime": 0.42, "profilerRoot": 1.8, "ttfbUncachedMs": 1900, "template": null,
+     "shapes": [{"sql": "SELECT * FROM catalog_product_entity WHERE entity_id IN(?)", "count": 42, "time": 0.05}, {"sql": "SELECT * FROM cms_block WHERE block_id = ?", "count": 1, "time": 0.001}]},
+    {"label": "category_small", "url": "https://example.test/sample-category.html", "uri": "/sample-category.html", "http": 200, "totalQueries": 221, "pass2Queries": 221, "distinctShapes": 1, "dbTime": 0.3, "profilerRoot": 1.2, "ttfbUncachedMs": 1300, "template": "app/design/frontend/Acme/child/Magento_Catalog/templates/product/list.phtml",
+     "shapes": [{"sql": "SELECT * FROM catalog_category_product_index WHERE category_id = ?", "count": 18, "time": 0.02}]}
+  ],
+  "recommendations": ["Preload stock data for listing pages."],
+  "coverageNote": "All frozen URLs captured twice with matching counts."
+}
