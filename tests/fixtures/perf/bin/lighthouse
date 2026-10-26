@@ -19,3 +19,5 @@ writeFileSync(outPath, JSON.stringify({
 }))
 const events = run.noDocument ? [] : [{ method: 'Network.responseReceived', params: { type: 'Document', response: { url, status: 200, headers: run.headers ?? {} } } }]
 writeFileSync(outPath.replace(/\.json$/, '-0.devtoolslog.json'), JSON.stringify(events))
+// --save-assets also writes a large trace, as the real CLI does.
+writeFileSync(outPath.replace(/\.json$/, '-0.trace.json'), '{"traceEvents":[]}')

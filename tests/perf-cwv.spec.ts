@@ -66,6 +66,15 @@ describe('cwv stage', () => {
     expect(project.server.requests).toContain('/home')
   })
 
+  it('deletes the saved traces and keeps the devtools logs', async () => {
+    setRuns([run(70, 1200), run(64, 1300), run(48, 1500)])
+    await cwv(config())
+    const { readdirSync } = await import('node:fs')
+    const files = readdirSync(join(runDir, 'cwv'))
+    expect(files.filter((f) => f.endsWith('.trace.json'))).toEqual([])
+    expect(files.filter((f) => f.endsWith('.devtoolslog.json'))).toHaveLength(3)
+  })
+
   it('keeps the median and spread of three runs on deep', async () => {
     setRuns([run(70, 1200), run(64, 1300), run(48, 1500)])
     await cwv(config())
