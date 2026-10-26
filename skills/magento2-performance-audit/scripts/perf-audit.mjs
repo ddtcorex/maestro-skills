@@ -9,7 +9,7 @@ import { cwv } from './cwv.mjs'
 import { discover } from './discover.mjs'
 import { invalidate } from './invalidate.mjs'
 import { loadConfig } from './lib/config.mjs'
-import { ClosedReason, closed, done, usage } from './lib/status.mjs'
+import { ClosedReason, closed, done, usage, UsageError } from './lib/status.mjs'
 import { renderRun } from './render.mjs'
 import { runAudit } from './run.mjs'
 import { switchBranch } from './switch.mjs'
@@ -17,13 +17,13 @@ import { switchBranch } from './switch.mjs'
 const USAGE = 'usage: perf-audit.mjs <discover|switch|capture|analyze|cwv|invalidate|render|run> [options]'
 
 function requireRun(args, stage) {
-  if (!args._[0] || !args.run) throw new ClosedReason(stage, `usage: ${stage} <config> --run <dir>`)
+  if (!args._[0] || !args.run) throw new UsageError(`usage: ${stage} <config> --run <dir>`)
   return { config: loadConfig(args._[0]), runDir: args.run, scope: args.scope ?? 'deep' }
 }
 
 export const COMMANDS = {
   async run(args) {
-    if (!args._[0] || typeof args.out !== 'string') throw new ClosedReason('run', 'usage: run <config> --out <dir> [--branch <b>] [--run-name <n>] [--compare <before-run-dir>] [--scope deep|quick] [--audience dev|client]')
+    if (!args._[0] || typeof args.out !== 'string') throw new UsageError('usage: run <config> --out <dir> [--branch <b>] [--run-name <n>] [--compare <before-run-dir>] [--scope deep|quick] [--audience dev|client]')
     const str = (v) => (typeof v === 'string' ? v : undefined)
     const result = await runAudit(loadConfig(args._[0]), { out: args.out, branch: str(args.branch), runName: str(args['run-name']), compare: str(args.compare), scope: args.scope ?? 'deep', audience: args.audience ?? 'dev' })
     done('run', [result.runDir])
@@ -34,12 +34,12 @@ export const COMMANDS = {
     done('render', [...result.files, join(runDir, 'findings.json')])
   },
   async discover(args) {
-    if (!args.root || typeof args['base-url'] !== 'string' || typeof args.out !== 'string') throw new ClosedReason('discover', 'usage: discover --root <project> --base-url <url> --out <perf-audit.config.json> [--refresh]')
+    if (!args.root || typeof args['base-url'] !== 'string' || typeof args.out !== 'string') throw new UsageError('usage: discover --root <project> --base-url <url> --out <perf-audit.config.json> [--refresh]')
     await discover(args.root, args['base-url'], args.out, { refresh: args.refresh === true })
     done('discover', [args.out])
   },
   async switch(args) {
-    if (!args._[0] || typeof args.branch !== 'string') throw new ClosedReason('switch', 'usage: switch <config> --branch <branch>')
+    if (!args._[0] || typeof args.branch !== 'string') throw new UsageError('usage: switch <config> --branch <branch>')
     const result = await switchBranch(loadConfig(args._[0]), args.branch)
     done('switch', result.steps)
   },
@@ -85,6 +85,7 @@ export async function main(argv) {
   try {
     await command(parseArgs(rest))
   } catch (err) {
+    if (err instanceof UsageError) return usage(err.message)
     if (err instanceof ClosedReason) return closed(err.stage, err.reason)
     closed(name, err.message)
   }

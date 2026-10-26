@@ -19,6 +19,15 @@ describe('perf-audit CLI skeleton', () => {
     expect(lastStatus(res.stdout)).toMatchObject({ ok: false })
   })
 
+  it.each([['run'], ['render', '--run', 'dir'], ['switch'], ['capture', 'cfg.json']])(
+    'exits 2 with a usage stage when %s misses required arguments',
+    (...argv) => {
+      const res = spawnSync('node', [perfCli, ...argv], { encoding: 'utf-8' })
+      expect(res.status).toBe(2)
+      expect(lastStatus(res.stdout)).toMatchObject({ ok: false, stage: 'usage' })
+    },
+  )
+
   it('names the missing field when the config lacks baseUrl', async () => {
     project = await makeProject()
     const bad = join(project.root, 'bad.json')

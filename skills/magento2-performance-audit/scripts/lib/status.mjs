@@ -20,6 +20,10 @@ export function usage(message) {
   process.exitCode = 2
 }
 
+// Thrown for missing or malformed arguments; the dispatcher reports it
+// with exit 2 so callers can tell a typo apart from a closed reason.
+export class UsageError extends Error {}
+
 // Thrown by a stage to stop with a closed reason the agent can act on.
 export class ClosedReason extends Error {
   constructor(stage, reason) {
