@@ -161,6 +161,16 @@ describe('perf run rendering', () => {
     expect(findings.findings.some((f: { code: string; file: string }) => f.code === 'M2-PERF-001' && f.file === 'app/code/Acme/Stock/Model/Load.php')).toBe(true)
   })
 
+  it('raises N+1 findings only for code the project can change, never Magento core', async () => {
+    const data = JSON.parse(readFileSync(join(after, 'audit-data.json'), 'utf-8'))
+    data.attribution.home['SELECT * FROM cms_block WHERE block_id = ?'] = [['vendor/magento/module-cms/Model/ResourceModel/Block.php:10 (Magento\\Cms\\Block->load)', 88]]
+    writeFileSync(join(after, 'audit-data.json'), JSON.stringify(data))
+    await renderRun(after, config(), { compare: before })
+    const findings = JSON.parse(readFileSync(join(after, 'findings.json'), 'utf-8'))
+    expect(findings.findings.some((f: { file: string }) => f.file.startsWith('vendor/magento/'))).toBe(false)
+    expect(findings.findings.some((f: { file: string }) => f.file === 'app/code/Acme/Stock/Model/Load.php')).toBe(true)
+  })
+
   it('renders a baseline without a comparison', async () => {
     await renderRun(after, config(), {})
     expect(html(after)).toContain('Baseline recorded: 2026-10-26')

@@ -81,6 +81,10 @@ function dbBullets(after, before) {
   return bullets
 }
 
+// Findings name code the project can change: app/code or a third-party
+// vendor package. A Magento core caller is context, not a finding.
+const isProjectCode = (file) => file.startsWith('app/') || (file.startsWith('vendor/') && !file.startsWith('vendor/magento/'))
+
 const callerFile = (caller) => {
   const m = caller.match(/^(.*?):(\d+) \(/)
   return m ? { file: m[1], line: Number(m[2]) } : { file: caller, line: null }
@@ -96,6 +100,7 @@ function perfFindings(data, after, before) {
         if (count <= REPEATED || seen.has(`${caller}|${sql}`)) continue
         seen.add(`${caller}|${sql}`)
         const { file, line } = callerFile(caller)
+        if (!isProjectCode(file)) continue
         findings.push({ code: 'M2-PERF-001', rule: null, severity: 'high', file, line, message: `${sql} runs ${count} times on ${label}`, fix: 'Load the rows once (IN(?) batch) or preload them in a view model' })
       }
     }
