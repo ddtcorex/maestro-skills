@@ -54,3 +54,18 @@ describe('perf-audit CLI skeleton', () => {
     }
   })
 })
+
+describe('govardSh with stdin', () => {
+  it('delivers stdin inside the container command, since govard sh does not forward it', async () => {
+    const project = await makeProject()
+    const restore = useEnv(project.env)
+    try {
+      const { govardSh } = await import(join(perfScripts, 'lib', 'govard.mjs'))
+      const res = await govardSh(project.root, 'cat', { stdin: "line one\n'quoted' line\n" })
+      expect(res.stdout).toBe("line one\n'quoted' line\n")
+    } finally {
+      restore()
+      await project.close()
+    }
+  })
+})
