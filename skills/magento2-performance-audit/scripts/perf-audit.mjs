@@ -10,6 +10,7 @@ import { discover } from './discover.mjs'
 import { invalidate } from './invalidate.mjs'
 import { loadConfig } from './lib/config.mjs'
 import { ClosedReason, closed, done, usage } from './lib/status.mjs'
+import { renderRun } from './render.mjs'
 import { switchBranch } from './switch.mjs'
 
 const USAGE = 'usage: perf-audit.mjs <discover|switch|capture|analyze|cwv|invalidate|render|run> [options]'
@@ -20,6 +21,11 @@ function requireRun(args, stage) {
 }
 
 export const COMMANDS = {
+  async render(args) {
+    const { config, runDir } = requireRun(args, 'render')
+    const result = await renderRun(runDir, config, { compare: typeof args.compare === 'string' ? args.compare : undefined, audience: args.audience ?? 'dev' })
+    done('render', [...result.files, join(runDir, 'findings.json')])
+  },
   async discover(args) {
     if (!args.root || typeof args['base-url'] !== 'string' || typeof args.out !== 'string') throw new ClosedReason('discover', 'usage: discover --root <project> --base-url <url> --out <perf-audit.config.json> [--refresh]')
     await discover(args.root, args['base-url'], args.out, { refresh: args.refresh === true })

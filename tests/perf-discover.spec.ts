@@ -12,9 +12,9 @@ describe('pickUrlSet', () => {
     const { pickUrlSet } = await lib()
     expect(pickUrlSet(candidates())).toEqual([
       { label: 'home', uri: '/' },
-      { label: 'category_small', uri: '/small.html' },
-      { label: 'category_medium', uri: '/mid2.html' },
-      { label: 'category_large', uri: '/big.html' },
+      { label: 'category_small', uri: '/small.html', productCount: 4 },
+      { label: 'category_medium', uri: '/mid2.html', productCount: 75 },
+      { label: 'category_large', uri: '/big.html', productCount: 900 },
       { label: 'product_1', uri: '/s1.html' },
       { label: 'product_2', uri: '/c1.html?x=1' },
       { label: 'product_3', uri: '/b1.html' },

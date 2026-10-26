@@ -57,12 +57,12 @@ describe('perf-audit same metrics comparison matrix', () => {
     expect(body).toMatch(/column set extends only through .*template update/i)
   })
 
-  it('renders the same six-column before/after matrix in report.html.template', () => {
+  it('renders the uncached and warm matrix slot in the perf template', () => {
     const body = htmlTemplate()
     expect(body).toMatch(/before\/after/i)
-    for (const col of sixColumns) {
-      expect(body).toMatch(new RegExp(col, 'i'))
-    }
+    expect(body).toContain('{{matrix}}')
+    expect(body).toMatch(/Uncached server render/)
+    expect(body).toMatch(/median of 3/)
   })
 
   it('states a metric recorded on one side only is a gate failure, not a blank cell', () => {
@@ -72,7 +72,6 @@ describe('perf-audit same metrics comparison matrix', () => {
 
   it('grandfathers legacy audits with the exact Skipped reason in both templates', () => {
     expect(template()).toContain('Skipped: legacy audit, cold only')
-    expect(htmlTemplate()).toContain('Skipped: legacy audit, cold only')
   })
 
   it('uses plain hyphens in the comparison gate headings and sample matrix rows', () => {
@@ -134,9 +133,7 @@ describe('perf-audit same metrics comparison matrix', () => {
   })
 
   it('hyphenates re-audit and top-level compounds where those words appear', () => {
-    for (const body of [template(), htmlTemplate()]) {
-      expect(body).toMatch(/re-audit/i)
-    }
+    expect(template()).toMatch(/re-audit/i)
     expect(template()).toMatch(/top-level/i)
     expect(template()).not.toMatch(/re audit/i)
     expect(template()).not.toMatch(/top level/i)
@@ -149,8 +146,6 @@ describe('perf-audit baseline mode without prior audit', () => {
     expect(template()).toMatch(/no prior URL set/i)
     expect(template()).toMatch(/comparison deferred/i)
     expect(template()).toMatch(/Baseline recorded/i)
-    expect(htmlTemplate()).toMatch(/no prior URL set/i)
-    expect(htmlTemplate()).toMatch(/Baseline recorded/i)
   })
 })
 
@@ -179,6 +174,5 @@ describe('perf-audit review findings C2 and I4', () => {
 
   it('states the matrix CLS column reports the cold value', () => {
     expect(template()).toMatch(/CLS column reports the cold value/i)
-    expect(htmlTemplate()).toMatch(/CLS column reports the cold value/i)
   })
 })

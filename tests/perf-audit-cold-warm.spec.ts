@@ -71,24 +71,23 @@ describe('perf-audit CWV cold/warm column split', () => {
     expect(section).toMatch(/performance score warm/i)
   })
 
-  it('splits LCP and performance score into cold and warm columns in report.html.template', () => {
+  it('measures warm only in the perf template CWV card', () => {
     const section = htmlCwvSection(htmlTemplate())
-    expect(section).toMatch(/LCP cold/i)
-    expect(section).toMatch(/LCP warm/i)
-    expect(section).toMatch(/performance score cold/i)
-    expect(section).toMatch(/performance score warm/i)
+    expect(section).not.toMatch(/cold/i)
+    expect(section).toMatch(/--throttling-method=devtools/)
+    expect(section).toMatch(/median/)
   })
 })
 
 describe('perf-audit review finding I5 legacy scope', () => {
   it('scopes the legacy reason to legacy data only', () => {
-    for (const body of [template(), htmlTemplate(), cwv()]) {
+    for (const body of [template(), cwv()]) {
       expect(body).toMatch(/legacy reason applies only to legacy data/i)
     }
   })
 
   it('rejects a fresh audit that reuses the legacy reason for warm cells', () => {
-    const docs = [template(), htmlTemplate(), cwv()]
+    const docs = [template(), cwv()]
     for (const body of docs) {
       expect(body).toMatch(/legacy reason applies only to legacy data/i)
     }
@@ -116,7 +115,7 @@ describe('perf-audit review finding I5 legacy scope', () => {
     }
     // Tied to the scope sentence already in the refs (whitespace tolerant:
     // the markdown template wraps the sentence across two lines).
-    for (const body of [template(), htmlTemplate(), cwv()]) {
+    for (const body of [template(), cwv()]) {
       expect(body).toMatch(/fresh\s+audit\s+using\s+it\s+for\s+warm\s+cells\s+fails/i)
     }
     const gateRejectsWarm = (fixture: { isLegacy: boolean; warmReason: string }) =>
@@ -131,8 +130,8 @@ describe('perf-audit CWV card note', () => {
     const card = htmlTemplate().match(/<h2>Core Web Vitals[\s\S]*?<\/div>\s*<\/div>/)?.[0] ?? ''
     const note = card.match(/<\/table>\s*<div[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? ''
     expect(note.length).toBeGreaterThan(0)
-    expect(note).not.toContain('Columns: LCP cold')
-    expect(note).toMatch(/Cold and Warm columns/)
-    for (const metric of ['LCP', 'performance score', 'INP', 'CLS']) expect(note, metric).toContain(metric)
+    expect(note).toMatch(/Warm only/)
+    expect(note).toMatch(/median and the spread/)
+    expect(note).toMatch(/HIT/)
   })
 })

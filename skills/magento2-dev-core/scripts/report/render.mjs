@@ -16,8 +16,8 @@ import { validateFindings, validatePerf } from './lib/validate.mjs'
 const refs = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'references')
 
 const LAYOUTS = {
-  perf: { template: 'report-perf.html.template', build: buildPerf, validate: validatePerf },
-  findings: { template: 'report-findings.html.template', build: buildFindings, validate: validateFindings },
+  perf: { template: (audience) => (audience === 'client' ? 'report-perf-client.html.template' : 'report-perf.html.template'), build: buildPerf, validate: validatePerf },
+  findings: { template: () => 'report-findings.html.template', build: buildFindings, validate: validateFindings },
 }
 
 export class ValidationError extends Error {
@@ -39,7 +39,7 @@ export async function renderReport({ layout, audience = 'dev', data, outDir }) {
   const errors = spec.validate(data)
   if (errors.length > 0) throw new ValidationError(errors)
   const built = spec.build(data, audience)
-  const html = fillTemplate(dropBrandMarkers(loadTemplate(spec.template)), { ...built.slots, contract: String(REPORT_CONTRACT) })
+  const html = fillTemplate(dropBrandMarkers(loadTemplate(spec.template(audience))), { ...built.slots, contract: String(REPORT_CONTRACT) })
   mkdirSync(outDir, { recursive: true })
   const files = {
     'report.md': renderMarkdown(built.title, built.metaLines, built.sections),
