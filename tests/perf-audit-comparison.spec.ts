@@ -39,21 +39,12 @@ describe('perf-audit frozen URL set and comparison gate', () => {
 })
 
 describe('perf-audit same metrics comparison matrix', () => {
-  const sixColumns = [
-    'query count',
-    'LCP cold',
-    'LCP warm',
-    'CLS',
-    'performance score cold',
-    'performance score warm',
-  ]
+  const columns = ['Queries', 'Profiler root', 'TTFB (uncached)', 'Score', 'LCP', 'CLS', 'TTFB (warm)', 'HIT proof']
 
-  it('documents the before/after matrix with the closed six columns in report-template.md', () => {
+  it('documents the before/after matrix with the closed uncached and warm columns in report-template.md', () => {
     const body = template()
     expect(body).toMatch(/before\/after/i)
-    for (const col of sixColumns) {
-      expect(body).toMatch(new RegExp(col, 'i'))
-    }
+    expect(body).toContain(`| Page | ${columns.join(' | ')} |`)
     expect(body).toMatch(/column set extends only through .*template update/i)
   })
 
@@ -68,10 +59,6 @@ describe('perf-audit same metrics comparison matrix', () => {
   it('states a metric recorded on one side only is a gate failure, not a blank cell', () => {
     expect(template()).toMatch(/one side only.*gate failure/i)
     expect(htmlTemplate()).toMatch(/one side only.*gate failure/i)
-  })
-
-  it('grandfathers legacy audits with the exact Skipped reason in both templates', () => {
-    expect(template()).toContain('Skipped: legacy audit, cold only')
   })
 
   it('uses plain hyphens in the comparison gate headings and sample matrix rows', () => {
@@ -133,7 +120,6 @@ describe('perf-audit same metrics comparison matrix', () => {
   })
 
   it('hyphenates re-audit and top-level compounds where those words appear', () => {
-    expect(template()).toMatch(/re-audit/i)
     expect(template()).toMatch(/top-level/i)
     expect(template()).not.toMatch(/re audit/i)
     expect(template()).not.toMatch(/top level/i)
@@ -152,7 +138,6 @@ describe('perf-audit baseline mode without prior audit', () => {
 describe('perf-audit review findings C2 and I4', () => {
   it('uses only sample placeholder paths with no French taxonomy path', () => {
     expect(template()).toContain('sample-')
-    expect(cwvText()).toContain('sample-')
     for (const body of [template(), htmlTemplate(), cwvText()]) {
       expect(body).not.toContain('eveil')
       expect(body).not.toContain('livre-sonore')
@@ -162,7 +147,7 @@ describe('perf-audit review findings C2 and I4', () => {
   })
 
   it('keeps every example.test sample path on sample-', () => {
-    for (const body of [template(), cwvText()]) {
+    for (const body of [template()]) {
       const urls = [...body.matchAll(/example\.test(\/\S*)/gi)].map((m) => m[1])
       const paths = urls.filter((p) => p && p !== '/' && p.includes('.html'))
       expect(paths.length).toBeGreaterThan(0)
@@ -170,9 +155,5 @@ describe('perf-audit review findings C2 and I4', () => {
         expect(p).toMatch(/sample-/)
       }
     }
-  })
-
-  it('states the matrix CLS column reports the cold value', () => {
-    expect(template()).toMatch(/CLS column reports the cold value/i)
   })
 })

@@ -19,7 +19,7 @@ const afterPath = join(fixturesDir, 'perf-comparison-after.json')
 const batchSpecs = [
   'perf-audit-brand-slots.spec.ts',
   'perf-audit-comparison.spec.ts',
-  'perf-audit-cold-warm.spec.ts',
+  'perf-audit-warm-protocol.spec.ts',
   'perf-audit-feedback.spec.ts',
   'perf-audit-brand-free.spec.ts',
 ]

@@ -31,6 +31,10 @@ curl -sk -H "Accept: $ACCEPT" -A "$UA" -o page.html -w "%{http_code}\n" https://
 govard sh -c "bin/magento dev:profiler:disable"
 ```
 
+## Template path per sample
+
+`perf-audit.mjs analyze` reads the rendering template of `product/list.phtml` (category samples) and `product/view.phtml` (product samples) from each sample's `TEMPLATE:` timers and records it as `template` in `urlSet`. Discovery lists every theme in the store's theme chain that overrides those templates (`themeOverrides` in `perf-audit.config.json`). The step 10 gate fails when an override theme is rendered by no sample: a child theme that overrides `list.phtml` can skip a fix the parent theme received, and only a sample rendered through that theme shows it.
+
 ## Reading the table: what each column actually means
 
 - **Timer Id** — a `->`-nested path built from Magento's own instrumentation naming; the

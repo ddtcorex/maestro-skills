@@ -23,7 +23,9 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 ```markdown
 # Performance Audit Report
 
-Audience: dev - use for engineering (full file:line traces inline). For a stakeholder readout use `Audience: client` instead: plain-language headings, file:line traces collapsed behind `<details>`, same sections/KPIs/evidence. Flag form: `audience: dev | client` (default `dev`). Brand slots (Maestro defaults, replace all three together for an overlay - never hard-code another brand in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`. Fill shapes and the tokens an overlay may set: `magento2-dev-core/references/report-theme.md`, Overlay token map.
+Audience: dev - use for engineering (full file:line traces inline). For a stakeholder readout use `--audience client`. Flag form: `audience: client` renders one page with verdict, comparison matrix, top 5 recommendations, coverage note, and a link to the full developer report (`audience: dev | client`, default `dev`). Brand slots (Maestro defaults, replace all three together for an overlay - never hard-code another brand in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`. Fill shapes and the tokens an overlay may set: `magento2-dev-core/references/report-theme.md`, Overlay token map.
+
+> **Agent sections and evidence:** the steps the scripts do not measure (infra, cache, indexer, cron, slow queries, AJAX load, code-level patterns) and the recommendations go into `<run-dir>/sections.json`. Every number in a section needs `evidence: {command, excerpt}` (the command run and its raw output excerpt); `render` refuses a section number without evidence. Verdict, KPI subtitles and query bullets come from sentence templates over the data.
 
 Scope: quick — 3 pages (quick PR, ~5–10m), call-stack false, threshold 1, batch govard sh, grep recipes for stats, trap single
 <!-- For a release audit use: Scope: deep — 7 pages (1 home + 3 category + 3 product), call-stack true, threshold 0, full two-pass, Govard-native `govard audit run --checks lint,profiler --url <absolute http(s) url>` lease, `artifacts/profiler/profile.csv` SHA -->
@@ -67,31 +69,33 @@ Every before/after report renders one comparison matrix over the frozen URL set 
 above: one row per page, each cell holding the before value and the after value for the same
 metric on the same page, so a reader can see at a glance whether each page improved, regressed,
 or stayed flat. Baseline mode: a first audit has no prior URL set to compare against, so it
-omits the matrix card and records a baseline note instead (`Baseline recorded: <date> - no
+records a baseline note above its single-side matrix (`Baseline recorded: <date> - no
 prior URL set exists, comparison deferred to the next audit`). The step 10 gate accepts the
-baseline note in place of the matrix; the matrix renders only when both a before and an after
-side exist. The matrix keeps a closed fixed column set of exactly six metrics: query count,
-LCP cold, LCP warm, CLS, performance score cold, performance score warm.
+baseline note in place of a comparison; before/after cells render only when both a before and
+an after side exist. The matrix keeps a closed fixed column set of two groups:
+uncached server render (Queries, Profiler root, TTFB (uncached)) and warm CWV
+(Score, LCP, CLS, TTFB (warm), HIT proof).
 The column set extends only through a template update, never per report: a report adds rows for
 its pages but never adds, renames, or drops a metric column, which is what keeps any two reports
-directly comparable without realigning columns by hand.
+directly comparable without realigning columns by hand. The uncached group is where backend work
+shows; the warm group is the median of 3 runs served from the full page cache.
 A metric recorded on one side only is a gate failure, not a blank cell: an empty half hides
 whether the number improved, regressed, or was never captured, so the step 10 gate fails the
-matrix until both sides carry a value or an explicit Skipped reason. Legacy `audit-data.json`
-files captured before warm measurement existed are grandfathered without forcing a re-audit:
-their warm cells read `Skipped: legacy audit, cold only`, and the comparison still gates on the
-remaining cold columns plus query count and CLS.
-The CLS column reports the cold value, so both sides stay comparable.
-The legacy reason applies only to legacy data captured before warm measurement existed; a fresh
-audit using it for warm cells fails the step 10 gate.
+matrix until both sides carry a value or an explicit Skipped reason. Closed reasons for a side
+that cannot be compared:
 
-| Page | Query count | LCP cold | LCP warm | CLS | Performance score cold | Performance score warm |
-|---|---|---|---|---|---|---|
-| home - before/after | 363 → 341 | 3.1s → 2.8s | 1.9s → 1.7s | 0.02 → 0.01 | 71 → 78 | 92 → 94 |
-| category_small - before/after | 221 → 205 | 2.6s → 2.4s | 1.5s → 1.4s | 0.00 → 0.00 | 76 → 81 | 94 → 95 |
-<!-- one row per frozen URL; each cell shows "before → after". Warm cells for legacy audits
-read `Skipped: legacy audit, cold only` for legacy data only; a fresh audit using it fails
-the gate. CLS reports the cold value. -->
+- `Skipped: non-200 on before side`
+- `Skipped: non-200 on after side (regression)`: also raised automatically as a finding in the
+  verdict and in `findings.json`, since a page the change broke is the first thing to fix.
+- `Skipped: before side measured on an older protocol, re-measure with switch`: `--compare`
+  accepts only a before run written by this toolkit (same `templateVersion`); mixing protocols
+  produces incomparable numbers, and `perf-audit.mjs switch` makes re-measuring cheap.
+
+| Page | Queries | Profiler root | TTFB (uncached) | Score | LCP | CLS | TTFB (warm) | HIT proof |
+|---|---|---|---|---|---|---|---|---|
+| home - before/after | 363 → 341 | 1.8s → 1.6s | 1900 ms → 1700 ms | 92 → 94 | 1200 ms → 1150 ms | 0.01 → 0.01 | 90 ms → 88 ms | x-magento-cache-debug |
+| category_small - before/after | 221 → 205 | 1.2s → 1.1s | 1300 ms → 1200 ms | 94 → 95 | 1000 ms → 990 ms | 0.00 → 0.00 | 85 ms → 84 ms | x-magento-cache-debug |
+<!-- one row per frozen URL; each cell shows "before → after". Rendered by perf-audit.mjs render. -->
 
 ## Infrastructure
 - [ ] Application Mode: production
@@ -193,14 +197,11 @@ template timer exceeded the threshold on any captured page`) — same rule as th
 Shapes table above: an empty table with no comment reads as "not checked."
 
 ## Core Web Vitals
-| Metric | Cold | Warm | Status |
-|--------|------|------|--------|
-| LCP (LCP cold, LCP warm) | X.Xs | X.Xs | PASS/FAIL |
-| Performance score (performance score cold, performance score warm) | NN | NN | PASS/FAIL |
-| INP | X.Xms | same as cold | PASS/FAIL |
-| CLS | X.XXX | X.XXX | PASS/FAIL |
+| Page | Score | LCP | CLS | TTFB (warm) | Spread | HIT proof |
+|------|-------|-----|-----|-------------|--------|-----------|
+| home | NN | X.Xs | X.XXX | NN ms | score N, LCP N ms | x-magento-cache-debug |
 
-Cold is the first load after `cache:flush` expecting a cache MISS; warm is one immediate repeat load expecting a cache HIT; both record cache status response headers (see `references/core-web-vitals.md`). When a capture cannot run, use exactly one closed reason: `Skipped: no cache backend`, `Skipped: flush not permitted on this environment`, `Skipped: legacy audit, cold only`.
+Warm only: each page is primed, then measured with a median of 3 Lighthouse runs from the full page cache (see `references/core-web-vitals.md`). When a page cannot be measured, use exactly one closed reason: `Skipped: no FPC HIT`, `Skipped: no HIT signal (production mode, built-in FPC)`, `Skipped: page cache disabled`, `Skipped: Lighthouse CLI not found`; the spread column reads `Skipped: quick` on quick scope.
 
 ## Per-Page Query Detail - deep mandatory gate
 

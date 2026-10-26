@@ -163,8 +163,8 @@ describe('perf-audit markdown note order', () => {
 
   it('renders the CWV table before its context note', () => {
     const body = template()
-    expect(body.indexOf('| Metric | Cold | Warm | Status |')).toBeLessThan(
-      body.indexOf('Cold is the first load'),
+    expect(body.indexOf('| Page | Score | LCP | CLS |')).toBeLessThan(
+      body.indexOf('Warm only: each page is primed'),
     )
   })
 
