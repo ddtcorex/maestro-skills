@@ -1,0 +1,24 @@
+#!/usr/bin/env node
+// Test shim for the govard CLI. Logs every invocation to PERF_SHIM_LOG and
+// runs `sh -c <cmd>` locally in the cwd (the fake project root). Like the
+// real `govard sh -c` (docker exec without -i), stdin is NOT forwarded.
+import { appendFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+const args = process.argv.slice(2)
+const log = (line) => process.env.PERF_SHIM_LOG && appendFileSync(process.env.PERF_SHIM_LOG, `${line}\n`)
+if (args[0] === 'sh' && args[1] === '-c') {
+  log(`sh: ${args[2]}`)
+  const res = spawnSync('sh', ['-c', args[2]], { stdio: ['ignore', 'inherit', 'inherit'], cwd: process.cwd(), env: process.env })
+  process.exit(res.status ?? 1)
+}
+if ((args[0] === 'redis' || args[0] === 'valkey') && args[1] === 'cli') {
+  log(`${args[0]}: ${args.slice(2).join(' ')}`)
+  if (process.env.PERF_SHIM_NO_REDIS === '1' && args[0] === 'redis') {
+    process.stderr.write('unknown service: redis\n')
+    process.exit(1)
+  }
+  process.stdout.write('OK\n')
+  process.exit(0)
+}
+log(`govard: ${args.join(' ')}`)
+process.exit(0)

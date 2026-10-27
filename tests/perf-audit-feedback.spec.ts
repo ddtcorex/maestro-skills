@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
 const SKILL = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'SKILL.md')
 function skill() { return readFileSync(SKILL, 'utf-8') }
@@ -19,11 +20,11 @@ describe('perf-audit feedback P2', () => {
     const dir = join(__dirname, '..', 'skills', 'magento2-performance-audit')
     const perPage = readFileSync(join(dir, 'references', 'per-page-type-audit.md'), 'utf-8')
     const template = readFileSync(join(dir, 'references', 'report-template.md'), 'utf-8')
-    expect(skill()).toContain('20–30m')
+    expect(skill()).toContain('30-45m')
     expect(skill()).toContain('144 tool calls')
-    expect(perPage).toContain('20–30 min')
-    expect(template).toContain('5–10m')
-    expect(template).not.toContain('3–5m')
+    expect(perPage).toContain('30-45 min')
+    expect(template).toContain('5-10m')
+    expect(template).not.toContain('3-5m')
   })
 
   it('stamps the observed floor so the number cannot rot silently', () => {
@@ -61,7 +62,7 @@ describe('perf-audit feedback P5', () => {
   it('adds a generic client-facing variant without private branding', () => {
     const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
     const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
-    const theme = readFileSync(join(base, 'report-theme.md'), 'utf-8')
+    const theme = loadThemeDoc()
     expect(template).toContain('audience: dev | client')
     expect(template).toContain('{{brand_logo}}')
     expect(theme).toContain('brand-fixed surfaces')
@@ -72,7 +73,7 @@ describe('perf-audit feedback P6', () => {
   it('requires full URL for dev and full URI for client', () => {
     const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
     const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
-    const theme = readFileSync(join(base, 'report-theme.md'), 'utf-8')
+    const theme = loadThemeDoc()
     expect(template).toContain('never truncate')
     expect(template).toContain('path + query')
     expect(theme).toContain('overflow-wrap:anywhere')
@@ -84,11 +85,11 @@ describe('review fix pass', () => {
   const read = (rel: string) => readFileSync(join(__dirname, '..', 'skills', rel), 'utf-8')
 
   it('labels the 22m floor as whole-audit time, distinct from capture time', () => {
-    // The reviewer caught "~22m observed floor" sitting next to a "20–30m" deep cap
+    // The reviewer caught "~22m observed floor" sitting next to a "20-30m" deep cap
     // while the reference file said captures cost ~2.5-3 min. Both numbers are real
     // but measure different scopes; the text must say so.
     expect(skill()).toContain('for the **whole audit**')
-    expect(skill()).toContain('Captures alone are only ~2.5–3 min')
+    expect(skill()).toContain('Captures alone are only ~2.5-3 min')
     expect(skill()).toContain('~2.5-3 min **on their own**')
     expect(read('magento2-performance-audit/references/per-page-type-audit.md')).toContain('**for the captures only**')
   })
@@ -125,8 +126,8 @@ describe('review fix pass', () => {
 
 describe('perf-audit report layout', () => {
   const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
-  const template = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
-  const theme = () => readFileSync(join(refs, 'report-theme.md'), 'utf-8')
+  const template = () => loadPerfTemplate()
+  const theme = () => loadThemeDoc()
 
   it('aligns header content with the container on wide screens', () => {
     // Full-bleed gradient, but the text sits in the same 1100px column as the cards,
@@ -142,11 +143,11 @@ describe('perf-audit report layout', () => {
   it('renders each context note below its data table', () => {
     const html = template()
     // Matrix card: the comparison table precedes its context note.
-    expect(html.indexOf('<tr><th>Page</th><th>Query count</th>')).toBeLessThan(html.indexOf('One row per page'))
+    expect(html.indexOf('{{matrix}}')).toBeLessThan(html.indexOf('One row per page'))
     // Per-page card: the detail blocks precede their context note.
     expect(html.indexOf('{{perpage_details}}')).toBeLessThan(html.indexOf('Deep: 7 pages unfiltered'))
     // CWV card: the vitals table precedes its context note.
-    expect(html.indexOf('<tr><th>Metric</th><th>Cold</th>')).toBeLessThan(html.indexOf('Cold is the first load'))
+    expect(html.indexOf('<tr><th>Page</th><th>Score</th>')).toBeLessThan(html.indexOf('Warm only'))
   })
 
   it('documents note below table with the seen-data rationale', () => {
@@ -162,8 +163,8 @@ describe('perf-audit markdown note order', () => {
 
   it('renders the CWV table before its context note', () => {
     const body = template()
-    expect(body.indexOf('| Metric | Cold | Warm | Status |')).toBeLessThan(
-      body.indexOf('Cold is the first load'),
+    expect(body.indexOf('| Page | Score | LCP | CLS |')).toBeLessThan(
+      body.indexOf('Warm only: each page is primed'),
     )
   })
 

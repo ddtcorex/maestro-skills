@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Shared report engine in `magento2-dev-core`** (`scripts/report/render.mjs`). Renders `report.md`, `report.html` and `report.body.html` (body-only form for hosts that wrap pages, such as Claude Artifact) from a data file with two layouts: `perf` and `findings`. Every report carries report contract 1: `<meta name="maestro-report-contract" content="1">`, the theme anchors, `data-report-title` and `data-report-verdict`. `render.mjs --contract` prints the number.
+- **Performance audit CLI** (`magento2-performance-audit/scripts/perf-audit.mjs`): `discover`, `switch`, `capture`, `analyze`, `cwv`, `invalidate`, `render` and `run`, each ending with one JSON status line. `switch` handles a branch change across `composer.lock` and module changes and flushes the cache stores directly; `invalidate` reproduces a product save through the repository without admin credentials.
+- **Findings reports for `magento2-linter`, `magento2-security-scan` and `magento2-code-review`** through `findings.json` (`magento2-dev-core/references/findings-schema.md`); `merge-findings.mjs` merges the trio and the performance audit for code review.
+- **Template override coverage.** Discovery lists the themes overriding `product/list.phtml` and `product/view.phtml`; the gate fails when no sample renders one of them.
+- A test fails on any em or en dash in the five report skills.
+
+### Changed
+
+- **BREAKING: measurement protocol.** The comparison matrix pairs the uncached server render (queries, profiler root, TTFB) with warm Core Web Vitals (median of 3 Lighthouse runs with devtools throttling, each run proving its own FPC HIT). The cold column (first load after `cache:flush`) is removed: it measured the global cache rebuild, not the page.
+- **BREAKING: theme location.** `report-theme.md`, the HTML template (now `report-perf.html.template` plus `report-theme.css`) and the brand assets moved from `magento2-performance-audit/references/` to `magento2-dev-core/references/`.
+- **BREAKING: comparison input.** `--compare` accepts only a before side written by this toolkit; the legacy cold-only grandfather rule is removed. Re-measure an older before side with `perf-audit.mjs switch`.
+- Narrative numbers (verdict, KPI subtitles, query bullets) come from sentence templates; agent-written sections need `evidence` for every number.
+- The publish question follows the conversation language instead of a hardcoded one.
+
 ## [2.19.0] - 2026-10-23
 
 ### Added

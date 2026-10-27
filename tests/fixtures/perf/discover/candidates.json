@@ -1,0 +1,17 @@
+{
+  "themeChain": ["Acme/child", "Acme/default", "Hyva/default"],
+  "themeOverrides": ["Acme/child"],
+  "categories": [
+    {"url": "https://example.test/big.html", "productCount": 900},
+    {"url": "https://example.test/empty.html", "productCount": 0},
+    {"url": "https://example.test/small.html", "productCount": 4},
+    {"url": "https://example.test/mid.html", "productCount": 60},
+    {"url": "https://example.test/mid2.html", "productCount": 75}
+  ],
+  "products": [
+    {"sku": "S-1", "url": "https://example.test/s1.html", "type": "simple"},
+    {"sku": "S-2", "url": "https://example.test/s2.html", "type": "simple"},
+    {"sku": "C-1", "url": "https://example.test/c1.html?x=1", "type": "configurable"},
+    {"sku": "B-1", "url": "https://example.test/b1.html", "type": "bundle"}
+  ]
+}

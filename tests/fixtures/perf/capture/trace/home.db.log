@@ -1,0 +1,23 @@
+## 2026-10-26 00:00:00
+## 41 ## QUERY
+SQL: SELECT * FROM t WHERE id IN (1, 2, 3)
+AFF: 0
+TIME: 0.0010
+TRACE: #1 Magento\Framework\DB\Adapter\Pdo\Mysql->query() called at [vendor/magento/framework/DB/Adapter/Pdo/Mysql.php:10]
+#2 Acme\Catalog\Model\Stock->load() called at [app/code/Acme/Catalog/Model/Stock.php:42]
+
+## 2026-10-26 00:00:00
+## 41 ## QUERY
+SQL: SELECT * FROM t WHERE id IN (4, 5)
+AFF: 0
+TIME: 0.0020
+TRACE: #1 Magento\Framework\DB\Adapter\Pdo\Mysql->query() called at [vendor/magento/framework/DB/Adapter/Pdo/Mysql.php:10]
+#2 Acme\Catalog\Model\Stock->load() called at [app/code/Acme/Catalog/Model/Stock.php:42]
+
+## 2026-10-26 00:00:00
+## 41 ## QUERY
+SQL: SELECT * FROM cms WHERE note = 'x'
+AFF: 0
+TIME: 0.0005
+TRACE: #1 Magento\Framework\DB\Adapter\Pdo\Mysql->query() called at [vendor/magento/framework/DB/Adapter/Pdo/Mysql.php:10]
+

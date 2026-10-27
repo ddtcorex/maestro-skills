@@ -13,6 +13,10 @@ node_modules/
 lib/
 *.tsbuildinfo
 
+# The lib/ rule above also matches skill runtime helpers; re-include them.
+!skills/magento2-dev-core/scripts/report/lib/
+!skills/magento2-performance-audit/scripts/lib/
+
 # Personal Claude Code plugin settings (see plugin-settings convention)
 .claude/*.local.md
 

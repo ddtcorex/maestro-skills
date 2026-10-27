@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="maestro-report-contract" content="{{contract}}">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}} - {{date}}</title>
+<style>
+{{theme_css}}
+</style>
+</head>
+<body>
+<div class="header"><div class="header-inner">
+  {{brand_logo}}
+  <!-- Default logo when the marker is left empty: Maestro lockup. An overlay fills the marker and deletes the default block below. -->
+  <svg viewBox="0 0 232 48" style="height:32px" role="img" aria-label="Maestro logo"><rect x="2" y="8" width="32" height="32" rx="9" fill="#0a84ff"/><path d="M2 11 L5 4 L8 9 L11 4 L14 11" transform="translate(2 8) scale(2)" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><text x="42" y="32" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="24" letter-spacing="-0.5" fill="#ffffff">Maestro</text></svg>
+  <h1 data-report-title>{{title}}</h1>
+  <div class="meta">
+    <div>Date: <b>{{date}}</b> · Govard <code>{{govard_version}}</code> · <code>{{host}}</code> · profile <code>{{profile}}</code></div>
+    <div>Magento <code>{{magento_version}}</code> · PHP <code>{{php_version}}</code> · MariaDB <code>{{mariadb_version}}</code> · Redis <code>{{redis_version}}</code> · OpenSearch <code>{{opensearch_version}}</code> · {{fpc}}</div>
+  </div>
+</div></div>
+<div class="container">
+
+<div class="kpi">
+  <div class="box"><div class="label">Infra</div><div class="value">{{infra_verdict}}</div><div class="sub">{{infra_sub}}</div></div>
+  <div class="box"><div class="label">Cache</div><div class="value">{{cache_verdict}}</div><div class="sub">{{cache_sub}}</div></div>
+  <div class="box"><div class="label">Indexer</div><div class="value">{{indexer_verdict}}</div><div class="sub">{{indexer_sub}}</div></div>
+  <div class="box"><div class="label">Cron</div><div class="value">{{cron_verdict}}</div><div class="sub">{{cron_sub}}</div></div>
+</div>
+
+<div class="card">
+  <h2>Verdict</h2>
+  <p class="verdict" data-report-verdict>{{verdict}}</p>
+</div>
+
+<div class="card">
+  <h2>URLs Audited <span class="badge badge-gray">{{scope}} · {{page_count}} pages · double-pass</span></h2>
+  <table>
+    <tr><th>Type</th><th>URL</th><th>Queries</th></tr>
+    {{urls_rows}}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Before/After Comparison Matrix <span class="badge badge-gray">same metrics · frozen URL set</span></h2>
+  {{matrix}}
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">One row per page; each cell reads before → after. Uncached server render (queries, profiler root, TTFB) is captured with full_page, block_html and layout caches disabled, so backend work shows here. Warm CWV is the median of 3 Lighthouse runs served from the full page cache, each run proving its own HIT. Closed fixed column set: columns change only through a template update, never per report. A metric recorded on one side only is a gate failure, not a blank cell; a side that cannot be measured carries its closed Skipped reason.</div>
+</div>
+
+<div class="card">
+  <h2>Infrastructure <span class="badge {{infra_badge}}">{{infra_status}}</span></h2>
+  {{infra_checks}}
+</div>
+
+<div class="card">
+  <h2>Cache Status <span class="badge {{cache_badge}}">{{cache_status}}</span></h2>
+  {{cache_checks}}
+</div>
+
+<div class="card">
+  <h2>Cache Invalidation Efficiency <span class="badge {{cache_inv_badge}}">{{cache_inv_status}}</span></h2>
+  {{cache_inv_checks}}
+</div>
+
+<div class="card">
+  <h2>Client-Side AJAX Load <span class="badge {{ajax_badge}}">{{ajax_status}}</span></h2>
+  {{ajax_checks}}
+</div>
+
+<div class="card">
+  <h2>Indexer Configuration</h2>
+  {{indexer_checks}}
+</div>
+
+<div class="card">
+  <h2>Database</h2>
+  <table>
+    <tr><th>Page</th><th>Queries</th><th>TIME max</th><th>TIME avg</th><th>≥1s</th><th>≥0.05s</th><th>≥0.01s</th></tr>
+    {{db_rows}}
+  </table>
+  <ul>
+    {{db_bullets}}
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Slow Queries <span class="badge {{slow_queries_badge}}">{{slow_queries_status}}</span></h2>
+  {{slow_queries_checks}}
+</div>
+
+<div class="card">
+  <h2>Per-Page Query Detail <span class="badge {{perpage_badge}}">{{perpage_status}}</span></h2>
+  {{perpage_details}}
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">Deep: 7 pages unfiltered per-page tables (mandatory). Quick: Skipped matrix entry only. Each <code>&lt;details&gt;</code> shows total queries + distinct-shape count; tables are <code>Count | SQL (normalized)</code>.</div>
+</div>
+
+<div class="card">
+  <h2>Top Repeated Query Shapes</h2>
+  <table>
+    <tr><th>Shape (normalized)</th><th>Count</th><th>Pages</th><th>Avg ms</th><th>Max ms</th><th>Evidence</th></tr>
+    {{repeated_rows}}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Top Timers</h2>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Profiler timers past the threshold (over 5% of the page total, or count 10+) per captured page.</div>
+  {{timers_content}}
+</div>
+
+<div class="card">
+  <h2>Core Web Vitals <span class="badge {{cwv_badge}}">{{cwv_status}}</span></h2>
+  <table>
+    <tr><th>Page</th><th>Score</th><th>LCP</th><th>CLS</th><th>TTFB (warm)</th><th>Spread</th><th>HIT proof</th></tr>
+    {{cwv_rows}}
+  </table>
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">Warm only: each page is primed, then measured 3 times (deep) from the full page cache with <code>--throttling-method=devtools</code>; the table shows the median and the spread (max minus min). Every run proves its HIT from the document response headers in its own devtools log.</div>
+</div>
+
+<div class="card">
+  <h2>Code-Level Performance Patterns <span class="badge {{code_patterns_badge}}">{{code_patterns_status}}</span></h2>
+  {{code_patterns_checks}}
+</div>
+
+<div class="card" style="border-left:4px solid var(--red)">
+  <h2>Recommendations <span class="badge badge-red">{{rec_count}} actions</span></h2>
+  <ol style="margin:8px 0;padding-left:18px;font-size:13px">{{recommendations}}</ol>
+</div>
+
+<div class="card">
+  <h2>Coverage Note <span class="badge badge-green">Self-verified</span></h2>
+  <div style="font-size:13px;color:var(--muted)">{{coverage_note}}</div>
+</div>
+
+<div class="footer">Generated {{date}} from live govard captures on <code>{{host}}</code>. <a href="report.md">Markdown</a> · <a href="report.pdf">PDF via Print</a></div>
+
+</div>
+</body>
+</html>

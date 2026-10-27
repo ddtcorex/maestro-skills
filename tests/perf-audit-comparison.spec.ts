@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
 const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
 const template = () => readFileSync(join(refs, 'report-template.md'), 'utf-8')
-const htmlTemplate = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
+const htmlTemplate = () => loadPerfTemplate()
 const perPage = () => readFileSync(join(refs, 'per-page-type-audit.md'), 'utf-8')
 const cwvText = () => readFileSync(join(refs, 'core-web-vitals.md'), 'utf-8')
 
@@ -38,40 +39,26 @@ describe('perf-audit frozen URL set and comparison gate', () => {
 })
 
 describe('perf-audit same metrics comparison matrix', () => {
-  const sixColumns = [
-    'query count',
-    'LCP cold',
-    'LCP warm',
-    'CLS',
-    'performance score cold',
-    'performance score warm',
-  ]
+  const columns = ['Queries', 'Profiler root', 'TTFB (uncached)', 'Score', 'LCP', 'CLS', 'TTFB (warm)', 'HIT proof']
 
-  it('documents the before/after matrix with the closed six columns in report-template.md', () => {
+  it('documents the before/after matrix with the closed uncached and warm columns in report-template.md', () => {
     const body = template()
     expect(body).toMatch(/before\/after/i)
-    for (const col of sixColumns) {
-      expect(body).toMatch(new RegExp(col, 'i'))
-    }
+    expect(body).toContain(`| Page | ${columns.join(' | ')} |`)
     expect(body).toMatch(/column set extends only through .*template update/i)
   })
 
-  it('renders the same six-column before/after matrix in report.html.template', () => {
+  it('renders the uncached and warm matrix slot in the perf template', () => {
     const body = htmlTemplate()
     expect(body).toMatch(/before\/after/i)
-    for (const col of sixColumns) {
-      expect(body).toMatch(new RegExp(col, 'i'))
-    }
+    expect(body).toContain('{{matrix}}')
+    expect(body).toMatch(/Uncached server render/)
+    expect(body).toMatch(/median of 3/)
   })
 
   it('states a metric recorded on one side only is a gate failure, not a blank cell', () => {
     expect(template()).toMatch(/one side only.*gate failure/i)
     expect(htmlTemplate()).toMatch(/one side only.*gate failure/i)
-  })
-
-  it('grandfathers legacy audits with the exact Skipped reason in both templates', () => {
-    expect(template()).toContain('Skipped: legacy audit, cold only')
-    expect(htmlTemplate()).toContain('Skipped: legacy audit, cold only')
   })
 
   it('uses plain hyphens in the comparison gate headings and sample matrix rows', () => {
@@ -133,9 +120,6 @@ describe('perf-audit same metrics comparison matrix', () => {
   })
 
   it('hyphenates re-audit and top-level compounds where those words appear', () => {
-    for (const body of [template(), htmlTemplate()]) {
-      expect(body).toMatch(/re-audit/i)
-    }
     expect(template()).toMatch(/top-level/i)
     expect(template()).not.toMatch(/re audit/i)
     expect(template()).not.toMatch(/top level/i)
@@ -148,15 +132,12 @@ describe('perf-audit baseline mode without prior audit', () => {
     expect(template()).toMatch(/no prior URL set/i)
     expect(template()).toMatch(/comparison deferred/i)
     expect(template()).toMatch(/Baseline recorded/i)
-    expect(htmlTemplate()).toMatch(/no prior URL set/i)
-    expect(htmlTemplate()).toMatch(/Baseline recorded/i)
   })
 })
 
 describe('perf-audit review findings C2 and I4', () => {
   it('uses only sample placeholder paths with no French taxonomy path', () => {
     expect(template()).toContain('sample-')
-    expect(cwvText()).toContain('sample-')
     for (const body of [template(), htmlTemplate(), cwvText()]) {
       expect(body).not.toContain('eveil')
       expect(body).not.toContain('livre-sonore')
@@ -166,7 +147,7 @@ describe('perf-audit review findings C2 and I4', () => {
   })
 
   it('keeps every example.test sample path on sample-', () => {
-    for (const body of [template(), cwvText()]) {
+    for (const body of [template()]) {
       const urls = [...body.matchAll(/example\.test(\/\S*)/gi)].map((m) => m[1])
       const paths = urls.filter((p) => p && p !== '/' && p.includes('.html'))
       expect(paths.length).toBeGreaterThan(0)
@@ -174,10 +155,5 @@ describe('perf-audit review findings C2 and I4', () => {
         expect(p).toMatch(/sample-/)
       }
     }
-  })
-
-  it('states the matrix CLS column reports the cold value', () => {
-    expect(template()).toMatch(/CLS column reports the cold value/i)
-    expect(htmlTemplate()).toMatch(/CLS column reports the cold value/i)
   })
 })

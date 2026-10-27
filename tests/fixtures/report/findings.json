@@ -1,0 +1,15 @@
+{
+  "tool": "magento2-linter",
+  "scope": "module",
+  "target": "app/code/Acme/Catalog",
+  "generatedAt": "2026-10-26T00:00:00Z",
+  "skillVersion": "0.0.0-test",
+  "templateVersion": 1,
+  "verdict": "2 high, 1 medium findings; no critical",
+  "summary": {"critical": 0, "high": 2, "medium": 1, "low": 0},
+  "findings": [
+    {"code": "M2-ARCH-001", "rule": null, "severity": "high", "file": "app/code/Acme/Catalog/Model/Foo.php", "line": 42, "message": "ObjectManager used directly", "fix": "Inject the dependency"},
+    {"code": "M2-SEC-006", "rule": null, "severity": "high", "file": "app/code/Acme/Catalog/Controller/Bar.php", "line": 10, "message": "Superglobal access", "fix": "Use the request object"},
+    {"code": null, "rule": "Magento2.Functions.StaticFunction", "severity": "medium", "file": "app/code/Acme/Catalog/Helper/Baz.php", "line": 7, "message": "Static function", "fix": "Make it an instance method"}
+  ]
+}

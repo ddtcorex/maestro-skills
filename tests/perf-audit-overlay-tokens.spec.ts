@@ -3,10 +3,11 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
 const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
-const template = () => readFileSync(join(refs, 'report.html.template'), 'utf-8')
-const theme = () => readFileSync(join(refs, 'report-theme.md'), 'utf-8')
+const template = () => loadPerfTemplate()
+const theme = () => loadThemeDoc()
 const themeStyle = () => theme().match(/<style>[\s\S]*?<\/style>/)?.[0] ?? ''
 
 // Header surface tokens and their Maestro defaults: an overlay redefines

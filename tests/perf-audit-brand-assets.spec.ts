@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
 // Standalone brand assets shipped for report overlays: mark only, lockup for
 // light surfaces, lockup for dark surfaces. The mark is the Maestro M from the
@@ -9,7 +10,7 @@ const assetsDir = join(
   __dirname,
   '..',
   'skills',
-  'magento2-performance-audit',
+  'magento2-dev-core',
   'references',
   'assets',
 )

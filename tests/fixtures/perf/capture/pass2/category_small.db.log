@@ -1,0 +1,6 @@
+## 2026-10-26 00:00:00
+## 41 ## QUERY
+SQL: SELECT * FROM idx WHERE category_id = 7
+AFF: 0
+TIME: 0.0100
+

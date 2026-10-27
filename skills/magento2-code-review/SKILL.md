@@ -22,23 +22,23 @@ metadata:
 
 # Magento 2 Code Review
 
-Orchestrates a review at one of four scopes — PR/MR, module, theme, or whole
-project — by calling the existing QA trio and `magento2-dev-core` at the
+Orchestrates a review at one of four scopes, PR/MR, module, theme, or whole
+project, by calling the existing QA trio and `magento2-dev-core` at the
 right scope, then merging their output into one report with one severity
 scale. This skill does not reimplement any check the trio already owns.
 
 ## Related Skills
 
-**REQUIRED BACKGROUND:** Load `magento2-dev-core` first — its
+**REQUIRED BACKGROUND:** Load `magento2-dev-core` first, its
 `references/severity-and-codes.md` defines the severity scale and finding
 codes this skill's report uses.
 
 Invokes `magento2-linter` (style/static analysis), `magento2-security-scan`
 (vulnerability scanning), and `magento2-performance-audit` (runtime/
-infrastructure) at whichever scope is in play — see "Scope modes" below.
+infrastructure) at whichever scope is in play, see "Scope modes" below.
 Theme scope additionally cross-references `magento2-hyva-dev` (CSP) and
 `magento2-frontend-dev` (Luma build/verify); it does not duplicate their
-content. Together with the trio, this forms the "QA quartet" — the four
+content. Together with the trio, this forms the "QA quartet", the four
 skills expected to run before a release.
 
 ## Scope modes
@@ -48,7 +48,7 @@ skills expected to run before a release.
 | Full path | "review this module/project" | module/theme/`app/code` path, as today |
 | Explicit file list | caller already knows which files | passed straight through |
 | Local git diff | "review this PR", branch already checked out | `git diff` against a base ref |
-| Remote fetch | "review MR !123 before I check it out" | GitHub MCP (`pull_request_read`, preferred for GitHub) / `glab mr diff` / `gh pr diff` — **text-pattern checks only**, see below |
+| Remote fetch | "review MR !123 before I check it out" | GitHub MCP (`pull_request_read`, preferred for GitHub) / `glab mr diff` / `gh pr diff`, **text-pattern checks only**, see below |
 
 > **Otherwise:** apply same extension/path table by hand and note split in review header.
 
@@ -60,38 +60,36 @@ Full mechanics, exact commands, and the remote-fetch limitation:
 
 ## Workflow
 
-1. Determine scope (ask if ambiguous — a bare "review this" with no target
+1. Determine scope (ask if ambiguous, a bare "review this" with no target
    and no diff in the working tree is not enough to guess from).
 2. Resolve the scope to a file list per `references/scope-modes.md`.
 3. Run `magento2-security-scan` against that file list (see its own
-   "Scoping" section for how it accepts a list vs. a path) — its
+   "Scoping" section for how it accepts a list vs. a path), its
    text-pattern greps are genuinely file-scoped. `magento2-linter`'s native
-   gate is not: the file list does **not** flow into `govard audit run` —
-   that command has no file-list or changed-lines argument, and its finest
+   gate is not: the file list does **not** flow into `govard audit run`, that command has no file-list or changed-lines argument, and its finest
    granularity is a whole module (`module_in_project`) or the whole project
    (`project`); `govard audit diff --base <ref>` records the base ref but
    still analyzes the full target (`effective_scope: project`). So at PR/MR
    scope, invoke `magento2-linter`'s native run at whatever target mode it
    resolves to and pick the PHP matrix/provider per its "Govard-Native Lint
-   Audit Is the Real Gate" section — don't restate that policy here —
-   preserve the `govard audit run` session and run IDs it returns, and then
+   Audit Is the Real Gate" section, don't restate that policy here, preserve the `govard audit run` session and run IDs it returns, and then
    split its findings into diff-introduced vs. pre-existing per
    `references/scope-modes.md`'s "Local git diff" guidance: report a
    pre-existing violation in a touched file separately, and don't block the
    PR/MR on legacy debt the diff didn't create. The same file list still
    feeds `magento2-linter`'s bare-tool fast pre-check (its own "Scoping"
-   section) — that's a local sanity check, not a substitute for the native
+   section), that's a local sanity check, not a substitute for the native
    run's findings. For a repeat review of the same scope (e.g. re-checking
    after fixes), rerun the exact prior session
    (`govard audit rerun --session <session-id>`, per that skill's "Caching,
-   rerun identity, and read-only source") before comparing findings — a
+   rerun identity, and read-only source") before comparing findings, a
    fresh `govard audit run` starts an unrelated session, not a comparable
    one. `magento2-security-scan`'s Authentication & Authorization, Data
    Exposure, and CSP Configuration checks are environment-level, not
-   file-scoped — see its "Environment-level checks — scope boundary": they
+   file-scoped, see its "Environment-level checks, scope boundary": they
    run once per audit at project/module/theme scope (never per file) and
    are skipped entirely at PR/MR scope (no live environment to query).
-4. Run the performance/theme checks applicable to scope — PR/MR scope is
+4. Run the performance/theme checks applicable to scope, PR/MR scope is
    **not** exempt, it always gets the static/file-scoped subset (never zero
    performance/theme coverage); project/module scope additionally gets the
    live/infra steps; theme scope runs the full routing in
@@ -100,17 +98,28 @@ Full mechanics, exact commands, and the remote-fetch limitation:
    "Performance/theme checks by scope".
 5. If the file list touches `di.xml` (including a `<preference>` addition),
    `events.xml`, a `Plugin/` class, or an `Observer/` class, run the
-   conflict check in `references/plugin-observer-conflict-check.md` — it
+   conflict check in `references/plugin-observer-conflict-check.md`, it
    now also covers preference conflicts (`M2-ARCH-008`), not just
    plugin/observer ones.
 6. Merge every finding into the report template below, using
-   `magento2-dev-core/references/severity-and-codes.md` — map to an existing
+   `magento2-dev-core/references/severity-and-codes.md`, map to an existing
    code before minting a new one.
 7. **Self-verification gate (mandatory, before presenting the report):** the
    Summary table's per-severity counts must equal the number of findings
-   actually listed below it — recount by hand if they don't match, the same
+   actually listed below it, recount by hand if they don't match, the same
    discipline `magento2-performance-audit` already requires of its own
    report.
+
+## Findings report
+
+Each trio skill (and the performance audit, when it ran) leaves a `findings.json` in the shared schema (`magento2-dev-core/references/findings-schema.md`). Merge them, then render the merged file:
+
+```bash
+node <skills>/magento2-code-review/scripts/merge-findings.mjs --out findings.json linter/findings.json security/findings.json perf/findings.json
+node <skills>/magento2-dev-core/scripts/report/render.mjs render --layout findings --audience dev --data findings.json --out <report-dir>
+```
+
+`merge-findings.mjs` keeps one finding per code (or rule), file and line, at the highest severity any input gave it, and recomputes the summary, so the counts in the report always match the findings. Dev-core anti-pattern findings found by hand go into their own `findings.json` with `tool: "magento2-dev-core"` before the merge.
 
 ## Report template
 
@@ -131,12 +140,11 @@ Full mechanics, exact commands, and the remote-fetch limitation:
 
 ### Findings
 
-- **[Code]** [severity] — `file:line` — [one-line description] — fix: [what to change]
+- **[Code]** [severity], `file:line`, [one-line description], fix: [what to change]
 
 ### Coverage note
 
-[If mode=remote fetch: state explicitly that PHPStan/PHPMD did not run —
-text-pattern checks only. If scope is PR/MR, list which live/infra
+[If mode=remote fetch: state explicitly that PHPStan/PHPMD did not run, text-pattern checks only. If scope is PR/MR, list which live/infra
 performance/theme steps from `references/scope-modes.md`'s "Performance/
 theme checks by scope" did not run and why, and confirm
 `magento2-security-scan`'s environment-level checks (Authentication &

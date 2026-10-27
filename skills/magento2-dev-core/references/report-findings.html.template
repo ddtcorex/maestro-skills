@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="maestro-report-contract" content="{{contract}}">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}} - {{date}}</title>
+<style>
+{{theme_css}}
+</style>
+</head>
+<body>
+<div class="header"><div class="header-inner">
+  {{brand_logo}}
+  <!-- Default logo when the marker is left empty: Maestro lockup. An overlay fills the marker and deletes the default block below. -->
+  <svg viewBox="0 0 232 48" style="height:32px" role="img" aria-label="Maestro logo"><rect x="2" y="8" width="32" height="32" rx="9" fill="#0a84ff"/><path d="M2 11 L5 4 L8 9 L11 4 L14 11" transform="translate(2 8) scale(2)" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><text x="42" y="32" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="24" letter-spacing="-0.5" fill="#ffffff">Maestro</text></svg>
+  <h1 data-report-title>{{title}}</h1>
+  <div class="meta">
+    <div>Date: <b>{{date}}</b> · Tool <code>{{tool}}</code> · scope <code>{{scope}}</code></div>
+    <div>Target <code>{{target}}</code></div>
+  </div>
+</div></div>
+<div class="container">
+
+<div class="card">
+  <h2>Verdict</h2>
+  <p class="verdict" data-report-verdict>{{verdict}}</p>
+</div>
+
+<div class="card">
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Severity</th><th>Count</th></tr>
+    {{summary_rows}}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Findings <span class="badge badge-gray">{{finding_count}} findings</span></h2>
+  <table>
+    <tr><th>Severity</th><th>Code</th><th>Location</th><th>Finding</th><th>Fix</th></tr>
+    {{finding_rows}}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Coverage Note</h2>
+  <div style="font-size:13px;color:var(--muted)">{{coverage_note}}</div>
+</div>
+
+<div class="footer">Generated {{date}} by {{tool}}. <a href="report.md">Markdown</a></div>
+
+</div>
+</body>
+</html>

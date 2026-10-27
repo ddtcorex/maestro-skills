@@ -4,7 +4,7 @@ Full detail for Workflow step 8.
 
 ## Scanning `app/code` for These Patterns
 
-Don't rely on reading through custom modules by eye — grep for the shapes below across custom code first (scope to `app/code`, not `vendor/`, so results are actually yours to fix; see the vendor-code note in `references/database-query-profiling.md` for anything that turns up in a third-party extension instead):
+Don't rely on reading through custom modules by eye, grep for the shapes below across custom code first (scope to `app/code`, not `vendor/`, so results are actually yours to fix; see the vendor-code note in `references/database-query-profiling.md` for anything that turns up in a third-party extension instead):
 
 > **Choose the recipe for the shell that executes it.** The audit container reached through `govard sh` uses BusyBox `grep`, which does not implement GNU `--include`; a command such as `grep -rn --include='*.php'` therefore fails before it searches anything. Inside that container, use the `find … -type f -exec grep … {} +` forms below. `find` performs the filename filtering itself, `grep -Hn` preserves the file and line evidence needed by the report, and `{} +` batches inputs so the audit does not spawn one process per file. Do not replace `+` with `\;` unless the command must run once per path.
 >
@@ -22,7 +22,7 @@ find app/code -name '*.php' -type f -exec grep -Hn 'count(\$.*[Cc]ollection' {} 
 find app/code -name '*.xml' -type f -exec grep -Hl 'cacheable="false"' {} +
 ```
 
-The `foreach`/`->load()` grep is a heuristic, not a proof — read each hit to confirm it's actually iterating a list (a false positive: a single `->load()` inside a `foreach` that only ever runs once). For the `cacheable="false"` grep, check what page/layout handle it's declared under before flagging it — Magento's own core layout XML uses it by default on inherently personalized pages (customer account, checkout, wishlist, order history), where it's correct and expected, not a bug.
+The `foreach`/`->load()` grep is a heuristic, not a proof, read each hit to confirm it's actually iterating a list (a false positive: a single `->load()` inside a `foreach` that only ever runs once). For the `cacheable="false"` grep, check what page/layout handle it's declared under before flagging it, Magento's own core layout XML uses it by default on inherently personalized pages (customer account, checkout, wishlist, order history), where it's correct and expected, not a bug.
 
 ## N+1 Query Detection (From magento2-dev-core)
 
@@ -41,7 +41,7 @@ foreach ($collection as $product) {
 }
 ```
 
-> **A textual match isn't proof of a scaling bug — check what the collection is scoped to.** A `Ui\...\Form\DataProvider::getData()` (not `Grid\DataProvider`) matching this exact shape is usually harmless: Magento filters Form providers to the one entity id from the request, so it's one extra query on one row, not an N+1.
+> **A textual match isn't proof of a scaling bug, check what the collection is scoped to.** A `Ui\...\Form\DataProvider::getData()` (not `Grid\DataProvider`) matching this exact shape is usually harmless: Magento filters Form providers to the one entity id from the request, so it's one extra query on one row, not an N+1.
 
 ## Collection Counting
 
@@ -53,7 +53,7 @@ $count = count($this->collection->create()->getItems());
 $count = $this->collection->create()->getSize();
 ```
 
-> **Check whether the collection was already loaded earlier in the same method.** `count($collection->getItems())` only queries if the collection hasn't loaded yet — after an earlier `foreach`/`->load()` on the same instance, `getItems()` is free (cached array), and switching it to `getSize()` changes behavior (a fresh count) for no benefit.
+> **Check whether the collection was already loaded earlier in the same method.** `count($collection->getItems())` only queries if the collection hasn't loaded yet, after an earlier `foreach`/`->load()` on the same instance, `getItems()` is free (cached array), and switching it to `getSize()` changes behavior (a fresh count) for no benefit.
 
 ## Uncacheable Blocks
 
@@ -73,7 +73,7 @@ $count = $this->collection->create()->getSize();
 
 ## Batch-Preload Plugins Must Stay FPC-Safe
 
-A batch-preload plugin (the standard fix for a per-item N+1 — see the Known Core-Magento Pattern in `references/database-query-profiling.md`) usually sits on a listing block's collection method (`getLoadedProductCollection()`, `createCollection()`), which commonly renders on `full_page`-cached pages. **Any** `SessionManagerInterface`-backed session — `Customer\Model\Session`, `Checkout\Model\Session`/quote session, not just customer group — starts a PHP session on first read. Reading one here forces a session for anonymous visitors on every cache miss, or risks a session-derived value leaking into a response FPC serves to other visitors.
+A batch-preload plugin (the standard fix for a per-item N+1, see the Known Core-Magento Pattern in `references/database-query-profiling.md`) usually sits on a listing block's collection method (`getLoadedProductCollection()`, `createCollection()`), which commonly renders on `full_page`-cached pages. **Any** `SessionManagerInterface`-backed session, `Customer\Model\Session`, `Checkout\Model\Session`/quote session, not just customer group, starts a PHP session on first read. Reading one here forces a session for anonymous visitors on every cache miss, or risks a session-derived value leaking into a response FPC serves to other visitors.
 
 ```php
 // WRONG - opens a session inside code that renders on an FPC-cached page

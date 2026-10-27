@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+// Test shim for the Lighthouse CLI. Each invocation consumes the next run
+// from the JSON array in PERF_LH_SCRIPT and writes the report plus its
+// devtools log the way `--save-assets` does.
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
+const args = process.argv.slice(2)
+if (process.env.PERF_LH_ARGV_LOG) appendFileSync(process.env.PERF_LH_ARGV_LOG, `${JSON.stringify(args)}\n`)
+const url = args.find((a) => !a.startsWith('--'))
+const outPath = args.find((a) => a.startsWith('--output-path=')).slice(14)
+const counter = `${process.env.PERF_LH_SCRIPT}.n`
+const n = existsSync(counter) ? Number(readFileSync(counter, 'utf-8')) : 0
+writeFileSync(counter, String(n + 1))
+const run = JSON.parse(readFileSync(process.env.PERF_LH_SCRIPT, 'utf-8'))[n]
+const audit = (v) => ({ numericValue: v })
+writeFileSync(outPath, JSON.stringify({
+  requestedUrl: url, finalDisplayedUrl: url, lighthouseVersion: '12.0.0', fetchTime: '2026-10-26T00:00:00Z',
+  categories: { performance: { score: run.score / 100 } },
+  audits: { 'largest-contentful-paint': audit(run.lcp), 'cumulative-layout-shift': audit(run.cls ?? 0), 'server-response-time': audit(run.ttfb ?? 100), 'total-blocking-time': audit(0) },
+}))
+const events = run.noDocument ? [] : [{ method: 'Network.responseReceived', params: { type: 'Document', response: { url, status: 200, headers: run.headers ?? {} } } }]
+writeFileSync(outPath.replace(/\.json$/, '-0.devtoolslog.json'), JSON.stringify(events))
+// --save-assets also writes a large trace, as the real CLI does.
+writeFileSync(outPath.replace(/\.json$/, '-0.trace.json'), '{"traceEvents":[]}')
