@@ -2,11 +2,22 @@
 // Merges the findings.json files of the QA trio (and the performance audit)
 // into one code review findings.json. Usage:
 //   merge-findings.mjs --out findings.json <input.json>...
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const lib = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'magento2-dev-core', 'scripts', 'report', 'lib')
+// The findings contract is owned by magento2-dev-core. Sibling skill under
+// skills/ in the plugin; vendored as <skill>/vendor/report in a Claude.ai ZIP
+// (scripts/build-claude-ai-zips.mjs), so resolve either layout.
+const here = dirname(fileURLToPath(import.meta.url))
+const report = [
+  join(here, '..', '..', 'magento2-dev-core', 'scripts', 'report'),
+  join(here, '..', 'vendor', 'report'),
+].find((dir) => existsSync(join(dir, 'lib', 'validate.mjs')))
+if (report === undefined) {
+  throw new Error(`merge-findings.mjs: findings library not found: expected ../../magento2-dev-core/scripts/report or ../vendor/report beside ${here}`)
+}
+const lib = join(report, 'lib')
 const { SEVERITIES, validateFindings } = await import(join(lib, 'validate.mjs'))
 const { findingsVerdict } = await import(join(lib, 'findings-layout.mjs'))
 

@@ -1,17 +1,6 @@
 ---
 name: magento2-code-review
-description: |
-  This skill should be used when the user asks to "review this PR/MR",
-  "review this merge request", "review this module", "audit this module
-  before merge", "review this theme", "audit this theme PR", or wants a
-  "full review before release". Orchestrates a PR/MR, module, theme, or
-  full-project code review by running the QA trio (magento2-linter,
-  magento2-security-scan, magento2-performance-audit) and
-  magento2-dev-core's anti-pattern checks at the right scope, then merges
-  their findings into one report using a shared severity scale and stable
-  finding codes. DEPENDENT on magento2-dev-core; invokes magento2-linter,
-  magento2-security-scan, and magento2-performance-audit as needed for the
-  chosen scope.
+description: "Use when reviewing a Magento 2 PR/MR, module, theme or full project: runs the QA trio, merges findings into one report. Keywords review this MR, audit this module, review before release."
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
@@ -22,6 +11,13 @@ metadata:
 
 # Magento 2 Code Review
 
+## When to use
+
+Load this skill to orchestrate a code review; it is DEPENDENT on magento2-dev-core and invokes magento2-linter, magento2-security-scan and magento2-performance-audit at the scope chosen.
+
+- "review this PR/MR", "review this merge request", "review this module", "audit this module before merge"
+- "review this theme", "audit this theme PR", "full review before release", "full-project review"
+
 Orchestrates a review at one of four scopes, PR/MR, module, theme, or whole
 project, by calling the existing QA trio and `magento2-dev-core` at the
 right scope, then merging their output into one report with one severity
@@ -30,7 +26,7 @@ scale. This skill does not reimplement any check the trio already owns.
 ## Related Skills
 
 **REQUIRED BACKGROUND:** Load `magento2-dev-core` first, its
-`references/severity-and-codes.md` defines the severity scale and finding
+`magento2-dev-core/references/severity-and-codes.md` defines the severity scale and finding
 codes this skill's report uses.
 
 Invokes `magento2-linter` (style/static analysis), `magento2-security-scan`
@@ -50,7 +46,7 @@ skills expected to run before a release.
 | Local git diff | "review this PR", branch already checked out | `git diff` against a base ref |
 | Remote fetch | "review MR !123 before I check it out" | GitHub MCP (`pull_request_read`, preferred for GitHub) / `glab mr diff` / `gh pr diff`, **text-pattern checks only**, see below |
 
-> **Otherwise:** apply same extension/path table by hand and note split in review header.
+> **If the generator is unavailable:** apply the same extension/path table by hand and note the split in the review header.
 
 Full mechanics, exact commands, and the remote-fetch limitation:
 `references/scope-modes.md`.
@@ -66,10 +62,11 @@ Full mechanics, exact commands, and the remote-fetch limitation:
 3. Run `magento2-security-scan` against that file list (see its own
    "Scoping" section for how it accepts a list vs. a path), its
    text-pattern greps are genuinely file-scoped. `magento2-linter`'s native
-   gate is not: the file list does **not** flow into `govard audit run`, that command has no file-list or changed-lines argument, and its finest
-   granularity is a whole module (`module_in_project`) or the whole project
-   (`project`); `govard audit diff --base <ref>` records the base ref but
-   still analyzes the full target (`effective_scope: project`). So at PR/MR
+   gate takes a target, not a file list: `--scope diff --base <ref>` narrows it
+   to the changed PHP/phtml files, and `module_in_project` / `project` cover the
+   rest, but a file list you resolved yourself does not flow in. Its evidence
+   block still reports `effective_scope: project` whatever the base ref, so read
+   the file scope from the run's `diff-files.txt`. At PR/MR
    scope, invoke `magento2-linter`'s native run at whatever target mode it
    resolves to and pick the PHP matrix/provider per its "Govard-Native Lint
    Audit Is the Real Gate" section, don't restate that policy here, preserve the `govard audit run` session and run IDs it returns, and then

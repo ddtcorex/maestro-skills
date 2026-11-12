@@ -17,10 +17,12 @@ export function dropBrandMarkers(html) {
 }
 
 // Body-only form for hosts that wrap pages in their own skeleton. Contract 1:
-// the contract meta, then the whole inline <style> block, then the body content.
+// the contract meta, the page title (a host names the page from it), then the
+// whole inline <style> block, then the body content.
 export function toFragment(fullHtml) {
   const style = fullHtml.match(/<style>[\s\S]*?<\/style>/)
   const body = fullHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i)
   if (!style || !body) throw new Error('toFragment: document has no <style> or <body>')
-  return `${CONTRACT_META}\n${style[0]}\n${body[1].trim()}\n`
+  const title = fullHtml.match(/<title>[\s\S]*?<\/title>/)
+  return `${CONTRACT_META}\n${title ? `${title[0]}\n` : ''}${style[0]}\n${body[1].trim()}\n`
 }

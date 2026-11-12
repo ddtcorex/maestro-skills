@@ -1,19 +1,21 @@
 ---
 name: magento2-dev-core
-description: |
-  This skill should be used when the user is creating new Magento 2 modules or customizations,
-  implementing features following Magento architecture, working with Dependency Injection,
-  Repositories, or Plugins, writing secure Magento code, or building backend logic, CLI
-  commands, or cron jobs. Foundation skill for professional Magento 2 development. This is the
-  CORE skill that other Magento 2 skills depend on. Always load this first.
+description: "Use for Magento 2 module work: architecture, dependency injection, repositories, plugins, secure backend code, CLI, cron. Core skill, always load it first. Keywords dependency injection, plugin."
 compatibility: claude, codex, opencode, copilot, dsh
 metadata:
   audience: developers
   workflow: magento
-  requires: [magento2-linter, magento2-performance-audit]
+  # no `requires`: the other Magento skills declare this one as their dependency
 ---
 
 # Magento 2 Developer Core
+
+## When to use
+
+Load this skill before any other Magento 2 skill: it is the CORE skill the rest depend on for architecture, security and escaping.
+
+- "new Magento 2 module", "module customization", "Dependency Injection", "di.xml", "Repository", "Plugin", "interceptor"
+- "secure Magento code", "escaping", "backend logic", "CLI command", "cron job"
 
 This skill provides the foundational patterns all Magento 2 developers must follow. It covers architectural decisions, security, and best practices that apply to every part of a Magento project.
 
@@ -37,9 +39,14 @@ class MyService
         private readonly LoggerInterface $logger
     ) {}
 
-    public function getProduct(int $id): ?ProductInterface
+    /**
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getProduct(int $id): ProductInterface
     {
-        return $this->productRepository->get($id);
+        // get() takes a SKU; getById() takes the entity id and throws
+        // NoSuchEntityException instead of returning null.
+        return $this->productRepository->getById($id);
     }
 }
 ```
@@ -96,7 +103,7 @@ Prefer `before` and `after` plugins over `around` plugins:
 |-------------|----------|
 | `before` | Modify arguments before method execution |
 | `after` | Modify return value after method execution |
-| `around` | **Avoid unless necessary** - blocks original method execution |
+| `around` | **Avoid unless necessary** - wraps the original method; it is skipped only when `$proceed` is not called |
 
 ```php
 // Prefer this pattern
@@ -111,21 +118,21 @@ public function beforeExecute(
 // Instead of around plugins that wrap the entire method
 ```
 
-Plugins only intercept **public** methods, must be stateless, and should not target a module's own classes or data objects. Register them in `di.xml` with an explicit `sortOrder` when order matters. Observer order is *not* guaranteed by contrast, if the sequence matters, use a plugin instead of an observer. Before adding a new plugin or observer, check for existing ones on the same target class/event, `magento2-code-review`'s plugin/observer conflict check (`references/plugin-observer-conflict-check.md` in that skill) covers the grep procedure.
+Plugins only intercept **public** methods, must be stateless, and should not target a module's own classes or data objects. Register them in `di.xml` with an explicit `sortOrder` when order matters. Observer order is *not* guaranteed by contrast, if the sequence matters, use a plugin instead of an observer. Before adding a new plugin or observer, check for existing ones on the same target class/event, `magento2-code-review`'s plugin/observer conflict check (`magento2-code-review/references/plugin-observer-conflict-check.md`) covers the grep procedure.
 
 ### Declarative Schema
 
 Use `db_schema.xml` for all database changes. Never modify database directly:
 
 ```xml
-<!-- app/code/Vendor/Module/etc/db_schema.xml -->
 <?xml version="1.0"?>
+<!-- app/code/Vendor/Module/etc/db_schema.xml -->
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="vendor_module_custom_table" resource="default">
         <column xsi:type="int" name="id" padding="10" unsigned="true" nullable="false" identity="true"/>
         <column xsi:type="varchar" name="name" nullable="false" length="255"/>
-        <column xsi:type="timestamp" name="created_at" nullable="false" init="current"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="id"/>
         </constraint>
@@ -141,14 +148,14 @@ Use `db_schema.xml` for all database changes. Never modify database directly:
 |------|---------|
 | Class naming | `PascalCase` - `ProductRepository` |
 | Method naming | `camelCase` - `getProductById()` |
-| Property naming | `snake_case` - `$product_id`, `$_cacheIdPrefix` |
+| Property naming | `camelCase` - `$productId`, `$cacheIdPrefix` (legacy core code still has `$_underscore` names; do not copy them in new properties, but a subclass keeps inherited core names such as `$_eventPrefix` or `$_template`) |
 | Visibility | Always explicit - `public`, `protected`, or `private` |
 | Indentation | 4 spaces (no tabs) |
 | Line endings | LF (Unix) |
 
 ### PHPStan Requirements
 
-Always run PHPStan at level 6+ using `bitexpert/phpstan-magento` for Magento's magic classes.
+Run PHPStan with `bitexpert/phpstan-magento` for Magento's magic classes. Note the level you actually get: a project config at 6+ is what you want, but `govard audit run --checks lint` writes its own `phpstan.neon` at level 5 into the lint image and ignores the project one (`internal/frameworks/magento2/magento2.go` sets `PHPStanLevel: 5`), so the native gate is a level-5 run and there is no CLI flag to raise it. Keep the project's own `phpstan.neon` at 6+ as the stricter local gate, and treat the native run as the portable floor.
 
 ```bash
 # In a Govard environment
@@ -161,6 +168,7 @@ Always include at the top of new PHP files:
 
 ```php
 <?php
+
 declare(strict_types=1);
 ```
 
@@ -222,7 +230,7 @@ Use Magento wrappers instead of native PHP:
 | Native PHP | Use Instead |
 |------------|-------------|
 | `serialize/unserialize` | `SerializerInterface` |
-| `json_encode/decode` | `\Magento\Framework\Serialize\Serializer\Json` |
+| `json_encode/decode` | `\Magento\Framework\Serialize\Serializer\Json` (raw `json_encode` only when embedding into HTML/JS, and then with the `JSON_HEX_*` flags) |
 | `curl_*` | `Magento\Framework\HTTP\ClientInterface` |
 | `date()`, `time()` | `\Magento\Framework\Stdlib\DateTime\DateTime` |
 | `md5()`, `sha1()` | `EncryptorInterface` |
@@ -249,7 +257,7 @@ bin/magento cache:flush
 
 ### Creating a Module
 
-> **Otherwise:** manually verify registration.php, etc/module.xml sequence, and each etc/*.xml parses.
+> **If it is unavailable:** verify registration.php, the etc/module.xml sequence, and that each etc/*.xml parses, by hand.
 
 1. Create registration file: `app/code/Vendor/Module/registration.php`
 2. Create `etc/module.xml` with correct sequence
@@ -286,26 +294,7 @@ bin/magento cache:flush
 
 ## Configuration File Reference
 
-Quick lookup for what each `etc/` XML file controls:
-
-| File | Purpose |
-|------|---------|
-| `di.xml` | Dependency injection: preferences, plugins, virtual types |
-| `events.xml` | Observer registration |
-| `crontab.xml` / `cron_groups.xml` | Cron jobs / cron group tuning |
-| `acl.xml` | Admin permission tree |
-| `routes.xml` | Frontend/adminhtml controller routing |
-| `webapi.xml` | REST route declarations |
-| `system.xml` | Admin configuration fields |
-| `config.xml` | Default config values |
-| `indexer.xml` + `mview.xml` | Indexer declaration + its change tracker (enables schedule mode) |
-| `extension_attributes.xml` | Extend a core entity without a preference |
-| `view.xml` | Theme image/gallery sizing, layout config |
-| `queue.xml` / `communication.xml` | Message queue publishers, consumers, topics |
-| `widget.xml` | CMS widget declaration |
-| `email_templates.xml` | Transactional email template registration |
-
-**Rule of thumb**: stale *data* is an indexer problem (check `indexer:status`); stale *output* is a cache problem (`cache:clean`/`cache:flush`). Diagnose in that order rather than assuming a cache bug.
+Read [references/config-files.md](references/config-files.md) when a module needs a new `etc/` file, or when you need to know what each one declares.
 
 ## Anti-Pattern Severity (for code review)
 
@@ -327,5 +316,10 @@ minting a new one.
 For detailed patterns, see:
 - `references/coding-standards.md` - Extended PHPCS/PHPStan guide
 - `references/architecture-patterns.md` - Service contracts, repositories, plugins
+- `references/config-files.md` - The `etc/` files a module ships, and what each declares
+- `references/findings-schema.md`: the findings.json contract every report renderer takes
+  (`code`, `rule`, `severity`, anchors).
+- `references/report-theme.md`: the report theme and contract behind
+  `scripts/report/render.mjs`.
 - `references/security-best-practices.md` - Security checklist and patterns
 - `references/severity-and-codes.md` - Shared severity scale and finding codes (used by the whole QA quartet)

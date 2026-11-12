@@ -1,9 +1,20 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const SKILL = join(__dirname, '..', 'skills', 'magento2-hyva-dev', 'SKILL.md')
-function skill() { return readFileSync(SKILL, 'utf-8') }
+const SKILL_DIR = join(__dirname, '..', 'skills', 'magento2-hyva-dev')
+/**
+ * The whole skill, body plus references. The house style keeps SKILL.md short and
+ * pushes the review checklist into `references/`, so a lesson may move one file
+ * down; a lesson missing from the skill entirely still fails.
+ */
+function skill() {
+  const references = readdirSync(join(SKILL_DIR, 'references')).filter(f => f.endsWith('.md'))
+  return [
+    readFileSync(join(SKILL_DIR, 'SKILL.md'), 'utf-8'),
+    ...references.map(f => readFileSync(join(SKILL_DIR, 'references', f), 'utf-8')),
+  ].join('\n')
+}
 
 describe('hyva review feedback: Alpine nested scope', () => {
   it('teaches that a nested x-data reads and writes its ancestors', () => {

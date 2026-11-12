@@ -48,8 +48,8 @@ govard sh -c "lock=var/debug/.performance-audit.lock; mkdir \"\$lock\" || { echo
 govard sh -c "test \"\$(cat var/debug/.performance-audit.lock/owner 2>/dev/null)\" = '$audit_token' || exit 1; bin/magento dev:query-log:enable --include-all-queries=true --include-call-stack=true --query-time-threshold=0"
 
 # Visit the page(s) to capture queries: output goes to var/debug/db.log (plain text, NOT *.sql)
-# Format per entry: a "## <connectionId> ## QUERY" header (the connection id varies, so don't
-# anchor a grep on a bare "## QUERY": it will never match), then "SQL: ...", "AFF: <rows>",
+# Format per entry: a "## <pid> ## QUERY" header (the number is the PHP process id, so an
+# anchored grep such as '^## QUERY' never matches; match the substring), then "SQL: ...", "AFF: <rows>",
 # "TIME: <seconds>", then (if --include-call-stack=true) a full PHP call stack: use the stack
 # to trace a repeated/slow query back to the exact file:line that issued it.
 

@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { normalizeRecommendations } from './perf-layout.mjs'
+import { buildTokens, isBaseline, matrixRows, narrativeErrors } from './tokens.mjs'
 
 export const SEVERITIES = ['critical', 'high', 'medium', 'low']
 
@@ -79,6 +81,60 @@ function matrixErrors(matrix) {
   return errors
 }
 
-export function validatePerf(data) {
-  return [...evidenceErrors(data.sections), ...themeCoverageErrors(data), ...matrixErrors(data.matrix)]
+// Ids a report link can target: lowercase ASCII words joined by hyphens,
+// never a section id or a page block prefix of the report, never a name
+// claude.ai keeps for itself.
+const ID_RULE = /^[a-z0-9]+(-[a-z0-9]+)*$/
+const RESERVED_IDS = ['settings', 'sidebar', 'customize', 'upgrade', 'downloads']
+const SECTION_IDS = ['verdict', 'urls-audited', 'comparison-matrix', 'infrastructure', 'cache-status', 'cache-invalidation', 'ajax-load', 'indexer', 'database', 'slow-queries', 'per-page-queries', 'repeated-shapes', 'timers', 'core-web-vitals', 'code-patterns', 'recommendations', 'coverage', 'key-figures', 'in-short', 'next-steps', 'results', 'how-to-read', 'glossary']
+
+function recommendationIdErrors(data) {
+  return (data.recommendations ?? [])
+    .filter((r) => typeof r === 'object' && r !== null)
+    .map((r) => r.id)
+    .filter((id) => typeof id !== 'string' || !ID_RULE.test(id) || RESERVED_IDS.includes(id) || SECTION_IDS.includes(id) || /^(comment|page|queries|timers)-/.test(id))
+    .map((id) => `recommendations: id "${id}" must be lowercase words joined by hyphens and not a reserved or section name`)
+}
+
+export const PRIORITIES = ['blocker', 'high', 'medium', 'low']
+
+// The client report is built from the agent's clientSummary; a missing or
+// inconsistent summary is an error, never a fallback to developer content.
+function clientErrors(data) {
+  const summary = data.clientSummary
+  if (!summary) return ['clientSummary: required for the client report']
+  const errors = []
+  const takeaways = summary.takeaways ?? []
+  if (takeaways.length < 3 || takeaways.length > 6) errors.push(`clientSummary.takeaways: 3 to 6 items, found ${takeaways.length}`)
+  const steps = summary.nextSteps ?? []
+  if (steps.length === 0) errors.push('clientSummary.nextSteps: at least one step')
+  steps.forEach((s, i) => {
+    if (!PRIORITIES.includes(s.priority)) errors.push(`clientSummary.nextSteps[${i}].priority: "${s.priority}" is not one of ${PRIORITIES.join(', ')}`)
+  })
+  const rank = steps.map((s) => PRIORITIES.indexOf(s.priority))
+  if (rank.some((r, i) => i > 0 && r < rank[i - 1])) errors.push(`clientSummary.nextSteps: sort by priority ${PRIORITIES.join(', ')}`)
+  let recIds = new Set()
+  try {
+    recIds = new Set(normalizeRecommendations(data.recommendations).map((r) => r.id))
+  } catch (err) {
+    errors.push(err.message)
+  }
+  const decisionIds = new Set((summary.decisions ?? []).map((d) => d.id))
+  steps.forEach((s, i) => {
+    if (s.decision !== undefined && !decisionIds.has(s.decision)) errors.push(`clientSummary.nextSteps[${i}].decision: unknown decision ${s.decision}`)
+    for (const ref of s.refs ?? []) if (!recIds.has(ref)) errors.push(`clientSummary.nextSteps[${i}].refs: unknown recommendation ${ref}`)
+  })
+  // A page that breaks after the change blocks the release; the status tile
+  // must not read "Release: ready" over it.
+  if (!isBaseline(data) && !steps.some((s) => s.priority === 'blocker')) {
+    for (const row of matrixRows(data)) {
+      if (row.after?.skipped?.includes('(regression)')) errors.push(`clientSummary.nextSteps: ${row.label} fails after the change; add a blocker step`)
+    }
+  }
+  return [...errors, ...narrativeErrors(summary, buildTokens(data), { baseline: isBaseline(data) })]
+}
+
+export function validatePerf(data, audience = 'dev') {
+  const errors = [...evidenceErrors(data.sections), ...themeCoverageErrors(data), ...matrixErrors(data.matrix), ...recommendationIdErrors(data)]
+  return audience === 'client' ? [...errors, ...clientErrors(data)] : errors
 }

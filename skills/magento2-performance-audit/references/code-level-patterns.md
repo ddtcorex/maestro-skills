@@ -58,17 +58,16 @@ $count = $this->collection->create()->getSize();
 ## Uncacheable Blocks
 
 ```xml
-<!-- WRONG - Prevents FPC -->
-<referenceBlock name="content" cacheable="false">
-    <!-- This block will prevent full page caching -->
-</referenceBlock>
+<!-- WRONG - Prevents FPC for the whole page. Also invalid on a reference:
+     blockReferenceType in elements.xsd allows only name, template, class,
+     group, display and remove, so cacheable is ignored here. -->
+<referenceBlock name="content" cacheable="false"/>
 
-<!-- CORRECT - Use esi:inline directive if needed -->
-<referenceBlock name="dynamic.block" template="Magento_Cms::dynamic.phtml">
-    <arguments>
-        <argument name="cache_lifetime" xsi:type="number">3600</argument>
-    </arguments>
-</referenceBlock>
+<!-- CORRECT - opt the block itself out, and only that block -->
+<block name="dynamic.block" template="Vendor_Module::dynamic.phtml" cacheable="false"/>
+
+<!-- CORRECT - a cheaper TTL on a block you own -->
+<block name="vendor.promo" template="Vendor_Module::promo.phtml" cacheable="true" ttl="3600"/>
 ```
 
 ## Batch-Preload Plugins Must Stay FPC-Safe
@@ -133,10 +132,9 @@ class FlushFullPageCache implements ObserverInterface
 public function execute(Observer $observer): void
 {
     $product = $observer->getEvent()->getProduct();
-    $this->cache->clean(
-        \Zend_Cache::CLEANING_MODE_MATCHING_TAG,
-        [\Magento\Catalog\Model\Product::CACHE_TAG . '_' . $product->getId()]
-    );
+    // CacheInterface::clean(array $tags): one argument. The two-argument
+    // ($mode, $tags) form belongs to PageCache\Model\Cache\Type only.
+    $this->cache->clean([\Magento\Catalog\Model\Product::CACHE_TAG . '_' . $product->getId()]);
 }
 
 // EVEN BETTER - don't add a parallel custom flush at all; make sure the

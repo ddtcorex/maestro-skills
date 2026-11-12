@@ -1,11 +1,6 @@
 ---
 name: magento2-security-scan
-description: |
-  This skill should be used when the user asks to "run a security audit", "find
-  vulnerabilities", "check for XSS", "check CSRF protection", "validate form security", "run a
-  dependency audit", "check for outdated packages", "run a PCI compliance check", or "do a
-  security review before deploy". Scans Magento 2 code for security vulnerabilities and
-  compliance issues. DEPENDENT on magento2-dev-core for security patterns.
+description: "Use when auditing Magento 2 security: XSS, CSRF, form security, dependency and outdated package checks, PCI compliance, or a security review before deploy. Keywords security audit, XSS, CSRF."
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
@@ -14,6 +9,14 @@ metadata:
 ---
 
 # Magento 2 Security Scanner
+
+## When to use
+
+Load this skill to scan Magento 2 code for vulnerabilities and compliance issues; it is DEPENDENT on magento2-dev-core for security patterns.
+
+- "run a security audit", "find vulnerabilities", "check for XSS", "check CSRF protection", "validate form security"
+- "run a dependency audit", "check for outdated packages", "run a PCI compliance check"
+- "do a security review before deploy"
 
 This skill performs security scanning for vulnerabilities, misconfigurations, and compliance issues.
 
@@ -71,22 +74,20 @@ curl -I https://store.test/.git/config
 ### 4. CSP Configuration
 
 ```bash
-# Check CSP settings
-govard sh -c "bin/magento config:get cms/wysiwyg/use_static_urls"
-govard sh -c "bin/magento config:get design/content-security_policy/enable_content_security_policy"
+# Magento has no config:get; config:show resolves the full precedence chain.
+govard sh -c "bin/magento config:show csp/mode/storefront/report_only"
+# (cms/wysiwyg/use_static_urls_in_catalog is a real path but a catalog setting, not CSP)
 ```
 
 ## Scanner Commands
 
 ### PHP Security Checker
 
-```bash
-# Install security tools
-composer require --dev magento/security-package --no-interaction
-
-# Run Magento security scan
-govard sh -c "vendor/bin/magento-security-scanner scan ./app/code/Vendor/Module"
-```
+Magento ships no scanner binary: `magento/security-package` is the metapackage
+for the 2FA, reCAPTCHA and admin security modules, not a patch package, and the
+official Security Scan is a hosted service you register a public URL with from
+your Adobe Commerce account (account.magento.com), not from the store admin. Locally, `composer audit` (below) plus the
+Adobe security bulletin for your exact version is what you can run.
 
 ### Dependency Audit
 
@@ -94,8 +95,9 @@ govard sh -c "vendor/bin/magento-security-scanner scan ./app/code/Vendor/Module"
 # Check for known vulnerabilities
 govard sh -c "composer audit --no-interaction"
 
-# Check for outdated packages with security fixes
-govard sh -c "composer outdated --direct --format=json | jq '.[] | select(.[\"security-update\"]) | .name'"
+# Machine-readable CVE list (composer outdated --format=json returns an object
+# keyed `installed`/`locked` with no advisories, so it cannot answer this)
+govard sh -c "composer audit --format=json | jq -r '.advisories | keys[]'"
 ```
 
 ### File Permission Check
@@ -127,7 +129,7 @@ live there, not here.
 
 Authentication & Authorization, Data Exposure, and CSP Configuration
 (sections 2-4 above) are not file-list-scoped at all, they check the
-running environment (`env.php`, a live URL, `bin/magento config:get`), not
+running environment (`env.php`, a live URL, `bin/magento config:show`), not
 specific files. They cannot run against a PR/MR diff or remote fetch (no
 checked-out environment to query there) and, even at project/module scope,
 run once per audit rather than once per file. `magento2-code-review`
@@ -156,12 +158,15 @@ running the review to decide silently.
     <?= $block->getBlockHtml('formkey') ?>
 </form>
 
-// AJAX with form key
+// AJAX with form key. Inside an AMD module declare the dependencies
+// (define(['jquery', 'mage/cookies'], function ($) {...})); there is no global
+// $ in Magento's module scope, and 'mage/cookies' provides $.mage.cookies.
+// Alternatively pass the form key from the template into the component config.
 $.ajax({
     url: url,
     type: 'POST',
     data: {
-        form_key: $.cookie('form_key'),
+        form_key: $.mage.cookies.get('form_key'),
         ...data
     }
 });
@@ -177,10 +182,10 @@ govard sh -c "bin/magento config:show admin/security/use_form_key"
 
 ## Rate Limiting
 
-```bash
-# Configure rate limiting
-govard sh -c "bin/magento config:set web/secure/open_restriction_enabled 1"
-```
+Magento has no built-in rate-limit switch (`web/secure/open_restriction_enabled`
+is not a real config path, so setting it writes a dead row). Rate limiting is an
+edge control: put it in nginx, the WAF or the CDN in front of the store, and
+verify it there.
 
 ## Security Headers
 
@@ -189,14 +194,13 @@ Check in nginx/Apache config or .htaccess:
 ```
 X-Frame-Options: SAMEORIGIN
 X-Content-Type-Options: nosniff
-X-XSS-Protection: 1; mode=block
 Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: camera=(), microphone=(), geolocation=()
 ```
 
 ## PCI-DSS 4.0 Checklist (E-commerce)
 
-From April 2025, payment pages require:
+Since 31 March 2025 the v4.0 future-dated requirements (6.4.3 and 11.6.1) apply to payment pages:
 
 - [ ] `unsafe-eval` CSP disabled
 - [ ] `unsafe-inline` CSP disabled

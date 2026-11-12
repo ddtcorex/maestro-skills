@@ -8,7 +8,7 @@ const renderCli = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts'
 const fixture = join(__dirname, 'fixtures', 'report', 'perf-audit-data.json')
 const count = (text: string, needle: string) => text.split(needle).length - 1
 const anchors = [
-  '<meta name="maestro-report-contract" content="1">',
+  '<meta name="maestro-report-contract" content="2">',
   ':root{--header-bg:',
   'code{font-family:',
   'aria-label="Maestro logo"',
@@ -18,7 +18,11 @@ const anchors = [
 
 function h2Texts(html: string): string[] {
   return [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((m) =>
-    m[1].replace(/<span[\s\S]*?<\/span>/g, '').replace(/<[^>]+>/g, '').trim(),
+    m[1]
+      .replace(/<a[^>]*class="anchor"[\s\S]*?<\/a>/g, '')
+      .replace(/<span[\s\S]*?<\/span>/g, '')
+      .replace(/<[^>]+>/g, '')
+      .trim(),
   )
 }
 
@@ -32,7 +36,7 @@ describe('report renderer, perf layout', () => {
 
   it('prints the contract number', () => {
     const res = spawnSync('node', [renderCli, '--contract'], { encoding: 'utf-8' })
-    expect(res.stdout.trim()).toBe('1')
+    expect(res.stdout.trim()).toBe('2')
   })
 
   it('writes the markdown, full html and body fragment', () => {
@@ -61,7 +65,8 @@ describe('report renderer, perf layout', () => {
 
   it('fills the title and verdict from the data file', () => {
     const html = readFileSync(join(out, 'report.html'), 'utf-8')
-    expect(html).toMatch(/<h1 data-report-title>Performance Audit - acme-shop<\/h1>/)
+    expect(html).toMatch(/<title>Performance Audit - acme-shop - 2026-10-26<\/title>/)
+    expect(html).toMatch(/<h1 data-report-title>/)
     expect(html).toMatch(/data-report-verdict>Uncached queries drop on every comparable page\.</)
   })
 })

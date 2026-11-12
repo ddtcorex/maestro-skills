@@ -42,7 +42,7 @@ interface ProductRepositoryInterface
 {
     public function save(ProductInterface $product): ProductInterface;
     public function getById(int $id): ProductInterface;
-    public function get(SearchCriteriaInterface $searchCriteria): \Magento\Framework\Api\SearchResultsInterface;
+    public function getList(SearchCriteriaInterface $searchCriteria): \Magento\Framework\Api\SearchResultsInterface;
     public function delete(ProductInterface $product): bool;
     public function deleteById(int $id): bool;
 }
@@ -59,7 +59,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function save(ProductInterface $product): ProductInterface
     {
         // Business logic here is OK for minimal transforms
-        $product->setUpdatedAt(date('Y-m-d H:i:s'));
+        $product->setUpdatedAt($this->dateTime->gmtDate());
         // BUT complex logic should be elsewhere
     }
 }

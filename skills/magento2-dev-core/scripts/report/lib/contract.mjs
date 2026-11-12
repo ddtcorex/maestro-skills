@@ -1,6 +1,7 @@
 // Report contract: the anchors and attributes a brand overlay relies on.
 // Bump REPORT_CONTRACT on any change to the anchors or the overlay token map.
-export const REPORT_CONTRACT = 1
+// 2: the overlay token map gains --chart-before and --chart-after.
+export const REPORT_CONTRACT = 2
 
 export const ANCHORS = {
   rootHeader: ':root{--header-bg:',

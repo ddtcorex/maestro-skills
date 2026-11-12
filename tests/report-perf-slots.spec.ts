@@ -73,6 +73,11 @@ const PRODUCERS = new Set([
   'code_patterns_sub',
   'cwv_badge',
   'cwv_status',
+  'header_side',
+  'eyebrow',
+  'subtitle',
+  'verdict_detail',
+  'repeated_table',
 ])
 
 const markers = (text: string) => [...text.matchAll(/{{([a-zA-Z_0-9]+)}}/g)].map((m) => m[1])

@@ -65,6 +65,7 @@ export function readRun(outPath) {
     lcpMs: value('largest-contentful-paint') === null ? null : Math.round(value('largest-contentful-paint')),
     cls: value('cumulative-layout-shift') === null ? null : Math.round(value('cumulative-layout-shift') * 1000) / 1000,
     ttfbMs: value('server-response-time') === null ? null : Math.round(value('server-response-time')),
+    tbtMs: value('total-blocking-time') === null ? null : Math.round(value('total-blocking-time')),
     runtimeError: report.runtimeError?.code ?? null,
     ...hitSignal(log, report.finalDisplayedUrl ?? report.requestedUrl),
   }

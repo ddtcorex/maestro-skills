@@ -1,11 +1,6 @@
 ---
 name: govard-magento
-description: |
-  This skill should be used when the user asks to "clear Magento cache", "flush redis cache",
-  "run Magento CLI", "run bin/magento commands", "deploy static content", "setup:di:compile",
-  "reindex catalog", "run indexer commands", "enable/disable modules", "start frontend sync",
-  "run browser-sync", "set up live reload for Hyva/Luma", or "govard frontend". Provides
-  Magento-specific Govard shortcuts and commands. DEPENDENT on govard-toolbox for base commands.
+description: Use when clearing Magento or redis cache, running bin/magento, deploying static content, setup:di:compile, reindexing, or frontend live reload. Keywords clear Magento cache, run bin/magento commands, govard frontend.
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [govard-toolbox]
 metadata:
@@ -14,6 +9,14 @@ metadata:
 ---
 
 # Govard Magento Commands
+
+## When to use
+
+Load this skill for Magento shortcuts on a Govard project; it is DEPENDENT on govard-toolbox for the base commands.
+
+- "clear Magento cache", "flush redis cache", "run Magento CLI", "run bin/magento commands"
+- "deploy static content", "setup:di:compile", "reindex catalog", "run indexer commands", "enable/disable modules"
+- "start frontend sync", "run browser-sync", "set up live reload for Hyva/Luma", "govard frontend"
 
 Magento-specific shortcuts and commands for Govard environments. Run `govard <cmd> --help` for the current flag set and `govard capabilities` for what the installed binary supports.
 
@@ -43,7 +46,7 @@ The profiler reads the CSV Magento writes to `var/log/profiler.csv`. If the run 
 
 Gotchas:
 
-- An audit refuses to run while Xdebug is enabled, to protect timing fidelity. Pass `--allow-xdebug` to accept the overhead, or turn Xdebug off with `govard debug off`. (The error text suggests `govard config set stack.features.xdebug false`, but `config set` rejects that key.)
+- The **profiler** check refuses to run while Xdebug is enabled, because it measures timing; `lint` and `integrity` run anyway. Pass `--allow-xdebug` to accept the overhead, or turn Xdebug off with `govard debug off`. (The error text suggests `govard config set stack.features.xdebug false`, but `config set` rejects that key.)
 - `audit rerun` reuses the session's stored checks. Passing a different `--checks` set than the session recorded can fail with "no persisted ... settings"; start a new `audit run` instead.
 
 ## Unit Tests
@@ -119,31 +122,7 @@ govard tool magento dev:query-log:enable         # also :disable
 
 ## Frontend Development (BrowserSync / LiveReload)
 
-Requires `stack.features.frontend_sync: true` in `.govard.yml` (Magento family only). Without it, `govard frontend ...` exits with "frontend sync is disabled". `govard env up` never starts this; it is a separate, explicit, on-demand lifecycle:
-
-```bash
-govard env up                    # app/db/etc. up, no frontend services yet
-govard frontend start            # renders + starts BrowserSync/LiveReload + watchers
-govard frontend logs -f          # sync/injector container
-govard frontend logs watch-<theme> -f
-govard frontend stop             # removes only frontend services, keeps their volumes
-```
-
-**Prerequisites (Govard never creates or edits these files):**
-
-Let `govard frontend start` be the discovery oracle: it validates the setup and fails fast with the reason. Only read theme files to fix a specific failure; do not pre-verify by hand.
-
-- **Hyva:** exactly one `scripts.browser-sync` owner under `app/design/frontend/<Vendor>/<Theme>/web/tailwind`, with a committed `package-lock.json`. The theme's `browser-sync.config.js` must read `GOVARD_FRONTEND_SYNC_TARGET` (and port) from the environment instead of hard-coding a host.
-- **Luma:** root `Gruntfile.js`, `package.json`, `package-lock.json` (copy Magento's `.sample` files, then `govard tool npm install`). No BrowserSync config needed.
-- Hyva and Luma discovery are exclusive: start fails unless exactly one setup is valid.
-
-**Switching the active Hyva theme:** move the `scripts.browser-sync` entry (plus its `browser-sync.config.js` and `package-lock.json`) from the old theme's `web/tailwind/package.json` to the new theme, then run `govard frontend start` again.
-
-| Symptom | Fix |
-|---|---|
-| `frontend start` reports success but the page redirects to a different host or drops the session | The theme's `browser-sync.config.js` proxy settings rewrite the origin or cookie domain; keep both unchanged |
-| Discovery fails ("requires either exactly one Hyva ... or root Gruntfile.js and package.json") | Confirm exactly one theme owns `scripts.browser-sync`, or that the Luma root files exist, and not both |
-| `frontend start` fails with "container ... health is unhealthy" | Read `govard frontend logs`; the sync container could not serve the project (for example Luma themes not yet compiled) |
+Read [references/FRONTEND.md](references/FRONTEND.md) when starting, stopping or debugging `govard frontend`, or when live reload is silently off.
 
 ## Database Operations
 
@@ -261,45 +240,4 @@ Template-only changes do not need `setup:di:compile`, only `setup:static-content
 
 ## Common Workflows
 
-### After Pulling Code
-
-```bash
-govard tool magento setup:upgrade --keep-generated
-govard tool magento setup:static-content:deploy -f
-govard tool magento cache:flush
-```
-
-### After Database Sync
-
-```bash
-govard config auto   # re-applies local DB, search, Redis, Varnish, base URLs and developer mode
-govard tool magento cache:flush
-```
-
-### Production Deployment Prep
-
-```bash
-govard tool magento maintenance:enable
-govard tool magento setup:upgrade
-govard tool magento setup:di:compile
-govard tool magento setup:static-content:deploy -f --theme=Vendor/Theme
-govard tool magento cache:flush
-govard tool magento maintenance:disable
-```
-
-### Govard Deploy (conditional migrate)
-
-`govard deploy <remote>` probes `setup:db:status` before the downtime block: exit 0 skips maintenance/workers/config-import/migrate, 1-2 runs them. `govard deploy plan <remote>` prints the resolved task list without executing anything (it needs a configured branch or `--branch`; the synthetic `sandbox` remote resolves the current branch by itself). See `govard-toolbox` (Deployment) for the full gate, verdict, and resume semantics.
-
-Rehearsing it against `govard sandbox` (confirmed live on a real Magento project):
-
-- **Seed needs an installed origin.** `sandbox up` dumps the running origin database and rewrites `core_config_data` base URLs. An origin with an empty database (no `bin/magento setup:install` yet) fails the seed with "Table ... core_config_data doesn't exist". Install the origin first.
-- **Database profile.** `--profile full` follows `stack.db_version`. A MariaDB series that ships no `mysqladmin` binary (the newest series) never answers the readiness probe, so `up` fails with exit 127 on `mysqladmin ping`. Pass `--db mariadb:<older series>` for the rehearsal; a database volume written by another series is refused until `sandbox down --purge`.
-- **Track source only.** The sandbox mirrors the git repository, so ignore `pub/static/*`, `generated/*`, `var/*`, `pub/media/*` and `app/etc/env.php`. A checkout that tracks built `pub/static` (dangling symlinks into the origin path) makes `build:assets` fail with "cannot be copied" warnings.
-- **Shared files.** `app/etc/env.php` and `pub/media` are shared and come from the seed, not from git. `sandbox reset` removes them: afterwards `build:assets` fails with "The default website isn't defined" until `sandbox up --reseed` restores `env.php`.
-- **Migrate step.** With an up-to-date schema the maintenance, worker-pause, config-import and migrate tasks are reported as skipped ("db up-to-date"). A pending schema change (for example a new module with `db_schema.xml`) runs maintenance, `setup:upgrade` (it completed on the sandbox without a search service), then maintenance off before the symlink swap. A failure after maintenance is enabled keeps the lock, the release directory and the maintenance flag: the live site answers 503 until `deploy --resume` completes or `deploy rollback` is run. `deploy unlock` alone does not clear maintenance, and refuses a young lock without `--force`.
-- **`--db-backup`.** The task takes a plain `mariadb-dump`/`mysqldump` of the database named in `app/etc/env.php`, with the credentials in a private option file (stock Magento disables `setup:backup`, so it is not used). A target with no dump client is refused up front as a configuration error (exit `4`). The dump lands in the release's backup area; `deploy rollback --with-db` restores the dump recorded by the release being replaced and creates `var/backups` if it is missing. The flag is not remembered across `--resume`, repeat it.
-- **Pulling files.** A pull does not follow symlinks that point outside the synced path (rsync `--safe-links`), so `sync -s <remote> --file --path app/etc` leaves the local `env.php` alone when the remote one is a symlink to a shared path. Add `--resolve-symlinks` only when you want the target's content copied.
-- **Doc roots.** `remote exec <remote> -- <cmd>` fails with "cd: ... No such file or directory" until the first release is live on a `symlink` sandbox. `govard sandbox ssh -- <cmd>` runs one command without a tty and returns its exit status (a command without `--` is a usage error); `remote exec` still needs the first deploy.
-- **Open targets.** `govard open admin|sftp -e sandbox` resolves the synthetic remote and uses the published port.
-- **Local audits.** `audit run` refuses while `stack.features.xdebug` is on unless `--allow-xdebug` is passed; the lint rows report real findings when core code is tracked in the checkout.
+Read [references/WORKFLOWS.md](references/WORKFLOWS.md) when running a routine sequence (after a pull, after a database sync, a production deploy prep) and you want the exact command order.

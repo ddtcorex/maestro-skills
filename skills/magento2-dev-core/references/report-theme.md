@@ -63,7 +63,7 @@ Layout rule: every card renders its context note below table markup, never above
 <!-- inline <style> above -->
 </head>
 <body>
-<div class="header"><div class="header-inner">{{brand_logo}}<!-- default Maestro lockup, see Brand defaults --><h1>{{title}}</h1><div class="meta">{{meta}}</div></div></div>
+<div class="header"><div class="header-inner"><div class="header-top">{{brand_logo}}<!-- default Maestro lockup, see Brand defaults --><div class="header-side">{{header_side}}</div></div><div class="eyebrow">{{eyebrow}}</div><h1>{{heading}}</h1><div class="subtitle">{{subtitle}}</div><div class="meta">{{meta}}</div></div></div>
 <div class="container">
   <div class="kpi">{{kpi}}</div>
   <div class="card"><h2>URLs Audited <span class="badge badge-gray">{{scope}}</span></h2>{{urls}}</div>
@@ -88,17 +88,17 @@ Layout rule: every card renders its context note below table markup, never above
 
 ### Brand defaults (Maestro)
 
-The template ships with Maestro defaults in all three slots, so a default render carries the brand: inline SVG lockup, primary accents, Inter with JetBrains Mono for code. Token copies carry the source stamp, which tests pin instead of the values, so drift is detected without duplicating ownership.
+The template ships with Maestro defaults in all three slots, so a default render carries the brand: inline SVG lockup, primary accents, Inter with JetBrains Mono for code. Token copies carry the source stamp tests pin, so drift is detected without duplicating ownership.
 
-`{{brand_logo}}` sits in the header above the title, defaulting to the inline SVG lockup: the Maestro M in white on a blue rounded tile, with the Maestro wordmark in white for the dark header. Default renders keep the SVG, drop the marker line; an overlay fills the marker, drops the default block. Never use an external image reference: single-file HTML stays offline capable with the logo inline.
+`{{brand_logo}}` sits at the left of the header top row, with the client line (`.header-side`: client, stack, measurement date) on the right and the eyebrow, title, subtitle and meta below, defaulting to the inline SVG lockup: the Maestro M in white on a blue rounded tile, with the Maestro wordmark in white for the dark header. Default renders keep the SVG, drop the marker line; an overlay fills the marker, drops the default block. Never use an external image: single-file HTML stays offline capable with the logo inline.
 
-`{{brand_colors}}` sits on its own line after the `:root` rules and defaults to the Maestro palette already there. An overlay fills it with one `:root` block redefining only tokens from the overlay token map below, header tokens included, which stay fixed in both modes per the theme rule above.
+`{{brand_colors}}` sits after the `:root` rules and defaults to the Maestro palette already there. An overlay fills it with one `:root` block redefining only tokens from the overlay token map below, header tokens included, which stay fixed in both modes per the theme rule above.
 
 `{{brand_font}}` sits on its own line after the `body` rule and defaults to the Inter stack in `body` plus the JetBrains Mono `code` rule. An overlay replaces it with one `body` rule setting only the family stack, leaving size, line height, and spacing untouched.
 
 ### Overlay token map
 
-An overlay rebrands the report by redefining custom properties, never by overriding selectors, so an upstream class rename cannot silently drop its branding. These are the only tokens an overlay may set:
+An overlay rebrands through custom properties, never selectors, so an upstream class rename cannot drop its branding. Only these tokens may be set:
 
 | Token | Role |
 |---|---|
@@ -113,15 +113,17 @@ An overlay rebrands the report by redefining custom properties, never by overrid
 | `--header-accent` | header bottom border |
 | `--header-code-bg` | code chips in the header meta |
 | `--link-decoration` | link underline, `none` or `underline` |
+| `--chart-before` | bars of the previous run in the client chart (report contract 2) |
+| `--chart-after` | bars of this run in the client chart (report contract 2) |
 
-Status colors stay stock everywhere.
+Status colors stay stock.
 
-Each slot takes exactly one construct:
+Each slot takes one construct:
 
-- `{{brand_colors}}` is one `:root{...}` block of tokens from the table above.
-- `{{brand_font}}` is one complete `body{font-family:Inter}` rule; put the whole family stack in it.
+- `{{brand_colors}}` is one `:root{...}` block of tokens from the table.
+- `{{brand_font}}` is one complete `body{font-family:Inter}` rule carrying the whole family stack.
 
-A bare declaration such as `font-family:Inter;` at the top level of the style block merges into the next selector and drops that rule: the font never applies and links lose their style. Unread properties such as `--brand-primary` change nothing. Keep text tokens at 4.5:1 contrast against their background; a bright accent belongs on `--header-accent`, not on text.
+A bare `font-family:Inter;` declaration merges into the next selector, dropping that rule: the font never applies and links lose their style. Unread properties such as `--brand-primary` do nothing. Keep text tokens at 4.5:1 contrast; a bright accent belongs on `--header-accent`.
 
 ```css
 :root{--header-bg:#ffffff;--header-text:#0f172a;--header-accent:#0a84ff;--header-code-bg:#f8fafc;--blue:#2563eb}

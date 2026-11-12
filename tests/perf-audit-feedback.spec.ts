@@ -1,10 +1,20 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
-const SKILL = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'SKILL.md')
+const SKILL_DIR = join(__dirname, '..', 'skills', 'magento2-performance-audit')
+const SKILL = join(SKILL_DIR, 'SKILL.md')
 function skill() { return readFileSync(SKILL, 'utf-8') }
+/**
+ * The whole skill, body plus references. The house style keeps SKILL.md short and
+ * moves budget and quoting detail into `references/`, so a lesson may move one
+ * file down; a lesson missing from the skill entirely still fails.
+ */
+function wholeSkill() {
+  const references = readdirSync(join(SKILL_DIR, 'references')).filter((f) => f.endsWith('.md')).sort()
+  return [skill(), ...references.map((f) => readFileSync(join(SKILL_DIR, 'references', f), 'utf-8'))].join('\n')
+}
 
 describe('perf-audit feedback P1', () => {
   it('points query-log analysis at the shell recipes, not a removed stats tool', () => {
@@ -20,8 +30,8 @@ describe('perf-audit feedback P2', () => {
     const dir = join(__dirname, '..', 'skills', 'magento2-performance-audit')
     const perPage = readFileSync(join(dir, 'references', 'per-page-type-audit.md'), 'utf-8')
     const template = readFileSync(join(dir, 'references', 'report-template.md'), 'utf-8')
-    expect(skill()).toContain('30-45m')
-    expect(skill()).toContain('144 tool calls')
+    expect(wholeSkill()).toContain('30-45m')
+    expect(wholeSkill()).toContain('144 tool calls')
     expect(perPage).toContain('30-45 min')
     expect(template).toContain('5-10m')
     expect(template).not.toContain('3-5m')
@@ -29,7 +39,7 @@ describe('perf-audit feedback P2', () => {
 
   it('stamps the observed floor so the number cannot rot silently', () => {
     // House rule: a prose table of environment facts must carry a verified-on date.
-    expect(skill()).toMatch(/Observed floor \(reference large-project audit, verified \d{4}-\d{2}-\d{2}/)
+    expect(wholeSkill()).toMatch(/Observed floor \(reference large-project audit, verified \d{4}-\d{2}-\d{2}/)
   })
 
   it('labels the Per-Page Detail URL example for both audiences', () => {
@@ -88,9 +98,8 @@ describe('review fix pass', () => {
     // The reviewer caught "~22m observed floor" sitting next to a "20-30m" deep cap
     // while the reference file said captures cost ~2.5-3 min. Both numbers are real
     // but measure different scopes; the text must say so.
-    expect(skill()).toContain('for the **whole audit**')
-    expect(skill()).toContain('Captures alone are only ~2.5-3 min')
-    expect(skill()).toContain('~2.5-3 min **on their own**')
+    expect(wholeSkill()).toContain('for the **whole audit**')
+    expect(wholeSkill()).toContain('Captures alone are only ~2.5-3 min')
     expect(read('magento2-performance-audit/references/per-page-type-audit.md')).toContain('**for the captures only**')
   })
 
@@ -113,8 +122,10 @@ describe('review fix pass', () => {
   it('quotes govard sh -c correctly in the perf-audit trap', () => {
     // The new quoting lesson forbids nested double quotes; this skill's own trap
     // contradicted it.
+    // The trap itself lives in the skill body; reference files legitimately quote
+    // a simple command with double quotes when nothing is nested.
     expect(skill()).not.toMatch(/govard sh -c "[^"]*"/)
-    expect(skill()).toContain("govard sh -c '")
+    expect(wholeSkill()).toContain("govard sh -c '")
   })
 
   it('leaves no dangling DSH tool map pointer in README', () => {
@@ -144,10 +155,11 @@ describe('perf-audit report layout', () => {
     const html = template()
     // Matrix card: the comparison table precedes its context note.
     expect(html.indexOf('{{matrix}}')).toBeLessThan(html.indexOf('One row per page'))
-    // Per-page card: the detail blocks precede their context note.
-    expect(html.indexOf('{{perpage_details}}')).toBeLessThan(html.indexOf('Deep: 7 pages unfiltered'))
+    // Per-page card: its note is an intro to what the blocks contain, so it opens
+    // the card above them; the seen-data rationale does not apply here.
+    expect(html.indexOf('Each block lists every normalized query shape')).toBeLessThan(html.indexOf('{{perpage_details}}'))
     // CWV card: the vitals table precedes its context note.
-    expect(html.indexOf('<tr><th>Page</th><th>Score</th>')).toBeLessThan(html.indexOf('Warm only'))
+    expect(html.indexOf('<tr><th>Page</th><th>Score warm</th>')).toBeLessThan(html.indexOf('Cold: one run per page'))
   })
 
   it('documents note below table with the seen-data rationale', () => {

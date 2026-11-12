@@ -1,14 +1,6 @@
 ---
 name: magento2-performance-audit
-description: |
-  This skill should be used when the user asks to "audit performance", "check Core Web
-  Vitals", "run Lighthouse", "check server configuration", "verify Redis/Varnish setup",
-  "analyze database queries", "find N+1 query issues", "review indexer configuration", "check
-  cron health", "debug cache flush", asks "why does full_page cache keep flushing", wants to
-  "trace FPC invalidation", or reports "too many ajax requests", a "customer data section
-  reload storm", or a "crawler overloading server". Performs a comprehensive performance and
-  health audit for Magento 2 projects against Adobe Commerce Best Practices. DEPENDENT on
-  magento2-dev-core for code-level performance patterns.
+description: "Use when auditing Magento 2 performance: Core Web Vitals, Lighthouse, Redis and Varnish, N+1 queries, indexers, cron, full_page cache flushes. Keywords Lighthouse, FPC invalidation."
 compatibility: claude, codex, opencode, copilot, dsh
 depends: [magento2-dev-core]
 metadata:
@@ -18,113 +10,98 @@ metadata:
 
 # Magento 2 Performance Audit
 
+## When to use
+
+Load this skill for a performance and health audit against Adobe Commerce best practices; it depends on `magento2-dev-core` for code-level patterns.
+
+- "audit performance", "check Core Web Vitals", "run Lighthouse", "check server configuration"
+- "verify Redis/Varnish setup", "analyze database queries", "find N+1 query issues", "review indexer configuration", "check cron health"
+- "debug cache flush", "why does full_page cache keep flushing", "trace FPC invalidation"
+- "too many ajax requests", "customer data section reload storm", "crawler overloading server"
+
 This skill performs a comprehensive audit of Magento 2 performance, infrastructure, and code-level patterns.
 
 ## Govard-Native Audit Coverage
 
-`govard audit run` executes PHPCS and PHPStan through Govard's pinned lint
-toolchain image, it covers coding-standard and static-analysis findings only.
-As of Govard v1.64.0 no `performance` audit check exists:
-`govard audit run --checks performance` fails with "audit check ... is not
-implemented". Govard v1.64.0 does add a native `profiler` check
-(`--checks lint,profiler --url <url>`) that machine-captures the stock profiler CSV for one
-URL, a quick complement to this skill's manual per-page audit, not a replacement: it ships
-no query log, no cross-page matrix, and no threshold analysis. The profiler requires a project target (not standalone), an absolute http(s) URL (the request carries `Accept: text/html` so stock Magento enables the CSV), and is guarded by a per-project `diagnostics` lease; the CSV lands as `artifacts/profiler/profile.csv` with its SHA in `audit-result.json`, open it as spreadsheet to read per-timer costs. Manual per-page captures (7 pages) cost ~2.5-3 min **on their own** (50k queries/page with call-stack, 16-26s each), the full deep audit around them takes far longer, ~22m observed, see the observed floor above. Keep all 7, run with 300s timeout or background polling and trap restore, not by sampling fewer categories (that hides per-item N+1s). Keep running this checklist
-yourself and treat `govard audit run --checks lint` as the shared lint gate. Never present a
-lint-only pass as a performance verdict.
+`govard audit run` runs PHPCS and PHPStan through Govard's pinned lint image, so it covers
+coding-standard and static-analysis findings only: no `performance` check exists, and
+`--checks performance` fails as "not implemented". The native `profiler`
+check (`--checks lint,profiler --url <url>`) captures the stock profiler CSV for one URL and
+complements the manual per-page audit without replacing it: no query log, no cross-page matrix, no
+threshold analysis. The profiler needs a project target, never a `standalone` one; the URL and
+lease rules are in `references/per-page-type-audit.md`. Manual per-page
+captures (7 pages) cost ~2.5-3 min on their own, so keep all 7, run them with a 300s
+timeout or background polling and trap restore, never by sampling fewer categories (that hides
+per-item N+1s). Keep running this checklist yourself and treat `govard audit run --checks lint` as
+the shared lint gate; never present a lint-only pass as a performance verdict.
 
-> **This is a checklist, not a menu.** All 9 steps under **Workflow** (bottom of this file) run on every invocation, infra, indexer/cron, per-page-type capture, Slow Query Analysis, Cache Invalidation Efficiency, Client-Side AJAX Load, Core Web Vitals, code-level grep, report. Picking the steps that feel highest-signal for the effort and quietly dropping the rest (no admin creds, no Chrome DevTools MCP, "I already found a good bug") is the single most common failure mode of this skill, it produces a confident, well-formatted report that silently covers less than half the checklist. If a step genuinely can't run, say so *in the report, under that step's own heading*, `Skipped: <reason>`, never by omission. See the self-verification gate at the end of Workflow: the report is not done until it's been checked against the Audit Report Template line by line.
+> **This is a checklist, not a menu.** All 9 steps under **Workflow** run on every invocation.
+> Picking the steps that feel highest-signal for the effort and quietly dropping the rest (no
+> admin creds, no Chrome DevTools MCP, "I already found a good bug") is the single most common
+> failure mode of this skill: it produces a confident report that silently covers less than half
+> the checklist. If a step genuinely can't run, say so in the report, under that step's own
+> heading, as `Skipped: <reason>`; never by omission. The report is not done until it has been
+> checked against the Audit Report Template line by line (step 10).
 
-> **Distinguish a scoped ask from an unscoped one, this rule governs dropping steps quietly, not answering a narrower question.** A general ask, "audit performance", "review this project before launch", is unscoped: all 9 steps apply, none optional, exactly as above. When the user's own words name one specific category instead ("just check the MySQL query count", "audit N+1s only", "how many queries does the homepage run"), scope the work to that category and its reference file(s), running the other 8 steps anyway would be answering a different question than the one asked. The obligation that carries over unchanged: state the scope explicitly (a "Scope" line/heading in the report) so the result is never mistaken for a full audit, and don't let scope creep run in either direction, no silently expanding a scoped ask back to all 9 steps, and no silently narrowing an unscoped one down to whichever step already found something.
+> **Distinguish a scoped ask from an unscoped one.** A general ask ("audit performance", "review
+> this project before launch") is unscoped: all 9 steps apply, none optional. When the user's own
+> words name one specific category ("just check the MySQL query count", "audit N+1s only"),
+> scope the work to that category and its reference files, because running the other 8 would
+> answer a different question. Either way state the scope explicitly (a "Scope" line or heading
+> in the report) so the result is never mistaken for a full audit, and let no scope creep run in
+> either direction: never silently expand a scoped ask back to all 9 steps, never silently narrow
+> an unscoped one to whichever step already found something.
 
-> **Read the step's reference file before the first attempt at that step, not after improvising fails.** Each "Full detail:" link owns its supported commands and environment traps: BusyBox grep inside `govard sh`, host/container DNS, Laminas renames, and DB privilege walls. If two attempts at a step fail, read that reference end to end before attempt 3. Never hand-edit `app/etc/env.php` to enable a diagnostic: it is deployment configuration, not an audit control surface; a syntax error takes every Magento CLI command down and cannot be reverted with `git checkout` when the file is gitignored.
+> **Read the step's reference file before the first attempt at that step.** Each "Full detail:"
+> link owns its supported commands and environment traps (BusyBox grep in `govard sh`, DNS,
+> Laminas renames, DB privilege walls); if two attempts fail, read it end to end before attempt
+> 3. Never hand-edit `app/etc/env.php` to enable a diagnostic: it is deployment configuration,
+> and a syntax error takes every Magento CLI command down.
 
-> **Shared query-log captures require ownership.** Before step 3, acquire the `.performance-audit.lock` session token described in `references/database-query-profiling.md`. A busy or foreign lock must fail-fast; do not remove a lock you do not own or treat its log as evidence.
+> **Shared query-log captures require ownership.** Before step 3, acquire the
+> `.performance-audit.lock` session token described in `references/database-query-profiling.md`.
+> A busy or foreign lock must fail fast; never remove a lock you do not own, and never treat its
+> log as evidence.
 
 ### Common ways this gets shortcut (don't)
 
-| Rationalization | Reality |
-|---|---|
-| "Infra/cache/indexer checks already give strong signal, that's enough" | Slow Query Analysis, Cache Invalidation Efficiency, and Client-Side AJAX Load each catch bug classes the others structurally cannot see, one being clean says nothing about the others |
-| "I already found a solid N+1, that's enough for a report" | A real finding proves the audit found *something*; it doesn't prove the mandatory steps ran. Finding a bug early is not a reason to stop the checklist |
-| "One category and one product page is representative enough" | Only 3 differently-sized samples per type can surface the size-scaling N+1 signal (`references/per-page-type-audit.md`), a single sample is provably unable to show it, however clean the one page looks |
-| "This step needs admin credentials / a Chrome DevTools MCP I don't have" | Mark that section **unverified** with the reason, in the report, don't drop it from the conversation as if it were never in scope |
-| "The draft report already has good findings, ship it" | Diff the draft against every checkbox in the Audit Report Template *before* presenting it as done, an unchecked box with no skip reason means the audit isn't finished, not that it's fine to omit |
-| "This query shape (or profiler timer) repeats/is slow but I don't think it's a real bug" | Not your call to make silently, list it in the Repeated Query Shapes or Slowest Blocks/Templates table (`references/report-template.md`) with your assessment anyway. A borderline case left out of the report is indistinguishable from one that was never checked |
-| "The user only asked about query counts, so I only ran that" | Correct *if* their own words named that one category, say so under a Scope heading. If their ask was general ("audit performance", "review this project"), this is the same shortcut as the rows above, just dressed up as scoping |
-| "There's no `dev:profiler:enable` / `dev:query-log:enable` flag, so I'll add one to `env.php` / patch a bootstrap script" | These are CLI diagnostics, not config flags. Use the exact commands in `references/database-query-profiling.md` and `references/per-page-type-audit.md`; never edit `env.php` or add a one-off bootstrap script |
-| "The reference's grep recipes don't work in `govard sh`, so I'll write my own" | The container's grep is BusyBox, no `--include`. `find app/code -name '*.php' -exec grep -Hn ... {} +` is the supported equivalent (recipes in `references/code-level-patterns.md` are already BusyBox-safe) |
+Read [references/shortcuts.md](references/shortcuts.md) when a step feels optional or the effort looks larger than the signal: it lists the rationalizations that truncate this audit and the reality behind each.
 
 ## Related Skills
 
 **REQUIRED BACKGROUND:** Load `magento2-dev-core` first, code-level fixes for N+1 queries and heavy constructors follow the patterns it defines.
 
-Part of the QA trio with `magento2-linter` and `magento2-security-scan`, together with `magento2-dev-core`, these form the "QA quartet" that `magento2-code-review` orchestrates at PR/module/theme/project scope. Findings use the shared `M2-PERF-xxx` codes cataloged in `magento2-dev-core/references/severity-and-codes.md`. Async/queue findings often point back to `magento2-backend-dev`.
+Part of the "QA quartet" with `magento2-linter`, `magento2-security-scan` and `magento2-dev-core`, orchestrated at PR/module/theme/project scope by `magento2-code-review`. Findings use the shared `M2-PERF-xxx` codes in `magento2-dev-core/references/severity-and-codes.md`; async/queue findings often point back to `magento2-backend-dev`.
 
 ## Audit Categories
 
-Nine categories, each with full commands/thresholds/edge-cases in its own reference file, read the relevant file when executing that step of the Workflow below, not all up front:
-
-| Category | Reference |
-|---|---|
-| Infrastructure, cache, indexer, async consumers, asset optimization, cron, security probes | `references/infrastructure-checks.md` |
-| Core Web Vitals (LCP/INP/CLS, Chrome DevTools MCP trace, Lighthouse fallback) | `references/core-web-vitals.md` |
-| Database query profiling: query-count tiers, query log setup, common issues, Slow Query Analysis | `references/database-query-profiling.md` |
-| HTML profiler: block/template timing, tracing custom-code cost, cross-page-type signals | `references/html-profiler-audit.md` |
-| Per-page-type audit (homepage + 3 category + 3 product samples, uncached) | `references/per-page-type-audit.md` |
-| Cache invalidation efficiency (built-in FPC debug log + Varnish BAN tracing) | `references/cache-invalidation-audit.md` |
-| Client-side AJAX/Customer Data load (sections.xml, reload storms) | `references/ajax-load-audit.md` |
-| Code-level performance patterns (N+1, collection counting, heavy constructors, cache invalidation code) | `references/code-level-patterns.md` |
-| Audit report template + self-verification checklist | `references/report-template.md` |
+Each category has its own reference file; read the relevant one when executing that step, not all up front. [references/audit-categories.md](references/audit-categories.md) maps the nine categories to their files.
 
 ## Quick / Deep: scope param (quick vs deep, quick 5-10m vs deep 30-45m)
 
-This skill accepts a `scope` param: `quick` (PR check, cap 5-10m) or `deep` (release audit, 30-45m). The value `quick.*deep` on one line is intentional for tooling checks, keep the param name `scope` with those two literal values. Default to `deep` when the caller does not specify; callers that need a fast PR signal pass `scope=quick`.
-
-Observed floor (reference large-project audit, verified 2026-09-21, deep scope): ~22m / 144 tool calls / ~332k tokens for the **whole audit**: setup, 7 captures, both passes, analysis, and report writing. Captures alone are only ~2.5-3 min of that (see `references/per-page-type-audit.md`); the rest is reading, cross-page analysis and the report. Use the total for the foreground/background + budget decision; it is an observation, not a commitment.
-
-> **Report header (mandatory):** every report starts with `Scope: quick` or `Scope: deep` on its first line (see `references/report-template.md`). Quick uses `Scope: quick, 3 pages (1 home + 1 category + 1 product)`, Deep uses `Scope: deep, 7 pages (1 home + 3 category small/medium/large + 3 product)`. Do not start a report without that line, it is how a reader tells PR vs release coverage at a glance.
-
-| Mode | Pages | Query-log call-stack | Query-time threshold | Files scope | grid_per_page | Time cap | Transport & restore |
-|------|-------|----------------------|----------------------|-------------|---------------|----------|---------------------|
-| quick | 3 pages small/medium/large (1 home + 1 category + 1 product), call-stack false, threshold 1, quick files, grid_per_page 48, cap 5-10m | `--include-call-stack=false` | `--query-time-threshold=1` | quick files (`app/code` + `app/design` + `app/etc` sampled, batch govard sh) | 48 | 5-10m | `grep -c '## QUERY'` recipes; batch govard sh single setup cmd; trap single |
-| deep | 7 pages double-pass (1 home + 3 category small/medium/large + 3 product), call-stack true, threshold 0, deep files, 30-45m | `--include-call-stack=true` (two-pass: pass 1 false for counts, pass 2 true for 1-2 traces) | `--query-time-threshold=0` | deep files (full `app/code` + `vendor`/`dev`/`lib`/`m2-hotfixes` to the ignore boundary) | prod `grid_per_page`/`list_per_page` | 20-30m | Same native-or-grep split; batch govard sh where possible; trap single (one `trap ... EXIT` for the whole session) |
-
-Key verbatim mapping for quick 3 pages small/medium/large call-stack false threshold 1 quick files grid_per_page 48 cap 5-10m vs deep 7 pages double-pass call-stack true threshold 0 deep files 30-45m, keep these values in sync with `references/per-page-type-audit.md` and `references/database-query-profiling.md`.
-
-> **Use the recipes, not hand-reading:** do not open 50k lines of `var/debug/db.log` as a spreadsheet. Use the `grep -c '## QUERY'` / `mysqldumpslow` / `pt-query-digest` recipes in `references/database-query-profiling.md`. For lint use `govard audit run --checks lint --format json` on the host.
-
-> **No stats tool exists for the query log.** Do not hand-grep 16-50k lines; use the `grep -c '## QUERY'` / `mysqldumpslow` recipes below.
-
-> **Batch govard sh + trap single:** collapse multi-step container setup (`mkdir .performance-audit.lock`, `dev:profiler:enable`, `dev:query-log:enable`, `cache:disable`, `cache:flush`, warmup) into one `govard sh -c '...'` round-trip where sequencing allows, single-quoted outer, `;`-sequenced (never `&&` around `grep`), see `govard-toolbox` § *govard sh -c quoting*; captures themselves stay sequential under the same lock. Always install a single `trap 'govard sh -c '\''bin/magento cache:enable; bin/magento cache:flush; bin/magento dev:profiler:disable; bin/magento dev:query-log:disable; rm -rf var/debug/.performance-audit.lock'\''' EXIT`, one trap for the entire audit, not per page, so a timeout restores caches/log/lock.
+The report header is mandatory: every report starts with `Scope: quick` or `Scope: deep` on its first line (quick = 3 pages, deep = 7 pages), the param name stays `scope` with those two literal values, and `deep` is the default when the caller does not specify. Read [references/scope-quick-deep.md](references/scope-quick-deep.md) when picking a mode, its page set, its thresholds, its time cap or its transport, or when you need the observed floor.
 
 ## Scripted path (default)
 
-The measurement steps run through a bundled CLI; this file stays the specification, the scripts are the default way to satisfy it. Every subcommand ends with one JSON status line (`{"ok":true,...}` or `{"ok":false,"reason":"Skipped: ..."}`), so branch on that line, never on prose output.
-
-```bash
-CLI=<skills>/magento2-performance-audit/scripts/perf-audit.mjs
-node $CLI discover --root <project> --base-url https://<domain> --out perf-audit.config.json   # once; frozen for later audits
-node $CLI run perf-audit.config.json --out <audit-dir> --branch <base>                         # deep by default
-node $CLI switch perf-audit.config.json --branch <changed>
-node $CLI run perf-audit.config.json --out <audit-dir> --run-name <changed> --compare <audit-dir>/<base>
-```
-
-- `perf-audit.mjs run` chains `capture`, `analyze`, `cwv`, `invalidate` and `render` (plus `switch` when `--branch` is given) into `<audit-dir>/<branch-slug>/`. The first closed reason stops it; fix the cause and rerun only that stage (`perf-audit.mjs <stage> perf-audit.config.json --run <run-dir>`). A template update only needs `render`.
-- The agent-run steps (1, 2, 4, 6, 8) and the recommendations go into `<run-dir>/sections.json` (`meta`, `sections.<name>`, `recommendations`, `coverageNote`). Every number there needs `evidence: {command, excerpt}`; `render` refuses a section number without it. Verdict, KPI subtitles and query bullets are generated from the data; never type them.
-- Budget: a deep audit takes 30 to 45 minutes (two capture passes, a trace pass and a median of 3 warm Lighthouse runs per page); quick takes about 10 minutes.
-- Output: `report.md`, `report.html`, `report.body.html` (for hosts that wrap pages, such as Claude Artifact) and `findings.json` (merged by `magento2-code-review`). `--audience client` renders the one-page client variant into `<run-dir>/client/`.
+The measurement steps run through the bundled CLI, `node <skills>/magento2-performance-audit/scripts/perf-audit.mjs` (`discover`, `run`, `switch`, `render`), and every subcommand ends with one JSON status line, so branch on that line and never on prose output. `render --audience client` renders the client summary into `<run-dir>/client/`. Read
+[references/scripted-path.md](references/scripted-path.md) when running a stage, writing
+`sections.json` or rendering a report.
 
 ## Workflow
 
 > **Query-log analysis:** use the `grep -c '## QUERY'` / `mysqldumpslow` recipes in references/database-query-profiling.md. Do not hand-grep 16-50k lines or open the log as a spreadsheet.
 
-> No `performance` check exists, `govard audit run --checks lint` covers lint only; use `govard audit run --checks profiler --url <absolute http(s) url>` for a single-URL profiler CSV where it helps, otherwise run the manual per-page captures and grep scans below.
-> **Otherwise:** run the same manual Workflow steps as written (profiler + query-log captures per `references/per-page-type-audit.md` and grep scans per `references/code-level-patterns.md`).
+> No `performance` check exists and `govard audit run --checks lint` covers lint only; for one URL's profiler CSV use `--checks profiler --url <absolute http(s) url>` where it helps, otherwise run the manual captures and grep scans below.
+> **If `perf-audit.mjs` cannot run here (no container, no CLI):** run the same manual Workflow steps as written (profiler + query-log captures per `references/per-page-type-audit.md` and grep scans per `references/code-level-patterns.md`).
 
-> **Step 0, branch and environment gate:** switch branches only with `perf-audit.mjs switch perf-audit.config.json --branch <branch>`. It runs fetch, checkout (never a forced checkout: a checkout blocked by local changes stops with a closed reason, ask before stashing), `pull --ff-only` (`Skipped: local diverged` when it cannot fast-forward), `composer install` when `composer.lock` changed, clears `generated/`, flushes the cache and page cache stores directly (never the session database; `bin/magento cache:flush` cannot bootstrap while the cache names a module the branch lacks), runs `setup:upgrade`, then proves the switch: enabled modules match `app/etc/config.php` and every frozen URL returns 200. When no branch is requested and the runtime supports questions, ask which branch to audit. Then `govard status`; if the project is `Down`, `govard env up` and wait for a 200 on the base URL before step 1.
-
-> **Step 0b, discovery:** `perf-audit.mjs discover` writes `perf-audit.config.json`: home, the smallest, median and largest category by product count, three products of distinct types, the store's theme chain and every theme overriding `product/list.phtml` or `product/view.phtml`, plus an invalidation SKU. It never overwrites an existing config without `--refresh`, because later audits compare against it. Manual fallback: `references/per-page-type-audit.md` section 0.
+> **Step 0, branch and environment gate, and Step 0b, discovery:** switch branches only with
+> `perf-audit.mjs switch perf-audit.config.json --branch <branch>` (a forced checkout is never
+> used; a checkout blocked by local changes stops with a closed reason, ask before stashing),
+> ask which branch to audit when none is named and questions are supported, and if the
+> project is `Down` run `govard env up` and wait for a 200 on the base URL before step 1.
+> `perf-audit.mjs discover` writes `perf-audit.config.json` and never overwrites an existing one
+> without `--refresh`. Read [references/setup-gates.md](references/setup-gates.md) for what the
+> switch proves, what `discover` records and what `discover --enrich` adds to an older config.
 
 **When invoked, steps 1-9 are mandatory, run in order, none optional:**
 1. Execute infrastructure checks (env.php, mode, cache status), first confirm whether the target is local dev, staging, or production, since expectations differ. Full detail: `references/infrastructure-checks.md`
@@ -134,16 +111,25 @@ node $CLI run perf-audit.config.json --out <audit-dir> --run-name <changed> --co
 4. Run Slow Query Analysis (app-level `TIME:` sort, and/or MySQL's own slow_query_log for cron/import-triggered queries the app-level log can't see), `EXPLAIN` any candidate before reporting it, and turn slow_query_log back off when done. Full detail: `references/database-query-profiling.md`
 5. Trace cache invalidation efficiency, enable temporary logging (debug.log for built-in Redis/file FPC, varnishlog/ban.list for Varnish), reproduce one isolated product save with `perf-audit.mjs invalidate` (repository save in the adminhtml area, no admin credentials needed), and flag any custom code causing broad/frequent flushes beyond Magento's default targeted invalidation. Full detail: `references/cache-invalidation-audit.md`
 6. Confirm which reactive/AJAX mechanism the project actually uses (sections.xml/Customer Data vs. Magewire/PWA/GraphQL or similar), then capture the AJAX footprint of a fresh/anonymous page load (Network tab) and audit accordingly, for sections.xml, check for overly broad Customer Data invalidation rules; these uncacheable requests are what crawler/bot JS execution multiplies regardless of FPC hit rate. Full detail: `references/ajax-load-audit.md`
-7. Run the warm Core Web Vitals audit with `perf-audit.mjs cwv` (Lighthouse CLI, median of 3 from the full page cache; the Chrome DevTools MCP trace explains an LCP but cannot score it), when render delay dominates an LCP, read it per the JS-hydration guidance rather than assuming a network/image problem. Full detail: `references/core-web-vitals.md`
+7. Run the Core Web Vitals audit with `perf-audit.mjs cwv`: one cold run per page right after `cache:clean full_page` (a HIT is retried once after another clean, then `Skipped: no cold MISS`), then the warm runs (Lighthouse CLI, median of 3 from the full page cache), TBT recorded on every run; the Chrome DevTools MCP trace explains an LCP but cannot score it), when render delay dominates an LCP, read it per the JS-hydration guidance rather than assuming a network/image problem. Full detail: `references/core-web-vitals.md`
 8. Scan `app/code` for code-level performance patterns using the grep recipes. Full detail: `references/code-level-patterns.md`
-9. Draft the report with recommendations, prioritizing any finding that repeats across all 3 page types (site-wide impact) over page-specific ones, and populate the Repeated Query Shapes table (every shape repeated more than ~5 times per page load), the **Per-Page Query Detail** breakdown (the complete, unfiltered per-page query list, **mandatory for deep**: 7 tables one per page via the `grep -c '## QUERY'` recipes, see gate in `references/report-template.md`; quick: `Skipped: quick, 3 pages only, Per-Page Detail deferred to deep`), and the Slowest Blocks/Templates table (every profiler timer past the threshold in `references/html-profiler-audit.md`), not just the ones already confirmed as bugs. **Always produce** `report.md`, `report.html` and `report.body.html` with `perf-audit.mjs render` (shared engine in `magento2-dev-core/scripts/report/render.mjs`, theme and contract in `magento2-dev-core/references/report-theme.md`). Then ask, in the conversation language, whether and where to publish `report.html` (local file, Govard static path, a static host, or not at all) before pushing anything.
+9. Draft the report with recommendations, prioritizing any finding that repeats across all 3
+   page types (site-wide impact) over page-specific ones. **Always produce** `report.md`,
+   `report.html` and `report.body.html` with `perf-audit.mjs render` (shared engine in
+   `magento2-dev-core/scripts/report/render.mjs`, theme and contract in
+   `magento2-dev-core/references/report-theme.md`), then ask, in the conversation language,
+   whether and where to publish `report.html` (local file, Govard static path, a static host, or
+   not at all) before pushing anything, and whether the client needs a client report too. On yes
+   write `clientSummary` into `sections.json` and run `perf-audit.mjs render perf-audit.config.json --run <run-dir> --audience client`; a later client
+   report reruns the same render on the existing run dir and never re-measures. Read
+   [references/report-step.md](references/report-step.md) for the three tables, the client-report
+   schema and the render flags.
 
-**10. Self-verification gate, mandatory, run before presenting the report to the user:**
-
-> **Pacing: do not inflate setup.** Run the reference-owned setup commands one at a time, then move directly into captures. If setup for a step takes more than a couple of calls, stop and read that step's reference file instead of iterating through unsupported variants.
-
-Walk the draft report against every checkbox in the Audit Report Template (`references/report-template.md`), one by one. For each checkbox, exactly one of these must be true:
-- It's checked, with evidence for it visible somewhere above in the report (a command output, a query-log count, a traced file:line).
-- It's unchecked, with an explicit `Skipped: <reason>` line next to it (missing credentials, no Chrome DevTools MCP, environment doesn't apply).
-
-A checkbox that is simply absent from the report, not checked, not marked skipped, just not mentioned, means step 10 hasn't been done yet. Go back and either run the missing step or add the skip reason; don't publish or hand off the report in that state. A report whose URLs section shows a cutoff URL without the full target visible (dev: absolute URL, client: full URI) fails the gate the same way. Only once every checkbox resolves to one of the two states above is the audit actually finished, both `report.md` and `report.html` (identical content, see step 9) must exist and have been checked against the template; publish `report.html` only if the user chose to in step 9 (otherwise keep both locally).
+**10. Self-verification gate, mandatory, run before presenting the report to the user:** walk
+the draft report against every checkbox in the Audit Report Template
+(`references/report-template.md`), one by one. Each checkbox resolves to exactly one of two
+states: checked with its evidence visible above in the report, or unchecked with an explicit
+`Skipped: <reason>` line next to it. A checkbox that is simply absent means step 10 has not been
+done, so go back and run the missing step or add the skip reason; never publish or hand off a
+report in that state. Read [references/verification-gate.md](references/verification-gate.md) for
+the full walk, including the URLs-section and client-report conditions.

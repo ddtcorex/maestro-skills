@@ -1,4 +1,5 @@
-import { appendFileSync, copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { appendFileSync, copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { govardSh } from './lib/govard.mjs'
 import { fetchPage, settle } from './lib/http.mjs'
@@ -32,6 +33,23 @@ async function capturePage(config, runDir, pass, page) {
   appendFileSync(join(runDir, 'capture', 'summary.csv'), `${pass},${page.label},${page.uri},${res.status},${res.total.toFixed(4)},${res.ttfb.toFixed(4)},${queries}\n`)
 }
 
+// The checkout the pages were served from, for the report subtitle. A
+// project that is not the root of its own git checkout (none at all, or one
+// nested in a parent repository) records nothing; a detached HEAD records
+// the commit with no branch.
+export function writeRevision(projectRoot, captureDir) {
+  const git = (...args) => execFileSync('git', ['-C', projectRoot, ...args], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()
+  let revision
+  try {
+    if (realpathSync(git('rev-parse', '--show-toplevel')) !== realpathSync(projectRoot)) return
+    const branch = git('rev-parse', '--abbrev-ref', 'HEAD')
+    revision = { branch: branch === 'HEAD' ? null : branch, commit: git('rev-parse', '--short', 'HEAD') }
+  } catch {
+    return // not a git checkout, or no commit yet
+  }
+  writeFileSync(join(captureDir, 'revision.json'), `${JSON.stringify(revision)}\n`)
+}
+
 // Uncached capture: FPC, block and layout caches off, query log and HTML
 // profiler on. The lock and the restore sequence keep a parallel or failed
 // run from leaving the project with caches disabled.
@@ -47,6 +65,7 @@ export async function capture(config, runDir, { scope = 'deep' } = {}) {
 
   for (const pass of [...passes, 'trace']) mkdirSync(join(runDir, 'capture', pass), { recursive: true })
   writeFileSync(join(runDir, 'capture', 'summary.csv'), 'pass,label,uri,http,timeTotal,ttfb,queries\n')
+  writeRevision(root, join(runDir, 'capture'))
   try {
     await sh(root, [
       'bin/magento dev:profiler:enable html',

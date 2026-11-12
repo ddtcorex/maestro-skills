@@ -30,11 +30,13 @@ When multiple skills apply, process skills come first — they set the approach,
 - "Let's build X" → superpowers:brainstorming first, then implementation skills.
 - "Fix this bug" → superpowers:systematic-debugging first, then domain skills.
 
-> Fork note (maestro-skills): upstream prefixes skills as `superpowers:<name>`.
-> In this bundle the process skills ship un-namespaced alongside the domain
-> skills (magento2-*, govard-*), so invoke them by their bare names. This file
-> and its references are forked from obra/superpowers v7.0.1 (MIT); body edits
-> beyond tool mapping should go through upstream — see THIRD-PARTY-NOTICES.md.
+> Fork note (this bundle): upstream prefixes skills as `superpowers:<name>`.
+> Here the process skills ship un-namespaced alongside the domain skills
+> (magento2-*, govard-*, and the local workflow skills), so invoke them by their
+> bare names. This file and its references are forked from obra/superpowers
+> (MIT); body edits beyond tool mapping should go through upstream. The one
+> local addition is this note, which scripts/sync-superpowers.sh preserves — see
+> THIRD-PARTY-NOTICES.md.
 
 ## Red Flags
 
