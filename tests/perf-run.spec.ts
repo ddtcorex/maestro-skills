@@ -70,7 +70,12 @@ describe('run subcommand end to end', () => {
     project = await makeProject({ invalidation: { sku: 'ACME-1' }, themeOverrides: [] })
     out = mkdtempSync(join(tmpdir(), 'perf-run-out-'))
     const script = join(out, 'lh.json')
-    writeFileSync(script, JSON.stringify([{ score: 80, lcp: 1000, headers: { 'X-Magento-Cache-Debug': 'HIT' } }]))
+    // The cwv stage measures the cold load first (MISS after the page cache
+    // clean), then the warm runs served from the cache.
+    writeFileSync(script, JSON.stringify([
+      { score: 10, lcp: 3000, headers: { 'X-Magento-Cache-Debug': 'MISS' } },
+      { score: 80, lcp: 1000, headers: { 'X-Magento-Cache-Debug': 'HIT' } },
+    ]))
     project.server.setPage('/', { status: 200, dbLog: record('SELECT 1') + record('SELECT 2'), headers: { 'X-Magento-Cache-Debug': 'HIT' } })
     env = { ...project.env, LIGHTHOUSE_CLI: join(shimBin, 'lighthouse'), PERF_LH_SCRIPT: script }
   })

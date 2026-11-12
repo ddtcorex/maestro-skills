@@ -32,6 +32,15 @@ const sections = {
   sections: { infra: { status: 'ok', verdict: 'Healthy', checks: [{ state: 'ok', text: 'Redis reachable' }] } },
   recommendations: ['One', 'Two', 'Three', 'Four', 'Five', 'Six'],
   coverageNote: 'All frozen URLs captured twice.',
+  // The client report is built from this summary and refuses to fall back to
+  // developer content, so the fixture carries a complete one.
+  clientSummary: {
+    takeaways: ['Requests drop by {queries.delta}.', 'The largest category builds in {serverTime.largest}.', 'Ticket #2023 is ready once fixed.'],
+    nextSteps: [
+      { priority: 'blocker', action: 'Fix the error page', benefit: 'No broken link', scope: 'Follow-up to #2022', refs: ['rec-1'] },
+      { priority: 'high', action: 'Batch the stock load', benefit: 'Faster pages', scope: 'New ticket', refs: ['rec-2'] },
+    ],
+  },
 }
 
 function writeRun(dir: string, pages: unknown[], extra: Record<string, unknown> = {}, cwvScores: Record<string, unknown> = {}) {
@@ -58,7 +67,7 @@ describe('sentence templates', () => {
     const { topShapeReductions } = await sentences()
     const before = [page('home', '/', 400)]
     const after = [page('home', '/', 100)]
-    expect(topShapeReductions(before, after, 1)).toEqual(['SELECT * FROM stock WHERE product_id = ?: 200 to 50 calls'])
+    expect(topShapeReductions(before, after, 1)).toEqual(['200 to 50 calls: `SELECT * FROM stock WHERE product_id = ?`'])
   })
 })
 
@@ -82,11 +91,12 @@ describe('perf run rendering', () => {
   })
   afterEach(() => rmSync(base, { recursive: true, force: true }))
 
-  it('renders the uncached and warm columns, never a cold one', async () => {
+  it('renders the uncached, cold and warm columns', async () => {
     await renderRun(after, config(), { compare: before })
     const m = matrix(html(after))
-    for (const col of ['Queries', 'Profiler root', 'TTFB (uncached)', 'Score', 'LCP', 'CLS', 'TTFB (warm)', 'HIT proof']) expect(m).toContain(`<th>${col}</th>`)
-    expect(m).not.toMatch(/cold/i)
+    // Cold is the first load after the page cache was emptied, warm the load a
+    // real visitor gets; both are measured and both belong in the matrix.
+    for (const col of ['Queries', 'Profiler root', 'TTFB (uncached)', 'Score cold', 'Score warm', 'LCP cold', 'LCP warm', 'TBT cold', 'TBT warm', 'CLS (warm)', 'TTFB (warm)', 'HIT proof (warm)']) expect(m).toContain(`<th>${col}</th>`)
     expect(m).toContain('400 → 300')
   })
 
@@ -124,7 +134,11 @@ describe('perf run rendering', () => {
     const b = pagesBefore()
     const a = pagesAfter()
     expect(text).toContain(pageDelta(b[0], a[0]))
-    expect(text).toContain(topShapeReductions(b, a, 3)[0])
+    // The sentence keeps its SQL in backticks for Markdown; the HTML renderer
+    // turns that span into <code>, so assert the lead and the code element.
+    const [lead, sql] = topShapeReductions(b, a, 3)[0].split('`')
+    expect(text).toContain(lead.trim())
+    expect(text).toContain(`<code>${sql}</code>`)
     expect(text).toContain(perExtraProductSlope(a))
   })
 
@@ -142,14 +156,18 @@ describe('perf run rendering', () => {
     await expect(renderRun(after, config({ themeOverrides: ['Acme/child', 'Acme/other'] }), { compare: before })).rejects.toThrow(/Acme\/other/)
   })
 
-  it('renders the client audience as one page with a link to the dev report', async () => {
+  it('renders the client audience as one self-contained page', async () => {
     await renderRun(after, config(), { compare: before, audience: 'client' })
     const text = readFileSync(join(after, 'client', 'report.html'), 'utf-8')
     const headings = [...text.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim())
-    expect(headings).toEqual(['Verdict', 'Before/After Comparison Matrix', 'Top Recommendations', 'Coverage Note'])
-    expect((text.match(/<li>/g) ?? []).length).toBe(5)
-    expect(text).toContain('href="../report.html"')
-    expect(text).toContain('<meta name="maestro-report-contract" content="1">')
+    expect(headings).toEqual(['Key figures', 'In short', 'Next steps and decisions', 'Results by page', 'How to read these results', 'Glossary'])
+    expect(text).toContain('Fix the error page')
+    expect(text).toContain('Batch the stock load')
+    // The client page ships on its own: no relative link back to the developer
+    // report and no Govard metadata the client cannot act on.
+    expect(text).not.toMatch(/href="(?!https?:)/)
+    expect(text).not.toMatch(/Govard/)
+    expect(text).toContain('<meta name="maestro-report-contract" content="2">')
     expect(text).toContain('aria-label="Maestro logo"')
   })
 

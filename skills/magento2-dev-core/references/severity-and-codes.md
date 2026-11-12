@@ -21,10 +21,10 @@ not a rewording of an existing row.
 |---|---|---|---|
 | M2-ARCH-001 | `ObjectManager::getInstance()` outside factories/proxies/bootstrap | Critical | Breaks testability, hides dependencies, escapes DI interception |
 | M2-ARCH-002 | `<preference>` on a core class | High | Replaces the class entirely, blocks other extensions, upgrade-fragile |
-| M2-ARCH-003 | Plugin on `Sales\Model\Order`, `Quote`, `Checkout`, `Payment`, `Customer\Model\Session` | High | High-traffic core classes, re-verify after every Magento upgrade |
+| M2-ARCH-003 | Plugin on `Sales\Model\Order`, `Quote`, `Checkout`, `Payment`, `Customer\Model\Session`, `Customer\Model\AccountManagement` | High | High-traffic core classes, re-verify after every Magento upgrade |
 | M2-ARCH-004 | Raw SQL outside a ResourceModel | Medium | Bypasses events, plugins, indexers, caching |
 | M2-ARCH-005 | Copy-pasted theme template override | Medium | Silently breaks when Magento changes the original on upgrade, prefer layout XML/view models |
-| M2-ARCH-006 | Extending `Action`, `AbstractModel`, `Template` base classes | Low | Prefer result interfaces, repositories, view models |
+| M2-ARCH-006 | Extending `Action`, `AbstractModel`, `Template` base classes | Low | Prefer result interfaces, repositories, view models. Exempt: admin controllers, which must extend `Magento\Backend\App\Action` to get the `ADMIN_RESOURCE` ACL check |
 | M2-ARCH-007 | Multiple `around` plugins (or unordered plugins) on the same method with no explicit `sortOrder` | High | Undefined interception order, see `magento2-code-review`'s plugin/observer conflict check |
 | M2-ARCH-008 | Two or more modules declare `<preference>` for the same class/interface | High | Unlike plugins, preferences have no `sortOrder`/arbitration mechanism, the last-merged module's declaration silently wins with no error, discarding the other module's replacement entirely. See `magento2-code-review`'s plugin/observer conflict check, which covers this alongside plugin/observer conflicts. |
 

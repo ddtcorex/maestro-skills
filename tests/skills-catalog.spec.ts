@@ -61,8 +61,8 @@ describe('skills catalog', () => {
     const { raw } = await load('magento2-performance-audit')
     expect(raw).toContain('.performance-audit.lock')
     expect(raw).toContain('session token')
-    expect(raw).toContain('fail-fast')
-    expect(raw).toContain('do not remove a lock')
+    expect(raw).toMatch(/must fail fast/)
+    expect(raw).toMatch(/never remove a lock/)
   })
 
   it('acquires the query-log lock before enabling global diagnostics', async () => {

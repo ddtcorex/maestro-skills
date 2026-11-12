@@ -18,9 +18,17 @@ function allGovardMd(): string[] {
   return out
 }
 
+/** govard-toolbox only, body plus references: the house style pushes command detail into references/. */
+function toolboxMd(): string {
+  const out = [readSkill('govard-toolbox', 'SKILL.md')]
+  for (const f of readdirSync(join(SKILLS, 'govard-toolbox', 'references')))
+    if (f.endsWith('.md')) out.push(readSkill('govard-toolbox', 'references', f))
+  return out.join('\n')
+}
+
 describe('govard command truth', () => {
   it('sandbox is top-level, never under deploy', () => {
-    expect(readSkill('govard-toolbox', 'SKILL.md')).toContain('govard sandbox up')
+    expect(toolboxMd()).toContain('govard sandbox up')
     for (const text of allGovardMd())
       expect(text.includes('deploy sandbox'), 'stale deploy sandbox spelling').toBe(false)
   })
@@ -48,12 +56,13 @@ describe('govard command truth', () => {
     expect(cmds.includes('lint is the only check'), 'stale single-check claim').toBe(false)
   })
   it('deploy documents plan --json, nested topology, and migrate gate', () => {
-    const toolbox = readSkill('govard-toolbox', 'SKILL.md')
+    const toolbox = toolboxMd()
     expect(toolbox).toContain('--json')
     expect(toolbox).toContain('needs_migration')
     expect(toolbox).toContain('remotes.<name>.deploy:')
     expect(toolbox).toContain('setup:db:status')
-    expect(toolbox.includes('remotes.staging.branch'), 'flat deploy keys were removed').toBe(false)
+    const skillBody = readSkill('govard-toolbox', 'SKILL.md')
+    expect(skillBody.includes('remotes.staging.branch'), 'flat deploy keys were removed').toBe(false)
     const magento = readSkill('govard-magento', 'SKILL.md')
     expect(magento).toContain('setup:db:status')
   })

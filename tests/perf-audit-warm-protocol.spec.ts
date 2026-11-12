@@ -1,9 +1,18 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const skill = join(__dirname, '..', 'skills', 'magento2-performance-audit')
 const read = (...parts: string[]) => readFileSync(join(skill, ...parts), 'utf-8')
+/** SKILL.md plus every reference: the house style keeps the body short and puts command detail one file down. */
+const wholeSkill = () =>
+  [
+    read('SKILL.md'),
+    ...readdirSync(join(skill, 'references'))
+      .filter((f) => f.endsWith('.md'))
+      .sort()
+      .map((f) => read('references', f)),
+  ].join('\n')
 const cwv = () => read('references', 'core-web-vitals.md')
 const skillMd = () => read('SKILL.md')
 const template = () => read('references', 'report-template.md')
@@ -42,13 +51,13 @@ describe('warm CWV protocol', () => {
 
 describe('skill workflow points at the CLI', () => {
   it('uses the run and switch subcommands as the default path', () => {
-    const body = skillMd()
+    const body = wholeSkill()
     for (const cmd of ['perf-audit.mjs run', 'perf-audit.mjs switch', 'perf-audit.mjs discover', 'perf-audit.mjs invalidate', 'sections.json']) expect(body, cmd).toContain(cmd)
     expect(body).not.toContain('checkout -f')
   })
 
   it('budgets 30 to 45 minutes for a deep audit', () => {
-    expect(skillMd()).toContain('30 to 45 minutes')
+    expect(wholeSkill()).toContain('30 to 45 minutes')
   })
 
   it('asks the publish question in the conversation language, not a hardcoded one', () => {
@@ -68,8 +77,13 @@ describe('report template rules', () => {
     expect(template()).not.toContain('Skipped: legacy audit, cold only')
   })
 
-  it('defines the client audience as one page', () => {
-    expect(template()).toMatch(/audience: client[^\n]*verdict, comparison matrix, top 5 recommendations, coverage note/)
+  it('defines the client audience as its own six-section report', () => {
+    const body = template()
+    expect(body).toContain('<run-dir>/client/report.{md,html,body.html}')
+    for (const section of ['Key figures', 'In short', 'Next steps and decisions', 'Results by page', 'How to read these results', 'Glossary']) expect(body, section).toContain(section)
+    // The client page stands alone: it must never point the client at the developer report.
+    expect(body).toMatch(/never mentions the technical report/)
+    expect(body).toMatch(/clientSummary/)
   })
 
   it('states the evidence rule for agent sections', () => {

@@ -23,7 +23,7 @@ Used by Workflow step 9 (drafting) and step 10 (the mandatory self-verification 
 ```markdown
 # Performance Audit Report
 
-Audience: dev - use for engineering (full file:line traces inline). For a stakeholder readout use `--audience client`. Flag form: `audience: client` renders one page with verdict, comparison matrix, top 5 recommendations, coverage note, and a link to the full developer report (`audience: dev | client`, default `dev`). Brand slots (Maestro defaults, replace all three together for an overlay - never hard-code another brand in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`. Fill shapes and the tokens an overlay may set: `magento2-dev-core/references/report-theme.md`, Overlay token map.
+Audience: dev - use for engineering (full file:line traces inline). For a client readout use `--audience client`, which renders the client summary described in Client report below (`audience: dev | client`, default `dev`). Every Lighthouse column names its state: cold is the first load after `cache:clean full_page`, warm the median of the runs served from the page cache; Score, LCP and TBT appear for both. Brand slots (Maestro defaults, replace all three together for an overlay - never hard-code another brand in the template): `{{brand_logo}}`, `{{brand_colors}}`, `{{brand_font}}`. Fill shapes and the tokens an overlay may set: `magento2-dev-core/references/report-theme.md`, Overlay token map.
 
 > **Agent sections and evidence:** the steps the scripts do not measure (infra, cache, indexer, cron, slow queries, AJAX load, code-level patterns) and the recommendations go into `<run-dir>/sections.json`. Every number in a section needs `evidence: {command, excerpt}` (the command run and its raw output excerpt); `render` refuses a section number without evidence. Verdict, KPI subtitles and query bullets come from sentence templates over the data.
 
@@ -121,7 +121,7 @@ that cannot be compared:
 - [ ] Uncacheable (session/customer-scoped) AJAX endpoints identified, these are what crawler/bot JS execution multiplies under load, independent of FPC hit rate
 
 ## Indexer Configuration
-- [ ] All indexers on "Update by Schedule"
+- [ ] Every indexer that supports it on "Update by Schedule" (some, such as `customer_grid`, only support "Update on Save")
 - [ ] Cron running properly
 
 ## Database
@@ -248,3 +248,53 @@ Every checkbox in the report must be either `[x]` with evidence visible above, o
 
 Example header for a quick PR (top of this template already contains `Scope: quick`): keep that line. For deep, change to `Scope: deep` and ensure 7 pages + two-pass + `EXPLAIN` prod 200k are in evidence column above.
 ```
+
+## Client report
+
+`render --audience client` writes `<run-dir>/client/report.{md,html,body.html}`. The header names the client (`meta.client`), the stack (`Magento 2`, plus `Hyvä` when the config theme chain holds a `Hyva/` theme; `meta.stack` overrides), the measurement date and the page mix ("7 key pages tested (home page, 3 categories, 3 product pages)"). Six sections follow, the same for a baseline and a comparison (a comparison adds before values and changes):
+
+1. **Key figures**: four tiles. Status (comparison: `Release: N fix(es) required` when a next step is a blocker, else `Release: ready`; baseline: `N high-priority actions`), Database requests (sum over comparable pages), Server time on the category page with the most products, and Product page main content (the warm LCP range across the product pages, "2.9 to 3.1 s", against the 2.5 s target; Not measured without a product page). Tile labels use status colors only: a change of -5 % or better reads Gain confirmed, +5 % or worse Regression, anything between No change.
+2. **In short**: the takeaways.
+3. **Next steps and decisions**: one row per step, ranked blocker, high, medium, low; the Owner · estimate column prints `clientSummary.owner`, else `To estimate`; a step that needs a client decision carries Your decision. The client report never mentions the technical report: `refs` stay for validation only.
+4. **Results by page**: an HTML table with CSS bars (no script, no SVG) of database requests per page, with the human page name, its subtitle and a total row; a comparison shows before and after bars and the change; a page that failed reads `Page error on this version, fix required` and an unmeasured one `Not measured` (client wording, never a raw skip reason). A quick run speaks only of the pages it measured, and a comparison whose page fails after the change must carry a blocker step.
+5. **How to read these results** and 6. **Glossary**: fixed copy with titled blocks; a baseline drops the sentence about comparing percentages and its glossary defines the current version with its branch.
+
+Page subtitles come from `urlSet[].subtitle` in the config when set, else from the capture: `Home page`, `Category · 98 products (35 per page)` from the listing toolbar the analyze stage reads (`listingTotal`, `listedCount`), or the product type (`Grouped product page`, else `Product page`).
+
+The agent writes `clientSummary` in `sections.json`:
+
+```json
+"clientSummary": {
+  "takeaways": ["3 to 6 plain sentences, figures only as tokens: requests drop by {queries.delta}"],
+  "nextSteps": [{ "priority": "blocker", "action": "…", "benefit": "…", "scope": "Regression from #123", "decision": "image", "refs": ["rec-1"] }],
+  "decisions": [{ "id": "image", "title": "…", "question": "…" }],
+  "pageNames": { "category_large": "optional override of the discovered name" },
+  "owner": "optional owner column copy, default To estimate"
+}
+```
+
+Optional `meta` fields: `heading` and `subtitle` replace the client report title (default "Website performance audit", no subtitle; a comparison defaults to "Performance comparison of the two versions"); used by both reports: `client` (header client line), `stack`, and `branch` plus `commit`, which override the revision the capture stage records in `capture/revision.json` for the technical subtitle ("Current version (main @ abc1234)").
+
+Both reports carry stable anchor ids, so a link such as `report.html#database` opens that section: technical sections (`verdict`, `urls-audited`, `comparison-matrix`, `infrastructure`, `cache-status`, `cache-invalidation`, `ajax-load`, `indexer`, `database`, `slow-queries`, `per-page-queries`, `repeated-shapes`, `timers`, `core-web-vitals`, `code-patterns`, `recommendations`, `coverage`), page blocks (`page-<label>`, `queries-<label>`, `timers-<label>`, label with hyphens) and recommendation ids; client sections (`key-figures`, `in-short`, `next-steps`, `results`, `how-to-read`, `glossary`). The technical report shows a link on hover beside each section heading and opens any `<details>` around a linked target. Recommendation ids must be lowercase words joined by hyphens, never a section id and never `settings`, `sidebar`, `customize`, `upgrade`, `downloads` or `comment-…`; render refuses one that breaks the rule. A backtick span in a recommendation renders as inline code.
+
+Recommendations may be plain strings (id `rec-N` by position) or `{ "id": "rec-…", "text": "…" }`; `refs` point at ids. Narrative fields (`takeaways`, `action`, `benefit`, `scope`, decision `title` and `question`) contain no typed digit except ticket references like `#123`; figures are metric tokens the renderer fills from the measured matrix:
+
+| Token | Value |
+|---|---|
+| `{queries.total}` | database requests over the comparable pages, this run |
+| `{queries.before}` | the same over the previous run (comparison only) |
+| `{queries.delta}` | change in whole percent (comparison only) |
+| `{serverTime.largest}` | server time (profiler root) of the category page with the most products |
+| `{serverTime.largest.before}` | the same page in the previous run (comparison only) |
+| `{serverTime.largest.delta}` | change in whole percent (comparison only) |
+| `{lcp.worst}` | the worst warm LCP of this run |
+| `{lcp.worst.page}` | the name of that page |
+| `{lcp.target}` | the 2.5 s target |
+| `{pages.count}` | pages in the url set |
+| `{pages.comparable}` | pages measured on both sides (comparison only) |
+| `{page.<label>.queries}` | database requests of one page |
+| `{page.<label>.queries.delta}` | its change in whole percent (comparison only) |
+| `{page.<label>.name}` | its human name |
+
+Render refuses an unknown token, a token whose value is skipped, a comparison-only token in a baseline, takeaways outside 3 to 6, unsorted next steps, and a `refs` or `decision` id that does not resolve.
+

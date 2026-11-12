@@ -46,10 +46,14 @@ govard sh -c "bin/magento indexer:reindex"
 | Indexer | Recommended Mode |
 |---------|------------------|
 | catalog_product_price | Update on Save for small catalogs / frequent price changes; Update by Schedule for large catalogs (thousands+ SKUs) where synchronous reindex-on-save would slow down admin saves and imports. Don't apply one rule blindly, check catalog size and how prices are updated (manual saves vs. bulk import) first. |
-| catalog_url_category | Update by Schedule |
 | catalog_category_product | Update by Schedule |
-| inventory | Update by Schedule |
-| targetrule | Update by Schedule |
+| catalog_product_category | Update by Schedule |
+| catalogsearch_fulltext | Update by Schedule |
+| cataloginventory_stock | Update by Schedule |
+| inventory | Update by Schedule (MSI installs) |
+| targetrule_product_rule / targetrule_rule_product | Update by Schedule (Adobe Commerce only) |
+
+Indexer ids differ by edition and installed modules: confirm the real list with `bin/magento indexer:info` before recommending a mode for an id.
 
 **Also check that cron is actually running and draining the changelog**: schedule-mode indexers are only as fresh as the last successful cron run. Check `crontab -l` for a magento entry, and query `cron_schedule` for recent `success` rows (`SELECT MAX(executed_at) FROM cron_schedule WHERE status='success'`), an idle cron combined with schedule-mode indexers silently produces stale prices/URLs/inventory with no error anywhere. If this fails with "table doesn't exist," the install has a DB table prefix (`db.table_prefix` in `app/etc/env.php`), check it and prepend it (see the same caveat in `references/per-page-type-audit.md`).
 
@@ -78,12 +82,16 @@ If no `queue:consumers:start` processes are running and there's no cron/supervis
 
 ## 5. Asset Optimization
 
-```bash
-# JS Bundling (recommended for production)
-govard sh -c "bin/magento config:set dev/js/enable_js_bundling 1"
-govard sh -c "bin/magento config:set dev/js/minify_files 1"
+Every `config:set` below is a **production write**: on staging or production run it only after explicit approval from the owner, never as part of a read-only audit.
 
-# CSS Minification
+**JS bundling: evaluate, do not recommend by default.** Magento's built-in bundling (`dev/js/enable_js_bundling`) usually hurts: it emits a few huge, render-blocking bundles that every page downloads whole. Prefer HTTP/2 with bundling off, or an advanced bundler (for example a RequireJS optimizer setup or Magepack) when measurements justify it. Not applicable to Hyvä themes, which do not use RequireJS.
+
+```bash
+# Inspect current values first (read-only)
+govard sh -c "bin/magento config:show dev/js/enable_js_bundling"
+
+# Minification (production write, needs explicit approval)
+govard sh -c "bin/magento config:set dev/js/minify_files 1"
 govard sh -c "bin/magento config:set dev/css/minify_files 1"
 ```
 
@@ -93,7 +101,7 @@ govard sh -c "bin/magento config:set dev/css/minify_files 1"
 # Verify cron is running
 govard sh -c "crontab -l | grep magento"
 
-# Check cron_schedule table
+# Install the Magento crontab (a write: it changes the user crontab; on production, get approval first)
 govard sh -c "bin/magento cron:install"
 
 # Manual cron run for testing

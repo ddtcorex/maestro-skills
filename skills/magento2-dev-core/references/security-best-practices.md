@@ -23,28 +23,36 @@ This document covers security patterns and vulnerabilities in Magento 2.
 
 <!-- JavaScript Strings -->
 <script>
-    var config = <?= /* @noEscape */ json_encode($config) ?>;
+    // JSON_HEX_* is what makes this safe: without it a value containing
+    // "</script>" closes the tag and injects markup. escapeJs is for a
+    // single quoted JS string, never for JSON.
+    var config = <?= /* @noEscape */ json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
     var productName = '<?= $escaper->escapeJs($productName) ?>';
 </script>
 
 <!-- CSS (escape for style attributes) -->
 <div style="color: <?= $escaper->escapeCss($color) ?>">
 
-<!-- Quotes -->
-<input value="<?= $escaper->escapeQuote($value) ?>">
+<!-- Attribute values -->
+<input value="<?= $escaper->escapeHtmlAttr($value) ?>">
 ```
 
 ### Block Method Escaping
 
 ```php
-// escapeHtml is default for getData()
-$this->getData('product_name'); // auto-escaped if using getHtml()
+// Nothing escapes by itself: DataObject::getData() returns the raw _data value
+// and AbstractBlock::getHtml() returns _toHtml(). Neither goes through the
+// escaper, so a block reading getData() and printing it is an XSS hole.
+$this->getData('product_name'); // RAW: escape it before printing
 
-// Explicit escaping methods
-$block->escapeHtml($text);
-$block->escapeJs($text);
-$block->escapeUrl($url);
-$block->escapeQuote($text);
+// Explicit escaping, one per output context. `$block->escapeHtml()` and friends
+// are deprecated since 103.0.0 (AbstractBlock), so templates use $escaper:
+$escaper->escapeHtml($text);
+$escaper->escapeHtmlAttr($text);
+$escaper->escapeJs($text);
+$escaper->escapeUrl($url);
+$escaper->escapeQuote($text);
+$escaper->escapeCss($text);
 ```
 
 ### HTML Purifier (For Rich Content)
@@ -70,8 +78,9 @@ public function getFilteredContent(string $html): string
 ```php
 <form action="<?= $escaper->escapeUrl($block->getSubmitUrl()) ?>" method="post">
     <?= $block->getBlockHtml('formkey') ?>
-    <!-- or -->
-    <input name="form_key" type="hidden" value="<?= $block->getFormKey() ?>"/>
+    <!-- or, from an explicit FormKey block, still escaped: -->
+    <input name="form_key" type="hidden"
+           value="<?= $escaper->escapeHtmlAttr($block->getBlockHtml('formkey')) ?>"/>
 </form>
 ```
 
@@ -81,12 +90,14 @@ public function getFilteredContent(string $html): string
 // JavaScript - include form key
 define([
     'jquery',
-    'Magento_Customer/js/customer-data'
-], function ($, customerData) {
+    'mage/cookies'
+], function ($) {
     'use strict';
 
     return function (url, data) {
-        var formKey = $.cookie('form_key');
+        // 'mage/cookies' provides $.mage.cookies; $.cookie needs the
+        // separate jquery/jquery.cookie plugin and is not loaded here.
+        var formKey = $.mage.cookies.get('form_key');
         return $.ajax({
             url: url,
             type: 'POST',
@@ -102,19 +113,41 @@ define([
 ### Adminhtml Controllers
 
 ```php
-// In admin controllers, form key validation is automatic
-// But for custom actions, add explicit check
+use Magento\Backend\App\Action;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Data\Form\FormKey\Validator as FormKeyValidator;
 
-public function execute()
+class Save extends Action
 {
-    if (!$this->_formKeyValidator->validate($this->getRequest())) {
-        $result = ['success' => false, 'error' => 'Invalid form key'];
-        return $this->resultFactory->create(ResultFactory::TYPE_JSON)->setData($result);
+    // Without ADMIN_RESOURCE the controller is reachable by any admin user,
+    // and _isAllowed() defaults to true.
+    public const ADMIN_RESOURCE = 'Vendor_Module::thing';
+
+    public function __construct(
+        Action\Context $context,
+        private readonly RequestInterface $request,
+        private readonly FormKeyValidator $formKeyValidator,
+        private readonly ResultFactory $resultFactory
+    ) {
+        parent::__construct($context);
     }
-    // Continue processing
+
+    public function execute()
+    {
+        if (!$this->formKeyValidator->validate($this->request)) {
+            return $this->resultFactory->create(ResultFactory::TYPE_JSON)
+                ->setData(['success' => false, 'error' => 'Invalid form key']);
+        }
+        // Continue processing
+    }
 }
 ```
+
+`$this->_formKeyValidator` and `$this->getRequest()` come from
+`Magento\Backend\App\AbstractAction`, which is deprecated since 102.0.0 (use
+`ActionInterface`); inject the request and the form key validator instead.
+
 
 ## SQL Injection Prevention
 
@@ -257,4 +290,4 @@ public function setSecureCookie(string $value): void
 - [ ] Rate limiting on sensitive endpoints
 - [ ] Admin URL not predictable (`/admin` changed)
 - [ ] Two-factor authentication enforced for admin
-- [ ] CSP headers configured in `csp_whitelist.xml`
+- [ ] CSP allowlist declared in `csp_whitelist.xml`; report-only vs restrict mode is set per area under the `csp/mode/*` config paths (for example `csp/mode/storefront/report_only`)

@@ -14,25 +14,24 @@ If it's Hyvä, also resolve the CSP question **now**, before section 2 below, `m
 as its own axis, separate from Hyvä-vs-Luma: `Hyva/default-csp` vs. the
 plain `Hyva/default`/`Hyva/reset` parent. Don't stop at reading `theme.xml`, a project can carry leftover/cargo-culted `$hyvaCsp->registerInlineScript()`
 calls even on a plain, non-CSP `Hyva/default` parent (copied from a
-different project's template or an older Hyvä doc example), where they're
-inert (guarded by `isset($hyvaCsp)`, which is always false) rather than a
-real compliance mechanism. Confirm the pattern is actually live before
-treating a missing call as a defect:
+different project's template or an older Hyvä doc example). `$hyvaCsp` is
+ambient on a Hyvä theme that wires a CSP mechanism, so the guard only fails on
+a theme with no such wiring at all: in that case the call is inert and its
+absence is "not applicable", not a finding. Confirm the pattern is actually
+live before treating a missing call as a defect:
 
 ```bash
-# 1. theme.xml parent
+# theme.xml parent is the only reliable signal
 grep -n "<parent>" app/design/frontend/<Vendor>/<Theme>/theme.xml
-
-# 2. Does a real CSP view-model class ship in this project's Hyvä packages?
-grep -rl "class.*HyvaCsp\|class Csp" vendor/hyva-themes/*/  2>/dev/null
-
-# 3. Is $hyvaCsp actually assigned to a block anywhere (layout viewModel
-#    argument), not just referenced defensively in a template?
-grep -rn "hyvaCsp" app/design/frontend/<Vendor>/<Theme> --include="*.xml"
 ```
 
-If the parent is plain `Hyva/default`/`Hyva/reset` AND no CSP view-model
-class exists in `vendor/hyva-themes/*` AND no layout wires `hyvaCsp` to a
+Two checks that look sensible and are not: grepping `vendor/hyva-themes/*/` for a
+`HyvaCsp` class always matches, because the class ships in the theme module for every
+Hyvä project; and grepping the theme layout for `hyvaCsp` always comes back empty,
+because the template engine plugin injects `$hyvaCsp` into every template dictionary
+rather than a layout argument.
+
+If the parent is plain `Hyva/default`/`Hyva/reset`, a
 block, this project has no working CSP-nonce mechanism at all, skip
 section 2's CSP check entirely (report it as not applicable, not as a pass)
 rather than flagging `registerInlineScript()` omissions as `M2-SEC-010`.

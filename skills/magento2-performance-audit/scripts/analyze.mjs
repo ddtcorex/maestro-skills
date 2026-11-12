@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { attributeCaller } from './lib/attribution.mjs'
+import { listingCounts } from './lib/listing.mjs'
 import { parseProfiler, templatePath } from './lib/profiler.mjs'
 import { normalizeSql, parseQueryLog } from './lib/querylog.mjs'
 
@@ -34,7 +35,9 @@ function analyzePage(captureDir, row, rows, config) {
     shapes.set(sql, s)
   }
   const htmlFile = join(captureDir, 'pass1', `${row.label}.html`)
-  const profiler = existsSync(htmlFile) ? parseProfiler(readFileSync(htmlFile, 'utf-8')) : []
+  const html = existsSync(htmlFile) ? readFileSync(htmlFile, 'utf-8') : ''
+  const profiler = html ? parseProfiler(html) : []
+  const listing = row.label.startsWith('category') ? listingCounts(html) : { total: null, listed: null }
   const pattern = templatePattern(row.label)
   // Counted from the logs themselves, so a run captured by an older parser
   // can be re-analyzed without re-measuring.
@@ -62,11 +65,15 @@ function analyzePage(captureDir, row, rows, config) {
     ttfbUncachedMs: Math.round(Number(row.ttfb) * 1000),
     template: pattern ? templatePath(profiler, pattern) : null,
     productCount: config.urlSet.find((u) => u.label === row.label)?.productCount ?? null,
+    listingTotal: listing.total,
+    listedCount: listing.listed,
     shapes: [...shapes.values()].sort((a, b) => b.count - a.count).map((s) => ({ ...s, time: round(s.time) })),
     slowest: records.map((r) => ({ sql: normalizeSql(r.sql), time: r.time })).sort((a, b) => b.time - a.time).slice(0, 5),
     profiler: profiler.filter((p) => p.time >= 0.05).sort((a, b) => b.time - a.time).slice(0, 20),
   }
 }
+
+const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf-8')) : null)
 
 const round = (n) => Math.round(n * 10000) / 10000
 
@@ -102,6 +109,7 @@ export function analyzeRun(runDir, config, { scope = 'deep' } = {}) {
     urlSet: config.urlSet.map((u) => ({ ...u, url: `${config.baseUrl}${u.uri}`, template: byLabel.get(u.label)?.template ?? null })),
     pages,
     attribution: attribution(captureDir, rows),
+    revision: readJson(join(captureDir, 'revision.json')),
     passMismatch: pages.filter((p) => p.pass2Queries !== null && p.pass2Queries !== p.totalQueries).map((p) => p.label),
   }
   writeFileSync(join(runDir, 'audit-data.json'), `${JSON.stringify(data, null, 1)}\n`)

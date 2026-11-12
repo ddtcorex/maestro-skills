@@ -11,40 +11,64 @@
 </head>
 <body>
 <div class="header"><div class="header-inner">
+  <div class="header-top">
   {{brand_logo}}
   <!-- Default logo when the marker is left empty: Maestro lockup. An overlay fills the marker and deletes the default block below. -->
   <svg viewBox="0 0 232 48" style="height:32px" role="img" aria-label="Maestro logo"><rect x="2" y="8" width="32" height="32" rx="9" fill="#0a84ff"/><path d="M2 11 L5 4 L8 9 L11 4 L14 11" transform="translate(2 8) scale(2)" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><text x="42" y="32" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="24" letter-spacing="-0.5" fill="#ffffff">Maestro</text></svg>
-  <h1 data-report-title>{{title}}</h1>
+  <div class="header-side">{{header_side}}</div>
+  </div>
+  <div class="eyebrow">{{eyebrow}}</div>
+  <h1 data-report-title>{{heading}}</h1>
+  {{subtitle}}
   <div class="meta">
-    <div>Date: <b>{{date}}</b> · Govard <code>{{govard_version}}</code> · <code>{{host}}</code> · profile <code>{{profile}}</code></div>
-    <div>Magento <code>{{magento_version}}</code> · PHP <code>{{php_version}}</code> · MariaDB <code>{{mariadb_version}}</code> · Redis <code>{{redis_version}}</code> · OpenSearch <code>{{opensearch_version}}</code> · {{fpc}}</div>
-    <div>Lint audit <code>{{lint_session}}</code> · <b>{{lint_findings}}</b> findings · <b>{{lint_duration}}</b> · {{lint_size}}</div>
+    <div>{{scope_line}}</div>
   </div>
 </div></div>
 <div class="container">
 
-<div class="card">
-  <h2>Verdict</h2>
-  <p class="verdict" data-report-verdict>{{verdict}}</p>
+<div class="card" id="key-figures">
+  <h2>Key figures</h2>
+  <div class="tiles">
+  {{tiles}}
+  </div>
 </div>
 
-<div class="card">
-  <h2>Before/After Comparison Matrix</h2>
-  {{matrix}}
+<div class="card" id="in-short">
+  <h2>In short</h2>
+  <ul class="bullets">
+    {{takeaways}}
+  </ul>
 </div>
 
-<div class="card" style="border-left:4px solid var(--red)">
-  <h2>Top Recommendations</h2>
-  <ol style="margin:8px 0;padding-left:18px;font-size:13px">{{recommendations}}</ol>
+<div class="card" id="next-steps">
+  <h2>Next steps and decisions</h2>
+  <div class="tw"><table class="steps">
+    <tr><th>#</th><th>Priority</th><th>Action</th><th>What it brings you</th><th>Scope</th><th>Owner · estimate</th></tr>
+    {{next_steps_rows}}
+  </table></div>
+  {{decisions}}
 </div>
 
-<div class="card">
-  <h2>Coverage Note</h2>
-  <div style="font-size:13px;color:var(--muted)">{{coverage_note}}</div>
-  <div style="font-size:13px;margin-top:8px">Engineering detail: <a href="../report.html">full developer report</a>.</div>
+<div class="card keep" id="results">
+  <h2>Results by page</h2>
+  <div class="note">Database requests needed to build each page when it is not cached. Fewer requests means less work for the server.</div>
+  {{chart_legend}}
+  <div class="chart">{{chart}}</div>
 </div>
 
-<div class="footer">Generated {{date}}. <a href="report.md">Markdown</a></div>
+<div class="card read" id="how-to-read">
+  <h2>How to read these results</h2>
+  {{how_to_read}}
+</div>
+
+<div class="card" id="glossary">
+  <h2>Glossary</h2>
+  <ul class="bullets">
+    {{glossary}}
+  </ul>
+</div>
+
+<div class="footer">Generated {{date}}.</div>
 
 </div>
 </body>

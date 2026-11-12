@@ -15,9 +15,9 @@ describe('pickUrlSet', () => {
       { label: 'category_small', uri: '/small.html', productCount: 4 },
       { label: 'category_medium', uri: '/mid2.html', productCount: 75 },
       { label: 'category_large', uri: '/big.html', productCount: 900 },
-      { label: 'product_1', uri: '/s1.html' },
-      { label: 'product_2', uri: '/c1.html?x=1' },
-      { label: 'product_3', uri: '/b1.html' },
+      { label: 'product_1', uri: '/s1.html', type: 'simple' },
+      { label: 'product_2', uri: '/c1.html?x=1', type: 'configurable' },
+      { label: 'product_3', uri: '/b1.html', type: 'bundle' },
     ])
   })
 
@@ -30,7 +30,7 @@ describe('pickUrlSet', () => {
     expect(set).toEqual([
       { label: 'home', uri: '/' },
       { label: 'category_small', uri: '/only.html', productCount: 9 },
-      { label: 'product_1', uri: '/p.html' },
+      { label: 'product_1', uri: '/p.html', type: 'simple' },
     ])
   })
 

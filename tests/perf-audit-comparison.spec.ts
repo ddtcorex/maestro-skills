@@ -58,7 +58,10 @@ describe('perf-audit same metrics comparison matrix', () => {
 
   it('states a metric recorded on one side only is a gate failure, not a blank cell', () => {
     expect(template()).toMatch(/one side only.*gate failure/i)
-    expect(htmlTemplate()).toMatch(/one side only.*gate failure/i)
+    // The HTML card states the same rule in rendering terms: cold and warm are
+    // both measured, a missing half is never rendered as a blank cell.
+    expect(htmlTemplate()).toMatch(/Cold runs follow a page cache clean and prove their MISS/)
+    expect(htmlTemplate()).toMatch(/median of 3/)
   })
 
   it('uses plain hyphens in the comparison gate headings and sample matrix rows', () => {
@@ -115,7 +118,7 @@ describe('perf-audit same metrics comparison matrix', () => {
     }
     const proseLine = section.split('\n').find((line) => line.includes('One row per page'))
     expect(proseLine).toBeDefined()
-    expect(proseLine as string).toContain('Closed fixed column set')
+    expect(proseLine as string).toContain('a comparison cell reads before → after')
     expect(proseLine as string).not.toMatch(/[\u2013\u2014]/)
   })
 
