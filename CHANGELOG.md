@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0] - 2026-11-12
+
+### Changed
+
+- The `@deepseek-ai/cordis` peer moves from `~4.0.4` to `~4.1.0`, the version DSH 0.2.2 ships, so hosts on the current harness no longer report an unmet peer. A host still on cordis 4.0 stays on 3.0.0. (#116)
+- Toolchain: TypeScript 7, vitest 5, `@types/node` 26; `tsconfig.json` names the `node` types explicitly, as TypeScript 6+ no longer loads every `@types` package by default. (#116)
+
 ## [3.0.0] - 2026-10-27
 
 ### Added
