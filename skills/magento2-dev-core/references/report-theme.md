@@ -98,7 +98,7 @@ The template ships with Maestro defaults in all three slots, so a default render
 
 ### Overlay token map
 
-An overlay rebrands by redefining custom properties, never selectors, so an upstream class rename cannot drop its branding. Only these tokens may be set:
+An overlay rebrands through custom properties, never selectors, so an upstream class rename cannot drop its branding. Only these tokens may be set:
 
 | Token | Role |
 |---|---|
@@ -113,17 +113,17 @@ An overlay rebrands by redefining custom properties, never selectors, so an upst
 | `--header-accent` | header bottom border |
 | `--header-code-bg` | code chips in the header meta |
 | `--link-decoration` | link underline, `none` or `underline` |
-| `--chart-before` | bars of the previous run in the client chart |
-| `--chart-after` | bars of this run in the client chart |
+| `--chart-before` | bars of the previous run in the client chart (report contract 2) |
+| `--chart-after` | bars of this run in the client chart (report contract 2) |
 
 Status colors stay stock.
 
-Each slot takes exactly one construct:
+Each slot takes one construct:
 
 - `{{brand_colors}}` is one `:root{...}` block of tokens from the table.
 - `{{brand_font}}` is one complete `body{font-family:Inter}` rule carrying the whole family stack.
 
-A bare `font-family:Inter;` declaration merges into the next selector and drops that rule: the font never applies and links lose their style. Unread properties such as `--brand-primary` change nothing. Keep text tokens at 4.5:1 contrast; a bright accent belongs on `--header-accent`, not on text.
+A bare `font-family:Inter;` declaration merges into the next selector, dropping that rule: the font never applies and links lose their style. Unread properties such as `--brand-primary` do nothing. Keep text tokens at 4.5:1 contrast; a bright accent belongs on `--header-accent`.
 
 ```css
 :root{--header-bg:#ffffff;--header-text:#0f172a;--header-accent:#0a84ff;--header-code-bg:#f8fafc;--blue:#2563eb}
