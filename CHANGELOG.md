@@ -1,5 +1,30 @@
 # Changelog
 
+## [4.0.0] - 2026-11-12
+
+### Added
+
+- **Cold Core Web Vitals pass.** `perf-audit.mjs cwv` now measures one cold load per page right after `bin/magento cache:clean full_page`, proving its `MISS` from the document response and retrying once after another clean when the first load comes back as a `HIT`. Two new closed reasons: `Skipped: no cold MISS` and `Skipped: no cold signal (production mode, built-in FPC)`.
+- **Total Blocking Time** on every Lighthouse run, warm and cold.
+- **Client report from `clientSummary`.** `render --audience client` writes a self-contained six-section page (Key figures, In short, Next steps and decisions, Results by page, How to read these results, Glossary) with no relative links and no Govard metadata. The summary lives in `sections.json`; a missing or inconsistent one is an error, never a fallback to developer content.
+- **Product type in the discovered URL set**, so the three product samples cover distinct types.
+- `normalizeCwv` reads a `cwv.json` entry written before the cold run existed.
+
+### Changed
+
+- **BREAKING: report contract 2.** Every report carries `<meta name="maestro-report-contract" content="2">` and `render.mjs --contract` prints `2`. A consumer pinned to contract 1 must update.
+- **BREAKING: comparison matrix columns.** The matrix carries twelve closed columns: uncached queries, profiler root, uncached TTFB, then score, LCP and TBT cold and warm, CLS, warm TTFB and the HIT proof. The cold column is measured again, this time proven from the document response.
+- **BREAKING: `cwv/cwv.json` entries are `{cold, warm}`.** `normalizeCwv` keeps older files readable.
+- **BREAKING: `clientSummary` is required for the client audience**, with 3 to 6 takeaways, priority-sorted next steps and recommendation refs that must resolve.
+- **Skill detail moved into `references/`.** Several bodies shrink sharply; the command, budget and checklist detail they used to carry lives one file down, and the tests now read a skill's references alongside its body. Cross-skill links follow.
+- Recommendation bullets read `N to M calls: <shape>` so the SQL stays one code span.
+- The process skills follow the upstream v7.0.2 snapshot.
+
+### Fixed
+
+- A warm run with no document response counts as a miss, never as a score.
+- `report-theme.md` sits inside the 170-220 word lesson budget in both lessons it holds.
+
 ## [3.1.0] - 2026-11-12
 
 ### Changed
