@@ -12,6 +12,23 @@ const toUri = (url) => {
   return `${parsed.pathname}${parsed.search}`
 }
 
+const named = (c) => (c.name ? { name: c.name } : {})
+
+// Adds the names, product counts and product types discovery now records to a
+// frozen URL set, matched by URI. Entries are never added, removed or
+// reordered, so later audits still compare the same pages.
+export function enrichUrlSet(urlSet, candidates) {
+  const categories = new Map(candidates.categories.map((c) => [toUri(c.url), c]))
+  const products = new Map(candidates.products.map((p) => [toUri(p.url), p]))
+  return urlSet.map((entry) => {
+    const category = categories.get(entry.uri)
+    if (category) return { ...entry, productCount: category.productCount, ...named(category) }
+    const product = products.get(entry.uri)
+    if (product) return { ...entry, type: product.type, ...named(product) }
+    return entry
+  })
+}
+
 // Frozen URL set: home, the smallest, median and largest non-empty category
 // by product count, and three products of distinct types (filled with other
 // products when the catalog has fewer types).
@@ -19,7 +36,7 @@ export function pickUrlSet(candidates) {
   const categories = candidates.categories.filter((c) => c.productCount > 0).sort((a, b) => a.productCount - b.productCount)
   const set = [{ label: 'home', uri: '/' }]
   if (categories.length > 0) {
-    const cat = (label, c) => ({ label, uri: toUri(c.url), productCount: c.productCount })
+    const cat = (label, c) => ({ label, uri: toUri(c.url), productCount: c.productCount, ...named(c) })
     set.push(cat('category_small', categories[0]))
     if (categories.length > 2) set.push(cat('category_medium', categories[Math.floor(categories.length / 2)]))
     if (categories.length > 1) set.push(cat('category_large', categories[categories.length - 1]))
@@ -33,17 +50,24 @@ export function pickUrlSet(candidates) {
     }
   }
   const products = [...byType, ...candidates.products.filter((p) => !byType.includes(p))].slice(0, 3)
-  products.forEach((p, i) => set.push({ label: `product_${i + 1}`, uri: toUri(p.url) }))
+  products.forEach((p, i) => set.push({ label: `product_${i + 1}`, uri: toUri(p.url), type: p.type, ...named(p) }))
   return set
 }
 
-export async function discover(projectRoot, baseUrl, outPath, { refresh = false } = {}) {
-  if (existsSync(outPath) && !refresh) {
+export async function discover(projectRoot, baseUrl, outPath, { refresh = false, enrich = false } = {}) {
+  if (enrich && !existsSync(outPath)) throw new ClosedReason('discover', 'Skipped: no config to enrich')
+  if (existsSync(outPath) && !refresh && !enrich) {
     throw new ClosedReason('discover', `Skipped: ${outPath} exists and later audits compare against it; pass --refresh to rewrite it`)
   }
   const res = await govardSh(projectRoot, 'php', { stdin: readFileSync(php, 'utf-8') })
   if (res.code !== 0) throw new Error(`discovery failed: ${res.stderr || res.stdout}`)
   const candidates = JSON.parse(res.stdout)
+  if (enrich) {
+    const existing = JSON.parse(readFileSync(outPath, 'utf-8'))
+    const enriched = { ...existing, urlSet: enrichUrlSet(existing.urlSet, candidates) }
+    writeFileSync(outPath, `${JSON.stringify(enriched, null, 2)}\n`)
+    return enriched
+  }
   const urlSet = pickUrlSet(candidates)
   const config = {
     projectRoot,

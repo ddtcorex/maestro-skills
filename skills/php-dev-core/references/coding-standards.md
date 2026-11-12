@@ -10,6 +10,7 @@ Every file starts with strict types on line 2:
 
 ```php
 <?php
+
 declare(strict_types=1);
 
 namespace Vendor\Package;
@@ -30,7 +31,7 @@ use Vendor\Package\Dto\UserDto;
 - One class per file, file name matches class `PascalCase`.
 
 ```php
-// Correct — class/method brace next line
+// Correct, class/method brace next line
 final class UserService
 {
     public function findById(int $id): ?UserDto
@@ -48,7 +49,7 @@ final class UserService
 Group imports from the same namespace; one `use` per line for readability.
 
 ```php
-// Preferred — grouped when same vendor
+// Preferred, grouped when same vendor
 use Vendor\Package\Dto\UserDto;
 use Vendor\Package\Exception\NotFoundException;
 use Vendor\Package\Repository\UserRepository;
@@ -57,12 +58,15 @@ use Vendor\Package\Repository\UserRepository;
 use Vendor\Package\Dto\{UserDto, CreateUserDto};
 ```
 
-Remove unused imports — PHPCS flags them.
+Remove unused imports before committing. PSR-12 does not detect them (that is
+`SlevomatCodingStandard.Namespaces.UnusedUses` in slevomat/coding-standard, or the
+Magento2 standard); most IDEs and `php-cs-fixer` do.
 
 ### Visibility and Modifiers
 
 - Always explicit: `public`, `protected`, `private`.
-- Order: `public`/`protected`/`private` then `static`, `readonly`, `final`.
+- Order: `[abstract|final]` first, then `public`/`protected`/`private`, then `static`, then
+  `readonly`. PSR-12 rejects `final` after the visibility (`PSR2.Methods.MethodDeclaration.FinalAfterVisibility`).
 - Prefer `readonly` properties and `readonly class` for DTOs.
 - Mark classes `final` by default.
 
@@ -72,13 +76,14 @@ final readonly class CreateUserDto
     public function __construct(
         public string $email,
         public string $name,
-    ) {}
+    ) {
+    }
 }
 ```
 
 ### Line Length and Formatting
 
-- Soft limit 120 characters; PHPCS hard limit 120.
+- Soft limit 120 characters and no hard limit (PSR-12 section 2.3): PHPCS warns at 120, it never fails a line for width.
 - 4 spaces indentation, no tabs, LF endings.
 - One blank line between methods, no trailing whitespace.
 
@@ -91,8 +96,22 @@ Minimum level 6 for generic PHP. Raise to 8 when codebase allows.
 parameters:
   level: 6
   paths: [src]
-  checkMissingIterableValueType: false
 ```
+
+PHPStan 2 removed `checkMissingIterableValueType` and
+`checkGenericClassInNonGenericObjectType`. To keep ignoring array and generic
+typehints, ignore them by error identifier instead of by parameter:
+
+```neon
+parameters:
+  reportUnmatchedIgnoredErrors: false
+  ignoreErrors:
+    - identifier: missingType.iterableValue
+    - identifier: missingType.generics
+```
+
+Keep `reportUnmatchedIgnoredErrors: false` next to them, or the run fails as soon as the
+codebase stops producing those errors.
 
 Extended example with stricter settings:
 
@@ -103,7 +122,6 @@ parameters:
     - src
   excludePaths:
     - tests
-  checkMissingIterableValueType: false
   reportUnmatchedIgnoredErrors: false
   ignoreErrors:
     - '#Missing return statement#'  # only for legacy, with comment
@@ -119,22 +137,25 @@ vendor/bin/phpstan analyse -c phpstan.neon
 govard audit run --checks lint --lint-provider govard --mode project --format json
 ```
 
-Treat every error as a defect — add types instead of extending `ignoreErrors`. Baseline only for third-party legacy code with an expiry comment.
+Treat every error as a defect, add types instead of extending `ignoreErrors`. Baseline only for third-party legacy code with an expiry comment.
 
 ## PHPCS Configuration
 
 ```xml
-<!-- phpcs.xml -->
 <?xml version="1.0"?>
+<!-- phpcs.xml -->
 <ruleset name="VendorPackage">
     <description>PSR-12 for generic PHP</description>
     <file>src</file>
     <file>tests</file>
-    <arg name="standard">PSR12</arg>
-    <arg name="encoding">utf-8</arg>
-    <arg name="tab-width">4</arg>
+    <rule ref="PSR12"/>
+    <arg name="encoding" value="utf-8"/>
+    <arg name="tab-width" value="4"/>
 </ruleset>
 ```
+
+The standard is a `<rule ref>`, not an `<arg name="standard">`: PHPCS rejects the latter
+with `option "--standard" not known`. Args take their value in a `value` attribute.
 
 ```bash
 vendor/bin/phpcs --standard=PSR12 src tests

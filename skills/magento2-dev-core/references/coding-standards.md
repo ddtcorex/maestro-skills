@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 ```php
 <?php
+/**
+ * Vendor Name
+ * Copyright (c) [YEAR] [Vendor Name]
+ * See LICENSE for license details.
+ */
+
 declare(strict_types=1);
 
 namespace Vendor\Module\Controller\Index;
@@ -34,15 +40,9 @@ use Magento\Framework\Controller\Result\Json as JsonResult;
  */
 class Index implements HttpGetActionInterface
 {
-    /** @var JsonFactory */
-    private JsonFactory $resultJsonFactory;
-
-    /**
-     * @param JsonFactory $resultJsonFactory
-     */
-    public function __construct(JsonFactory $resultJsonFactory)
-    {
-        $this->resultJsonFactory = $resultJsonFactory;
+    public function __construct(
+        private readonly JsonFactory $resultJsonFactory
+    ) {
     }
 
     /**
@@ -64,9 +64,9 @@ class Index implements HttpGetActionInterface
 | Classes | PascalCase | `ProductRepository` |
 | Interfaces | PascalCase + Interface suffix | `ProductInterface` |
 | Methods | camelCase | `getProductById()` |
-| Properties | snake_case | `$product_id` |
+| Properties | camelCase | `$productId` |
 | Constants | UPPER_SNAKE_CASE | `CACHE_TAG` |
-| Private props | snake_case with underscore | `$_cacheIdPrefix` |
+| Private props | camelCase, no underscore prefix (legacy core uses `$_name`; a subclass keeps inherited ones such as `$_eventPrefix`, `$_template`) | `$cacheIdPrefix` |
 | Tables | snake_case | `sales_order_item` |
 | Columns | snake_case | `customer_id` |
 
@@ -94,15 +94,17 @@ public function save(ProductInterface $product): void;
 ### PHPCS Configuration
 
 ```xml
-<!-- phpcs.xml -->
 <?xml version="1.0"?>
+<!-- phpcs.xml: the standard is a <rule ref>, never <arg name="standard">
+     (PHPCS answers `option "--standard" not known`), and an <arg> takes its
+     value in the value attribute. -->
 <ruleset name="VendorModule">
     <description>Vendor Module coding standard</description>
     <file>app/code/Vendor/Module</file>
     <exclude-pattern>*/Test/*</exclude-pattern>
-    <arg name="standard">Magento2</arg>
-    <arg name="encoding">utf-8</arg>
-    <arg name="tab-width">4</arg>
+    <rule ref="Magento2"/>
+    <arg name="encoding" value="utf-8"/>
+    <arg name="tab-width" value="4"/>
 </ruleset>
 ```
 
@@ -116,9 +118,11 @@ parameters:
         - app/code/Vendor/Module
     excludePaths:
         - app/code/Vendor/Module/Test
-    checkGenericClassInNonGenericObjectType: false
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
+        # PHPStan 2 removed checkGenericClassInNonGenericObjectType; the old key
+        # is now an error identifier, not a parameter.
+        - identifier: missingType.generics
         - '#Call to an undefined method Mage_.*#'
 ```
 

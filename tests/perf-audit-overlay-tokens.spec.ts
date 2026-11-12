@@ -162,7 +162,9 @@ describe('perf-audit link decoration token', () => {
 
   it.skipIf(!hasChrome())('default render leaves links undecorated (needs headless Chrome)', () => {
     const html = template().replace('{{brand_logo}}', '').replace('{{brand_colors}}', '').replace('{{brand_font}}', '')
-    const styles = renderProbe(html, `({ deco: getComputedStyle(document.querySelector('.footer a')).textDecorationLine })`)
+    // The footer carries no link any more, so probe a section anchor: it is a
+    // real <a> and the default token must leave every link undecorated.
+    const styles = renderProbe(html, `({ deco: getComputedStyle(document.querySelector('a.anchor')).textDecorationLine })`)
     expect(styles.deco).toBe('none')
   }, 120_000)
 })

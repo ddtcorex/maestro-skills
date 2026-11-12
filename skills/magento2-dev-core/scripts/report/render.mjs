@@ -11,12 +11,13 @@ import { dropBrandMarkers, fillTemplate, toFragment } from './lib/html.mjs'
 import { renderMarkdown } from './lib/markdown.mjs'
 import { buildFindings } from './lib/findings-layout.mjs'
 import { buildPerf } from './lib/perf-layout.mjs'
+import { buildPerfClient } from './lib/client-layout.mjs'
 import { validateFindings, validatePerf } from './lib/validate.mjs'
 
 const refs = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'references')
 
 const LAYOUTS = {
-  perf: { template: (audience) => (audience === 'client' ? 'report-perf-client.html.template' : 'report-perf.html.template'), build: buildPerf, validate: validatePerf },
+  perf: { template: (audience) => (audience === 'client' ? 'report-perf-client.html.template' : 'report-perf.html.template'), build: (data, audience) => (audience === 'client' ? buildPerfClient(data) : buildPerf(data, audience)), validate: validatePerf },
   findings: { template: () => 'report-findings.html.template', build: buildFindings, validate: validateFindings },
 }
 
@@ -36,7 +37,7 @@ export function loadTemplate(name) {
 export async function renderReport({ layout, audience = 'dev', data, outDir }) {
   const spec = LAYOUTS[layout]
   if (!spec) throw new Error(`unknown layout: ${layout}`)
-  const errors = spec.validate(data)
+  const errors = spec.validate(data, audience)
   if (errors.length > 0) throw new ValidationError(errors)
   const built = spec.build(data, audience)
   const html = fillTemplate(dropBrandMarkers(loadTemplate(spec.template(audience))), { ...built.slots, contract: String(REPORT_CONTRACT) })

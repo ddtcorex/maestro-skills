@@ -34,8 +34,8 @@ export const COMMANDS = {
     done('render', [...result.files, join(runDir, 'findings.json')])
   },
   async discover(args) {
-    if (!args.root || typeof args['base-url'] !== 'string' || typeof args.out !== 'string') throw new UsageError('usage: discover --root <project> --base-url <url> --out <perf-audit.config.json> [--refresh]')
-    await discover(args.root, args['base-url'], args.out, { refresh: args.refresh === true })
+    if (!args.root || typeof args['base-url'] !== 'string' || typeof args.out !== 'string') throw new UsageError('usage: discover --root <project> --base-url <url> --out <perf-audit.config.json> [--refresh | --enrich]')
+    await discover(args.root, args['base-url'], args.out, { refresh: args.refresh === true, enrich: args.enrich === true })
     done('discover', [args.out])
   },
   async switch(args) {

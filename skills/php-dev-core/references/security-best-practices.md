@@ -2,45 +2,49 @@
 
 Framework-agnostic PHP security patterns. Each section shows the vulnerable pattern, the correct fix, and the verification step.
 
-## XSS Prevention — Escape on Output
+## XSS Prevention: Escape on Output
 
 **NEVER** echo raw user input. Escape at the rendering boundary with `htmlspecialchars`.
 
 ```php
-// WRONG — XSS
+// WRONG, XSS
 echo $_GET['name'];
 echo "<div>$userInput</div>";
 
-// CORRECT — htmlspecialchars with ENT_QUOTES | ENT_SUBSTITUTE and explicit UTF-8
+// CORRECT, htmlspecialchars with ENT_QUOTES | ENT_SUBSTITUTE and explicit UTF-8
 echo htmlspecialchars($userInput, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 echo '<div data-id="' . htmlspecialchars($id, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">';
-echo '<a href="' . htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Profile</a>';
+// An href is a URL context: allow http/https first, then escape for the attribute.
+$safeUrl = filter_var($url, FILTER_VALIDATE_URL) !== false
+    && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)
+    ? $url : '#';
+echo '<a href="' . htmlspecialchars($safeUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">Profile</a>';
 
-// JavaScript context — json_encode with hex flags
+// JavaScript context, json_encode with hex flags
 echo '<script>var name = ' . json_encode($name, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) . ';</script>';
 ```
 
-Framework escapers (`Magento Escaper`, `Laravel e()`, `Twig autoescape`) build on the same `htmlspecialchars` principle — use them when available, fall back to `htmlspecialchars` in plain PHP.
+Framework escapers (`Magento Escaper`, `Laravel e()`, `Twig autoescape`) build on the same `htmlspecialchars` principle, use them when available, fall back to `htmlspecialchars` in plain PHP.
 
 Verification: `vendor/bin/phpcs --standard=PSR12` does not catch XSS; rely on code review and grep for `echo` without `htmlspecialchars` or escaper.
 
-## SQL Injection — Prepared Statements Only
+## SQL Injection: Prepared Statements Only
 
 **NEVER** interpolate variables into SQL strings. Use `PDO::prepare` with bound parameters.
 
 ```php
-// WRONG — SQL injection via string interpolation
+// WRONG, SQL injection via string interpolation
 $email = $_GET['email'];
 $pdo->query("SELECT * FROM users WHERE email = '$email'");
 
-// CORRECT — PDO::prepare with named placeholders and bindValue
+// CORRECT, PDO::prepare with named placeholders and bindValue
 $stmt = $pdo->prepare('SELECT * FROM users WHERE email = :email AND status = :status');
 $stmt->bindValue(':email', $email, \PDO::PARAM_STR);
 $stmt->bindValue(':status', $status, \PDO::PARAM_STR);
 $stmt->execute();
 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-// Also correct — execute with array
+// Also correct, execute with array
 $stmt = $pdo->prepare('SELECT * FROM users WHERE id = :id');
 $stmt->execute([':id' => $id]);
 $user = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -51,7 +55,7 @@ Best practices:
 - Disable emulated prepares: `$pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);`
 - Set error mode to exceptions: `$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);`
 - Use `PDO::PARAM_INT` / `PARAM_STR` explicitly for `bindValue`.
-- Never use `PDO::query` with variable input — always `PDO::prepare`.
+- Never use `PDO::query` with variable input, always `PDO::prepare`.
 
 ## CSRF Protection
 
@@ -63,10 +67,12 @@ $token = bin2hex(random_bytes(32));
 $_SESSION['csrf_token'] = $token;
 echo '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">';
 
-// Validate token (on form submit) — use filter_input, timing-safe compare
-$submitted = filter_input(INPUT_POST, 'csrf_token', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+// Validate token (on form submit): compare the raw value, timing-safe, and fail
+// closed when nothing was ever issued. Without the empty-string check a POST with
+// no token compares '' against '' and hash_equals() returns true.
+$submitted = $_POST['csrf_token'] ?? null;
 $expected = $_SESSION['csrf_token'] ?? '';
-if (!is_string($submitted) || !hash_equals($expected, $submitted)) {
+if ($expected === '' || !is_string($submitted) || !hash_equals($expected, $submitted)) {
     throw new \RuntimeException('Invalid CSRF token');
 }
 ```
@@ -77,7 +83,7 @@ Additional rules:
 - Rotate tokens after use for sensitive actions (password change, payment).
 - SameSite cookies (`SameSite=Lax` or `Strict`) complement but do not replace tokens.
 
-## Cryptography — random_bytes vs md5/uniqid
+## Cryptography: random_bytes vs md5/uniqid
 
 | Vulnerable | Secure Replacement | Use Case |
 |------------|-------------------|----------|
@@ -86,7 +92,7 @@ Additional rules:
 | `serialize()` / `unserialize()` | `json_encode()` / `json_decode()` | Data serialization |
 
 ```php
-// Passwords — NEVER md5
+// Passwords, NEVER md5
 $hash = password_hash($password, PASSWORD_DEFAULT);
 if (!password_verify($password, $hash)) {
     throw new \RuntimeException('Invalid credentials');
@@ -96,18 +102,18 @@ if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
     $hash = password_hash($password, PASSWORD_DEFAULT);
 }
 
-// Tokens — NEVER uniqid() or rand()
+// Tokens, NEVER uniqid() or rand()
 $token = bin2hex(random_bytes(32));          // 256-bit token
 $numericCode = random_int(100000, 999999);   // 6-digit OTP
 
-// Serialization — NEVER unserialize() on user input
+// Serialization, NEVER unserialize() on user input
 $json = json_encode($data, JSON_THROW_ON_ERROR);
 $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 ```
 
 Store secrets in `.env` (never in code or `composer.json`). Validate secrets are loaded before use and fail closed if missing.
 
-## Input Validation — filter_input
+## Input Validation: filter_input
 
 ```php
 // Validate integer

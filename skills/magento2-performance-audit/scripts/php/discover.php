@@ -33,7 +33,7 @@ $collection = $om->get(\Magento\Catalog\Model\ResourceModel\Category\CollectionF
     ->addAttributeToFilter('level', ['gt' => 1])
     ->addUrlRewriteToResult();
 foreach ($collection as $category) {
-    $categories[] = ['url' => $category->getUrl(), 'productCount' => (int) $category->getProductCount()];
+    $categories[] = ['url' => $category->getUrl(), 'productCount' => (int) $category->getProductCount(), 'name' => (string) $category->getName()];
 }
 
 $products = [];
@@ -45,7 +45,7 @@ $collection = $om->get(\Magento\Catalog\Model\ResourceModel\Product\CollectionFa
     ->addUrlRewrite()
     ->setPageSize(200);
 foreach ($collection as $product) {
-    $products[] = ['sku' => $product->getSku(), 'url' => $product->getProductUrl(), 'type' => $product->getTypeId()];
+    $products[] = ['sku' => $product->getSku(), 'url' => $product->getProductUrl(), 'type' => $product->getTypeId(), 'name' => (string) $product->getName()];
 }
 
 echo json_encode([

@@ -44,6 +44,9 @@ describe('cwv stage', () => {
   const config = (labels = ['home']) => ({ projectRoot: project.root, baseUrl: project.server.url, urlSet: labels.map((l) => ({ label: l, uri: `/${l}` })), trace: [] })
   const cwv = async (cfg: any, scope = 'deep') => (await import(join(perfScripts, 'cwv.mjs'))).cwv(cfg, runDir, { scope })
   const result = () => JSON.parse(readFileSync(join(runDir, 'cwv', 'cwv.json'), 'utf-8'))
+  // Every page starts with one cold run (the first load after `cache:clean
+  // full_page`), so this entry comes first in every script.
+  const cold = (score = 10, lcp = 9000) => run(score, lcp, MISS)
 
   beforeEach(async () => {
     project = await makeProject()
@@ -58,8 +61,8 @@ describe('cwv stage', () => {
     rmSync(runDir, { recursive: true, force: true })
   })
 
-  it('runs Lighthouse warm with devtools throttling and saved assets', async () => {
-    setRuns([run(70, 1200), run(64, 1300), run(48, 1500)])
+  it('runs Lighthouse cold and warm with devtools throttling and saved assets', async () => {
+    setRuns([cold(), run(70, 1200), run(64, 1300), run(48, 1500)])
     await cwv(config())
     const argv = JSON.parse(readFileSync(argvLog, 'utf-8').split('\n')[0])
     for (const flag of ['--preset=desktop', '--throttling-method=devtools', '--save-assets', '--output=json']) expect(argv).toContain(flag)
@@ -67,49 +70,78 @@ describe('cwv stage', () => {
   })
 
   it('deletes the saved traces and keeps the devtools logs', async () => {
-    setRuns([run(70, 1200), run(64, 1300), run(48, 1500)])
+    setRuns([cold(), run(70, 1200), run(64, 1300), run(48, 1500)])
     await cwv(config())
     const { readdirSync } = await import('node:fs')
     const files = readdirSync(join(runDir, 'cwv'))
     expect(files.filter((f) => f.endsWith('.trace.json'))).toEqual([])
-    expect(files.filter((f) => f.endsWith('.devtoolslog.json'))).toHaveLength(3)
+    // One cold run plus three warm runs.
+    expect(files.filter((f) => f.endsWith('.devtoolslog.json'))).toHaveLength(4)
   })
 
-  it('keeps the median and spread of three runs on deep', async () => {
-    setRuns([run(70, 1200), run(64, 1300), run(48, 1500)])
+  it('keeps the median and spread of three warm runs on deep', async () => {
+    setRuns([cold(), run(70, 1200), run(64, 1300), run(48, 1500)])
     await cwv(config())
-    expect(result().home).toMatchObject({ median: { score: 64, lcpMs: 1300 }, spread: { score: 22, lcpMs: 300 }, hitSource: 'x-magento-cache-debug' })
-    expect(result().home.runs).toHaveLength(3)
+    expect(result().home.warm).toMatchObject({ median: { score: 64, lcpMs: 1300 }, spread: { score: 22, lcpMs: 300 }, hitSource: 'x-magento-cache-debug' })
+    expect(result().home.warm.runs).toHaveLength(3)
   })
 
-  it('runs once on quick and marks the spread as skipped', async () => {
-    setRuns([run(70, 1200)])
+  it('records the cold run as the uncached measurement of the page', async () => {
+    setRuns([cold(12, 3400), run(70, 1200)])
     await cwv(config(), 'quick')
-    expect(result().home).toMatchObject({ median: { score: 70 }, spread: 'Skipped: quick' })
+    expect(result().home.cold).toMatchObject({ cacheState: 'MISS', score: 12, lcpMs: 3400, source: 'x-magento-cache-debug' })
   })
 
-  it('discards a miss, retries once, and keeps the HIT run', async () => {
-    setRuns([run(10, 9000, MISS), run(70, 1200)])
+  it('cleans the page cache again and retries a cold run that came back as a HIT', async () => {
+    setRuns([run(70, 1200, HIT), cold(12, 3400), run(70, 1200)])
     await cwv(config(), 'quick')
-    expect(result().home).toMatchObject({ median: { score: 70 } })
+    expect(result().home.cold).toMatchObject({ cacheState: 'MISS', score: 12 })
+    expect(project.shimLog()).toContain('magento: cache:clean full_page')
   })
 
-  it('skips the page after two misses in a row', async () => {
-    setRuns([run(10, 9000, MISS), run(11, 9000, MISS)])
+  it('skips the cold value when the cache serves the page twice', async () => {
+    setRuns([run(70, 1200, HIT), run(71, 1200, HIT), run(64, 1300)])
     await cwv(config(), 'quick')
-    expect(result().home).toEqual({ skipped: 'Skipped: no FPC HIT' })
+    expect(result().home.cold).toEqual({ skipped: 'Skipped: no cold MISS' })
+    expect(result().home.warm).toMatchObject({ median: { score: 64 } })
+  })
+
+  it('runs warm once on quick and marks the spread as skipped', async () => {
+    setRuns([cold(), run(70, 1200)])
+    await cwv(config(), 'quick')
+    expect(result().home.warm).toMatchObject({ median: { score: 70 }, spread: 'Skipped: quick' })
+  })
+
+  it('discards a warm miss, retries once, and keeps the HIT run', async () => {
+    setRuns([cold(), run(10, 9000, MISS), run(70, 1200)])
+    await cwv(config(), 'quick')
+    expect(result().home.warm).toMatchObject({ median: { score: 70 } })
+  })
+
+  it('skips the warm value after two misses in a row', async () => {
+    setRuns([cold(), run(10, 9000, MISS), run(11, 9000, MISS)])
+    await cwv(config(), 'quick')
+    expect(result().home.warm).toEqual({ skipped: 'Skipped: no FPC HIT' })
   })
 
   it('counts a run with no document response as a miss, never as a score', async () => {
-    setRuns([{ ...run(90, 900), noDocument: true }, { ...run(91, 900), noDocument: true }])
+    setRuns([cold(), { ...run(90, 900), noDocument: true }, { ...run(91, 900), noDocument: true }])
     await cwv(config(), 'quick')
-    expect(result().home).toEqual({ skipped: 'Skipped: no FPC HIT' })
+    expect(result().home.warm).toEqual({ skipped: 'Skipped: no FPC HIT' })
   })
 
-  it('reports no HIT signal when no run carries a cache header', async () => {
-    setRuns([run(70, 1200, {}), run(71, 1200, {})])
+  it('reports no HIT signal when no warm run carries a cache header', async () => {
+    setRuns([cold(), run(70, 1200, {}), run(71, 1200, {})])
     await cwv(config(), 'quick')
-    expect(result().home).toEqual({ skipped: 'Skipped: no HIT signal (production mode, built-in FPC)' })
+    expect(result().home.warm).toEqual({ skipped: 'Skipped: no HIT signal (production mode, built-in FPC)' })
+  })
+
+  it('normalizes a cwv.json entry written before the cold run existed', async () => {
+    const { normalizeCwv } = await import(join(perfScripts, 'cwv.mjs'))
+    const legacy = { median: { score: 70 }, spread: 'Skipped: quick' }
+    expect(normalizeCwv(legacy)).toEqual({ cold: undefined, warm: legacy })
+    const current = { cold: { score: 10 }, warm: legacy }
+    expect(normalizeCwv(current)).toBe(current)
   })
 
   it('skips the warm group when the full page cache is disabled', async () => {

@@ -66,6 +66,10 @@ const stockHexAllow = new Set(
     '#fecaca',
   ].map((h) => h.toLowerCase()),
 )
+// Neutral surfaces from the same slate ramp as the brand neutrals above: the
+// chart "before" bar and the gray chip background. Not brand colours, and not
+// severity either, so they carry their own set instead of widening stockHexAllow.
+const neutralHexAllow = new Set(['#cbd5e1', '#f1f5f9'].map((h) => h.toLowerCase()))
 // Allowlisted faces plus the generic system fallbacks: neither is brand, and
 // the fallbacks keep offline reports readable with no remote fonts.
 const fontAllow = new Set(['inter', 'jetbrains mono'])
@@ -99,7 +103,14 @@ function walkFiles(dir: string): string[] {
 }
 
 function hexes(text: string): string[] {
-  return (text.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).map((h) => h.toLowerCase())
+  // Six or eight digits only. The palette has no short form, and a three digit
+  // match is indistinguishable from a ticket reference such as `#123`, which
+  // the report template documents on purpose.
+  return (text.match(/#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?\b/g) ?? []).map((h) => h.toLowerCase())
+}
+
+function hexAllowed(hex: string): boolean {
+  return hexAllow.has(hex) || stockHexAllow.has(hex) || neutralHexAllow.has(hex)
 }
 
 function families(text: string): string[] {
@@ -130,7 +141,7 @@ describe('perf-audit brand allowlist gate', () => {
     const bad: string[] = []
     for (const file of [...walkFiles(skillDir), ...walkFiles(devCoreRefs)]) {
       for (const h of hexes(readFileSync(file, 'utf-8'))) {
-        if (!hexAllow.has(h) && !stockHexAllow.has(h)) bad.push(`${file}: ${h}`)
+        if (!hexAllowed(h)) bad.push(`${file}: ${h}`)
       }
     }
     expect(bad).toEqual([])
@@ -184,7 +195,7 @@ describe('perf-audit brand allowlist gate', () => {
     for (const name of batchSpecs) {
       const text = readFileSync(join(__dirname, name), 'utf-8')
       for (const h of hexes(text)) {
-        if (!hexAllow.has(h) && !stockHexAllow.has(h)) bad.push(`${name}: ${h}`)
+        if (!hexAllowed(h)) bad.push(`${name}: ${h}`)
       }
       for (const face of families(text)) {
         if (!fontAllow.has(face) && !fontSystem.has(face)) bad.push(`${name}: ${face}`)

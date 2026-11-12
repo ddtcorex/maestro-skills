@@ -13,7 +13,7 @@ Every Magento cache frontend (config, layout, block_html, full_page, etc.) is wr
 [...] main.DEBUG: cache_invalidate:  {"method":"GET","url":"http:/...","invalidateInfo":{"tags":["FPC"],"mode":"matchingTag"}} []
 ```
 
-**1. Confirm debug logging reaches `var/log/debug.log`.** Whether these DEBUG records are actually written depends on deployment config, not admin store config, `bin/magento config:set dev/debug/debug_logging 1` targets the wrong config store and will error (`Le chemin ... n'existe pas` / "path does not exist"). The real toggle is a deployment config value (`app/etc/env.php`), defaulting to **on** whenever the app is not in `production` mode:
+**1. Confirm debug logging reaches `var/log/debug.log`.** Whether these DEBUG records are actually written depends on deployment config, not admin store config, `bin/magento config:set dev/debug/debug_logging 1` targets the wrong config store and will error (`The "..." path doesn't exist. Verify and try again.` / "path does not exist"). The real toggle is a deployment config value (`app/etc/env.php`), defaulting to **on** whenever the app is not in `production` mode:
 
 ```bash
 govard sh -c "bin/magento deploy:mode:show"   # developer/default -> logging is on by default, nothing to change
@@ -52,13 +52,16 @@ class TraceCacheClean
     {
     }
 
-    public function beforeClean(Cache $subject, $mode = \Zend_Cache::CLEANING_MODE_ALL, array $tags = []): array
+    // Magento\Framework\App\Cache::clean(array $tags) takes one argument, so the
+    // plugin signature mirrors that; a ($mode, $tags) pair here would arrive
+    // shifted and log the wrong thing.
+    public function beforeClean(Cache $subject, array $tags = []): array
     {
         // Log unconditionally, only run this during ONE isolated reproduction step, so volume stays manageable
         $this->logger->debug(
-            sprintf("CACHE CLEAN mode=%s tags=%s\n%s", $mode, implode(',', $tags), (new \Exception())->getTraceAsString())
+            sprintf("CACHE CLEAN tags=%s\n%s", implode(',', $tags), (new \Exception())->getTraceAsString())
         );
-        return [$mode, $tags];
+        return [$tags];
     }
 }
 ```

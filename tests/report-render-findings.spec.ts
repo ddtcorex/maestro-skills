@@ -13,7 +13,7 @@ const fixturePath = join(__dirname, 'fixtures', 'report', 'findings.json')
 const fixture = () => JSON.parse(readFileSync(fixturePath, 'utf-8'))
 const count = (text: string, needle: string) => text.split(needle).length - 1
 const anchors = [
-  '<meta name="maestro-report-contract" content="1">',
+  '<meta name="maestro-report-contract" content="2">',
   ':root{--header-bg:',
   'code{font-family:',
   'aria-label="Maestro logo"',
