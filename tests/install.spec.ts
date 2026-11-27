@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, readdirSync } from 'node:fs'
+import { cpSync, mkdtempSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -10,6 +10,8 @@ function run(args: string[]) {
   const home = mkdtempSync(join(tmpdir(), 'maestro-install-'))
   const cache = join(home, 'cache')
   execFileSync('git', ['clone', '-q', repoRoot, cache])
+  // Overlay the working tree so uncommitted plugins are tested too.
+  cpSync(join(repoRoot, 'plugins'), join(cache, 'plugins'), { recursive: true })
   const res = spawnSync('bash', [join(repoRoot, 'install.sh'), '-y', '--scope', 'personal', '--target', 'opencode', ...args], {
     env: { ...process.env, HOME: home, MAESTRO_SKILLS_HOME: cache },
     encoding: 'utf8',
