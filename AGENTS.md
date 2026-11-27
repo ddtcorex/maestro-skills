@@ -47,7 +47,7 @@ application code beyond `src/` (the Cordis plugin); `tests/` is a vitest suite
 that guards the packaged skill catalog and the plugin's own contracts, and
 `pnpm verify` + `pnpm test` are the local gate. The repository *is* the plugin
 (in every ecosystem at once), and its content is Markdown (`SKILL.md`) plus
-four JSON manifests and one install script.
+a marketplace and per-area plugin manifests for each ecosystem, and one install script.
 
 ## Architecture
 

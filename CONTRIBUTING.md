@@ -17,7 +17,7 @@ Thank you for contributing to **maestro-skills** (`@ddtcorex/maestro-skills`) â€
    pnpm build        # runs tsc
    ```
 
-4. Open the project in your editor. Each skill lives at `skills/<name>/SKILL.md` â€” the single source of truth. Do not create duplicate copies or symlinks.
+4. Open the project in your editor. Each skill lives at `plugins/<area>/skills/<name>/SKILL.md`, and `src/areas.ts` maps areas to skills; that is the single source of truth. Do not create duplicate copies or symlinks.
 
 ## Superpowers 3-Phase Workflow (AGENTS.md)
 
