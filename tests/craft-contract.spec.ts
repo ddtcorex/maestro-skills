@@ -1,14 +1,35 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parseFrontmatter } from '../src/frontmatter.ts'
 import { AREAS } from '../src/areas.ts'
 import { skillPath } from './helpers/skills'
 
 const CRAFT = AREAS['maestro-craft'] ?? []
+// Any package runner invoking the registry CLI must name an exact version.
+const UNPINNED = /(?:npx|dlx|bunx)\s+(?:-\S+\s+)*skills(?!@\d+\.\d+\.\d+)/
+
+function markdownUnder(dir: string): string[] {
+  return readdirSync(dir).flatMap((e) => {
+    const p = join(dir, e)
+    return statSync(p).isDirectory() ? markdownUnder(p) : p.endsWith('.md') ? [p] : []
+  })
+}
 
 describe('maestro-craft contract', () => {
   it('ships the craft skills', () => {
     expect([...CRAFT].sort()).toEqual(['principles-from-own-writing', 'prior-art-search', 'source-to-skill'])
+  })
+
+  it('the unpinned pattern catches every runner form and passes a pinned one', () => {
+    for (const bad of ['npx skills find x', 'npx -y skills find x', 'pnpm dlx skills add y', 'bunx skills find', 'npx skills@1 find'])
+      expect(bad, bad).toMatch(UNPINNED)
+    expect('npx skills@1.9.0 find x').not.toMatch(UNPINNED)
+  })
+
+  it('every craft scenario fixture belongs to a shipped craft skill', () => {
+    const fixtures = readdirSync(join(__dirname, 'fixtures', 'craft'))
+    expect(fixtures.sort()).toEqual([...CRAFT].sort())
   })
 
   for (const skill of CRAFT) {
@@ -24,8 +45,8 @@ describe('maestro-craft contract', () => {
         expect(body.split('\n').length).toBeLessThan(500)
       })
 
-      it('never runs the skills registry CLI unpinned', () => {
-        expect(raw()).not.toMatch(/npx skills(?!@\d)/)
+      it('never runs the skills registry CLI unpinned, in any file of the skill', () => {
+        for (const file of markdownUnder(skillPath(skill))) expect(readFileSync(file, 'utf8'), file).not.toMatch(UNPINNED)
       })
 
       it('carries no em or en dash', () => {

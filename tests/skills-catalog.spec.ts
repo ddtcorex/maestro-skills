@@ -182,5 +182,16 @@ describe('skills catalog', () => {
     // A cached install.sh from v4 pulls the new layout but keeps globbing skills/ and links nothing.
     expect(unreleased).toMatch(/run `?install\.sh`? twice|curl one-liner/i)
   })
+
+  it('no doc still describes the flat layout or a fixed skill count', async () => {
+    const files = ['README.md', 'AGENTS.md', 'CONTRIBUTING.md', '.dsh-plugin/agent.cordis.yml', '.dsh-plugin-creator/agent.cordis.yml']
+    for (const f of files) {
+      const text = await readFile(new URL(`../${f}`, import.meta.url), 'utf-8')
+      // A tree line under plugins/<area>/ is the new layout, not the old one.
+      expect(text, f).not.toMatch(/(?<!\u2500\u2500 )(?<![\w/])skills\/<name>\/SKILL\.md/)
+      expect(text, f).not.toMatch(/serves all \d+ skills/)
+      expect(text, f).not.toMatch(/four JSON manifests/)
+    }
+  })
 })
 

@@ -7,7 +7,7 @@
 #
 # skill-filesystem automatically discovers skills from the user's ~/.dsh/skills/
 # directory, so no hardcoded customSkillDirs is needed here. When installed as a
-# plugin instead, the packaged provider in src/index.ts serves all 32 skills
+# plugin instead, the packaged provider in src/index.ts serves every packaged skill
 # directly from the package - no linking required either.
 #
 # Derived from DeepSeek Harness's own `standard` agent preset
