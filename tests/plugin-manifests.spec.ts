@@ -52,3 +52,22 @@ describe('area plugins', () => {
     }
   })
 })
+
+describe('codex marketplace', () => {
+  it('lists exactly the areas with a local source and a codex manifest each', async () => {
+    const marketplace = await json('.agents/plugins/marketplace.json')
+    const plugins = marketplace.plugins as Entry[]
+    expect(plugins.map(p => p.name).sort()).toEqual(Object.keys(AREAS).sort())
+    for (const p of plugins) {
+      expect(p.source, String(p.name)).toEqual({ source: 'local', path: `./plugins/${p.name}` })
+      const manifest = await json(`plugins/${p.name}/.codex-plugin/plugin.json`)
+      expect(manifest.name).toBe(p.name)
+      expect(manifest.skills).toBe('./skills/')
+      expect(manifest.version).toBe((await json('package.json')).version)
+    }
+  })
+
+  it('leaves no repo-root codex plugin manifest', () => {
+    expect(existsSync(join(root, '.codex-plugin'))).toBe(false)
+  })
+})

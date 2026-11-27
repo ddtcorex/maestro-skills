@@ -1,0 +1,13 @@
+{
+  "name": "maestro-govard",
+  "version": "4.0.0",
+  "description": "Govard dev-environment skills: the toolbox, Magento, Laravel, Symfony and WordPress commands, and Govard in detached review worktrees.",
+  "author": {
+    "name": "DDTCoreX",
+    "email": "kaido4492@gmail.com"
+  },
+  "homepage": "https://github.com/ddtcorex/maestro-skills",
+  "repository": "https://github.com/ddtcorex/maestro-skills",
+  "license": "MIT",
+  "skills": "./skills/"
+}
