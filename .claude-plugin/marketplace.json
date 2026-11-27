@@ -5,14 +5,14 @@
     "email": "kaido4492@gmail.com"
   },
   "metadata": {
-    "description": "Maestro Skills Hub & Cordis Plugin for Govard & supported web frameworks, plus the superpowers process-skills library",
+    "description": "Maestro Skills Hub & Cordis Plugin for Govard & supported web frameworks",
     "version": "4.0.0"
   },
   "plugins": [
     {
       "name": "maestro-skills",
       "source": "./",
-      "description": "Maestro Skills Hub & Cordis Plugin for Govard & supported web frameworks (Magento 2, Laravel, etc.) plus the superpowers process-skills library (forked from obra/superpowers)",
+      "description": "Maestro Skills Hub & Cordis Plugin for Govard & supported web frameworks (Magento 2, Laravel, etc.)",
       "version": "4.0.0",
       "author": {
         "name": "DDTCoreX",

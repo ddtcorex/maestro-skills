@@ -1,6 +1,6 @@
 # Contributing to maestro-skills
 
-Thank you for contributing to **maestro-skills** (`@ddtcorex/maestro-skills`) — a unified skills library for AI coding agents (Magento 2 / Govard / superpowers), packaged as a Cordis plugin for DeepSeek Harness and as a Claude Code / Codex CLI plugin.
+Thank you for contributing to **maestro-skills** (`@ddtcorex/maestro-skills`) — a unified skills library for AI coding agents (Magento 2 / Govard / PHP), packaged as a Cordis plugin for DeepSeek Harness and as a Claude Code / Codex CLI plugin.
 
 ## Getting Started
 
@@ -80,8 +80,6 @@ claude --plugin-dir . plugin details maestro-skills
 bash -n install.sh
 bash install.sh --help
 
-# Superpowers fork sync (only when updating the fork)
-scripts/sync-superpowers.sh
 ```
 
 Do not claim verified/done/clean without having actually run the checks — be ready to paste exact command output in the PR.

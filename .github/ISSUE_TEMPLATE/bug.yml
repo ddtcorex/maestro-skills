@@ -26,7 +26,6 @@ body:
         - Skill content (SKILL.md)
         - Cordis plugin (src/ / DSH preset)
         - install.sh / marketplace manifests
-        - Superpowers fork / sync
         - Documentation
         - Other
     validations:
