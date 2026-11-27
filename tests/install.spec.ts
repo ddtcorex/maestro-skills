@@ -8,7 +8,16 @@ import { ALL_SKILLS, repoRoot } from './helpers/skills'
 // The installer pulls its cache clone; a clone of this checkout makes that pull local.
 function run(args: string[], home = mkdtempSync(join(tmpdir(), 'maestro-install-'))) {
   const cache = join(home, 'cache')
-  if (!existsSync(cache)) execFileSync('git', ['clone', '-q', repoRoot, cache])
+  if (!existsSync(cache)) {
+    execFileSync('git', ['clone', '-q', repoRoot, cache])
+    // CI checks out a detached merge ref with no local branch, so the clone is detached too.
+    execFileSync('git', ['-C', cache, 'checkout', '-q', '--detach'])
+    // A user's cache tracks a branch; give the clone one that pulls from itself, so the
+    // installer's `git pull --ff-only` is a no-op wherever the suite runs.
+    execFileSync('git', ['-C', cache, 'checkout', '-q', '-B', 'install-test'])
+    execFileSync('git', ['-C', cache, 'config', 'branch.install-test.remote', '.'])
+    execFileSync('git', ['-C', cache, 'config', 'branch.install-test.merge', 'refs/heads/install-test'])
+  }
   // Overlay the working tree so uncommitted plugins are tested too.
   cpSync(join(repoRoot, 'plugins'), join(cache, 'plugins'), { recursive: true })
   const res = spawnSync('bash', [join(repoRoot, 'install.sh'), '-y', '--scope', 'personal', '--target', 'opencode', ...args], {
@@ -23,14 +32,14 @@ function run(args: string[], home = mkdtempSync(join(tmpdir(), 'maestro-install-
 
 describe('install.sh areas', () => {
   it('no flag installs every skill of every area', () => {
-    const { status, linked } = run([])
-    expect(status).toBe(0)
+    const { status, stderr, linked } = run([])
+    expect(status, stderr).toBe(0)
     expect(linked).toEqual([...ALL_SKILLS].sort())
   })
 
   it('--area maestro-php installs only php-dev-core', () => {
-    const { status, linked } = run(['--area', 'maestro-php'])
-    expect(status).toBe(0)
+    const { status, stderr, linked } = run(['--area', 'maestro-php'])
+    expect(status, stderr).toBe(0)
     expect(linked).toEqual(['php-dev-core'])
   })
 
