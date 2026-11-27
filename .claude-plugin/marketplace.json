@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "DDTCoreX skill plugins: Govard, Magento 2, PHP and design, one plugin per area.",
-    "version": "5.0.0"
+    "version": "5.0.1"
   },
   "plugins": [
     {
       "name": "maestro-govard",
       "source": "./plugins/maestro-govard",
       "description": "Govard dev-environment skills: the toolbox, Magento, Laravel, Symfony and WordPress commands, and Govard in detached review worktrees.",
-      "version": "5.0.0",
+      "version": "5.0.1",
       "author": {
         "name": "DDTCoreX",
         "email": "kaido4492@gmail.com"
@@ -25,7 +25,7 @@
       "name": "maestro-magento2",
       "source": "./plugins/maestro-magento2",
       "description": "Magento 2 skills: core architecture, backend APIs, Luma and Hyva frontends, linting, code review, performance audit and security scan.",
-      "version": "5.0.0",
+      "version": "5.0.1",
       "author": {
         "name": "DDTCoreX",
         "email": "kaido4492@gmail.com"
@@ -37,7 +37,7 @@
       "name": "maestro-php",
       "source": "./plugins/maestro-php",
       "description": "Framework-agnostic PHP: PSR standards, Composer packaging and static analysis.",
-      "version": "5.0.0",
+      "version": "5.0.1",
       "author": {
         "name": "DDTCoreX",
         "email": "kaido4492@gmail.com"
@@ -49,7 +49,7 @@
       "name": "maestro-design",
       "source": "./plugins/maestro-design",
       "description": "Design system work and editorial diagrams: Tailwind and shadcn/ui, accessibility, Figma to code, Mermaid with a CLI verifier.",
-      "version": "5.0.0",
+      "version": "5.0.1",
       "author": {
         "name": "DDTCoreX",
         "email": "kaido4492@gmail.com"
@@ -61,7 +61,7 @@
       "name": "maestro-craft",
       "source": "./plugins/maestro-craft",
       "description": "Working method for agents: search for prior art before building, turn source material into verified skills, derive writing principles from your own artifacts.",
-      "version": "5.0.0",
+      "version": "5.0.1",
       "author": {
         "name": "DDTCoreX",
         "email": "kaido4492@gmail.com"

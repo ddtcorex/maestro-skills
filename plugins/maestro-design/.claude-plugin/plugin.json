@@ -1,6 +1,6 @@
 {
   "name": "maestro-design",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Design system work and editorial diagrams: Tailwind and shadcn/ui, accessibility, Figma to code, Mermaid with a CLI verifier.",
   "author": {
     "name": "DDTCoreX",
