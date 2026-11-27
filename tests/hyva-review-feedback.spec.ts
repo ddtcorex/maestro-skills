@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const SKILL_DIR = join(__dirname, '..', 'skills', 'magento2-hyva-dev')
+const SKILL_DIR = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-hyva-dev')
 /**
  * The whole skill, body plus references. The house style keeps SKILL.md short and
  * pushes the review checklist into `references/`, so a lesson may move one file

@@ -1,9 +1,10 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { skillPath } from './helpers/skills'
 import { describe, expect, it } from 'vitest'
 import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
-const SKILL_DIR = join(__dirname, '..', 'skills', 'magento2-performance-audit')
+const SKILL_DIR = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit')
 const SKILL = join(SKILL_DIR, 'SKILL.md')
 function skill() { return readFileSync(SKILL, 'utf-8') }
 /**
@@ -27,7 +28,7 @@ describe('perf-audit feedback P1', () => {
 
 describe('perf-audit feedback P2', () => {
   it('states realistic quick/deep ranges with the observed floor', () => {
-    const dir = join(__dirname, '..', 'skills', 'magento2-performance-audit')
+    const dir = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit')
     const perPage = readFileSync(join(dir, 'references', 'per-page-type-audit.md'), 'utf-8')
     const template = readFileSync(join(dir, 'references', 'report-template.md'), 'utf-8')
     expect(wholeSkill()).toContain('30-45m')
@@ -43,7 +44,7 @@ describe('perf-audit feedback P2', () => {
   })
 
   it('labels the Per-Page Detail URL example for both audiences', () => {
-    const template = readFileSync(join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references', 'report-template.md'), 'utf-8')
+    const template = readFileSync(join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit', 'references', 'report-template.md'), 'utf-8')
     // The example must not show a bare absolute URL: dev gets scheme+host, client gets the URI.
     expect(template).toContain('dev: `https://example.test/')
     expect(template).toContain('client: `/')
@@ -52,7 +53,7 @@ describe('perf-audit feedback P2', () => {
 
 describe('perf-audit feedback P3', () => {
   it('teaches sh -c quoting once in govard-toolbox', () => {
-    const toolbox = readFileSync(join(__dirname, '..', 'skills', 'govard-toolbox', 'SKILL.md'), 'utf-8')
+    const toolbox = readFileSync(join(__dirname, '..', 'plugins', 'maestro-govard', 'skills', 'govard-toolbox', 'SKILL.md'), 'utf-8')
     expect(toolbox).toContain('never join `grep` with `&&`')
     expect(toolbox).toContain('|| true')
   })
@@ -60,7 +61,7 @@ describe('perf-audit feedback P3', () => {
 
 describe('perf-audit feedback P4', () => {
   it('pins the audit-data.json sidecar schema', () => {
-    const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+    const base = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit', 'references')
     const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
     expect(template).toContain('audit-data.json')
     expect(template).toContain('distinctShapes')
@@ -70,7 +71,7 @@ describe('perf-audit feedback P4', () => {
 
 describe('perf-audit feedback P5', () => {
   it('adds a generic client-facing variant without private branding', () => {
-    const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+    const base = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit', 'references')
     const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
     const theme = loadThemeDoc()
     expect(template).toContain('audience: dev | client')
@@ -81,7 +82,7 @@ describe('perf-audit feedback P5', () => {
 
 describe('perf-audit feedback P6', () => {
   it('requires full URL for dev and full URI for client', () => {
-    const base = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+    const base = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit', 'references')
     const template = readFileSync(join(base, 'report-template.md'), 'utf-8')
     const theme = loadThemeDoc()
     expect(template).toContain('never truncate')
@@ -92,7 +93,7 @@ describe('perf-audit feedback P6', () => {
 })
 
 describe('review fix pass', () => {
-  const read = (rel: string) => readFileSync(join(__dirname, '..', 'skills', rel), 'utf-8')
+  const read = (rel: string) => readFileSync(skillPath(rel.split('/')[0], ...rel.split('/').slice(1)), 'utf-8')
 
   it('labels the 22m floor as whole-audit time, distinct from capture time', () => {
     // The reviewer caught "~22m observed floor" sitting next to a "20-30m" deep cap
@@ -136,7 +137,7 @@ describe('review fix pass', () => {
 })
 
 describe('perf-audit report layout', () => {
-  const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+  const refs = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit', 'references')
   const template = () => loadPerfTemplate()
   const theme = () => loadThemeDoc()
 
@@ -170,7 +171,7 @@ describe('perf-audit report layout', () => {
 })
 
 describe('perf-audit markdown note order', () => {
-  const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+  const refs = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit', 'references')
   const template = () => readFileSync(join(refs, 'report-template.md'), 'utf-8')
 
   it('renders the CWV table before its context note', () => {

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-export const devCoreRefs = join(__dirname, '..', '..', 'skills', 'magento2-dev-core', 'references')
+export const devCoreRefs = join(__dirname, '..', '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-dev-core', 'references')
 
 export function loadThemeCss(): string {
   return readFileSync(join(devCoreRefs, 'report-theme.css'), 'utf-8')

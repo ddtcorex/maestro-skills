@@ -1,11 +1,12 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { areaOf } from './helpers/skills'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 
 async function skill(name: string): Promise<string> {
-  return readFile(new URL(`skills/${name}/SKILL.md`, `file://${root}/`), 'utf8')
+  return readFile(new URL(`plugins/${areaOf(name)}/skills/${name}/SKILL.md`, `file://${root}/`), 'utf8')
 }
 
 /**
@@ -17,7 +18,7 @@ async function skill(name: string): Promise<string> {
  * SKILL.md would turn every house-style trim into a false alarm.
  */
 async function skillWithReferences(name: string): Promise<string> {
-  const dir = new URL(`skills/${name}/references/`, `file://${root}/`)
+  const dir = new URL(`plugins/${areaOf(name)}/skills/${name}/references/`, `file://${root}/`)
   const references: string[] = []
   try {
     const entries = (await readdir(dir)).filter((f) => f.endsWith('.md')).sort()

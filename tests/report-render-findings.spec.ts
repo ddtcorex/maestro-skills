@@ -4,11 +4,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 // @ts-expect-error untyped ESM script
-import { validateFindings } from '../skills/magento2-dev-core/scripts/report/lib/validate.mjs'
+import { validateFindings } from '../plugins/maestro-magento2/skills/magento2-dev-core/scripts/report/lib/validate.mjs'
 // @ts-expect-error untyped ESM script
-import { findingsVerdict } from '../skills/magento2-dev-core/scripts/report/lib/findings-layout.mjs'
+import { findingsVerdict } from '../plugins/maestro-magento2/skills/magento2-dev-core/scripts/report/lib/findings-layout.mjs'
 
-const renderCli = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
+const renderCli = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
 const fixturePath = join(__dirname, 'fixtures', 'report', 'findings.json')
 const fixture = () => JSON.parse(readFileSync(fixturePath, 'utf-8'))
 const count = (text: string, needle: string) => text.split(needle).length - 1

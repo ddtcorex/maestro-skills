@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const SKILLS = join(__dirname, '..', 'skills')
+const SKILLS = join(__dirname, '..', 'plugins', 'maestro-govard', 'skills')
 function readSkill(...segs: string[]) {
   return readFileSync(join(SKILLS, ...segs), 'utf-8')
 }

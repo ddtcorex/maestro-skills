@@ -1,11 +1,10 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { parseFrontmatter } from '../src/frontmatter.ts'
+import { ALL_SKILLS, skillPath } from './helpers/skills'
 
-const SKILLS_DIR = fileURLToPath(new URL('../skills', import.meta.url))
 const DOMAIN_PATTERN = /^(dsh|magento2|govard)-/
 // The obra/superpowers fork left this repo in v5; none of these names may come back.
 const FORMERLY_FORKED = [
@@ -17,7 +16,7 @@ const FORMERLY_FORKED = [
 ]
 
 function load(skill: string) {
-  return readFile(join(SKILLS_DIR, skill, 'SKILL.md'), 'utf-8').then(raw => ({
+  return readFile(skillPath(skill, 'SKILL.md'), 'utf-8').then(raw => ({
     raw,
     metadata: parseFrontmatter(raw).metadata,
   }))
@@ -25,7 +24,7 @@ function load(skill: string) {
 
 describe('skills catalog', () => {
   it('every domain skill has a folded description and declares dsh', async () => {
-    const entries = (await readdir(SKILLS_DIR)).filter(e => DOMAIN_PATTERN.test(e))
+    const entries = ALL_SKILLS.filter(e => DOMAIN_PATTERN.test(e))
     expect(entries.length).toBeGreaterThanOrEqual(12)
     for (const entry of entries) {
       const { metadata } = await load(entry)
@@ -37,7 +36,7 @@ describe('skills catalog', () => {
   })
 
   it('carries no superpowers fork', async () => {
-    const entries = await readdir(SKILLS_DIR)
+    const entries = ALL_SKILLS
     for (const name of FORMERLY_FORKED) expect(entries, name).not.toContain(name)
   })
 
@@ -52,7 +51,7 @@ describe('skills catalog', () => {
   })
 
   it('no skill nests govard inside its own container shell', async () => {
-    const entries = await readdir(SKILLS_DIR)
+    const entries = ALL_SKILLS
     for (const entry of entries) {
       const { raw } = await load(entry)
       expect(raw, entry).not.toMatch(/govard\s+sh\s+-c\s+"govard\s+/)
@@ -74,13 +73,13 @@ describe('skills catalog', () => {
   })
 
   it('acquires the query-log lock before enabling global diagnostics', async () => {
-    const reference = await readFile(join(SKILLS_DIR, 'magento2-performance-audit', 'references', 'database-query-profiling.md'), 'utf-8')
+    const reference = await readFile(skillPath('magento2-performance-audit', 'references', 'database-query-profiling.md'), 'utf-8')
     expect(reference.indexOf('# Claim this global diagnostic resource')).toBeLessThan(reference.indexOf('# Enable full query logging'))
     expect(reference).toContain('owner missing')
   })
 
   it('does not leave owner checks outside global diagnostic mutations', async () => {
-    const base = join(SKILLS_DIR, 'magento2-performance-audit', 'references')
+    const base = skillPath('magento2-performance-audit', 'references')
     const [database, perPage] = await Promise.all([
       readFile(join(base, 'database-query-profiling.md'), 'utf-8'),
       readFile(join(base, 'per-page-type-audit.md'), 'utf-8'),
@@ -102,22 +101,22 @@ describe('skills catalog', () => {
       'native stats (?:tool|streaming)',
       '<search tool>',
     ].join('|'), 'i')
-    const entries = (await readdir(SKILLS_DIR))
+    const entries = (ALL_SKILLS)
     for (const entry of entries) {
       const files = [join(entry, 'SKILL.md')]
       try {
-        for (const ref of await readdir(join(SKILLS_DIR, entry, 'references')))
+        for (const ref of await readdir(skillPath(entry, 'references')))
           if (ref.endsWith('.md')) files.push(join(entry, 'references', ref))
       } catch { /* no references dir */ }
       for (const file of files) {
-        const raw = await readFile(join(SKILLS_DIR, file), 'utf-8')
+        const raw = await readFile(skillPath(file.split('/')[0], ...file.split('/').slice(1)), 'utf-8')
         expect(raw, file).not.toMatch(REMOVED_TOOL_PROSE)
       }
     }
   })
 
   it('keeps public skill content runtime-neutral', async () => {
-    const entries = await readdir(SKILLS_DIR)
+    const entries = ALL_SKILLS
     // Native-tool proper nouns and harness names. Shapes are deliberately broad
     // so a NEW skill cannot reintroduce one and stay green:
     //  - `maestro` + underscore OR a bare CamelCase-free `maestroX` name
@@ -139,11 +138,11 @@ describe('skills catalog', () => {
     for (const entry of entries) {
       const files = [join(entry, 'SKILL.md')]
       try {
-        for (const ref of await readdir(join(SKILLS_DIR, entry, 'references')))
+        for (const ref of await readdir(skillPath(entry, 'references')))
           if (ref.endsWith('.md')) files.push(join(entry, 'references', ref))
       } catch { /* no references dir */ }
       for (const file of files) {
-        const raw = await readFile(join(SKILLS_DIR, file), 'utf-8')
+        const raw = await readFile(skillPath(file.split('/')[0], ...file.split('/').slice(1)), 'utf-8')
         // Use the real parser: an ad-hoc `/^---\n[\s\S]*?\n---\n/` strip also
         // matches an opening `---` inside the body and would hide text after it.
         const body = parseFrontmatter(raw).body
@@ -155,7 +154,7 @@ describe('skills catalog', () => {
   it('README and AGENTS list every shipped skill and its declared dependencies', async () => {
     const readme = await readFile(new URL('../README.md', import.meta.url), 'utf-8')
     const agents = await readFile(new URL('../AGENTS.md', import.meta.url), 'utf-8')
-    const entries = (await readdir(SKILLS_DIR))
+    const entries = (ALL_SKILLS)
     for (const entry of entries) {
       expect(readme, `README.md must mention ${entry}`).toContain(entry)
       const { raw } = await load(entry)

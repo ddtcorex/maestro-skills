@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const skills = join(__dirname, '..', 'skills')
+const skills = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills')
 const DIRS = ['magento2-dev-core', 'magento2-performance-audit', 'magento2-linter', 'magento2-security-scan', 'magento2-code-review']
 
 function walk(dir: string): string[] {

@@ -1,0 +1,12 @@
+{
+  "name": "maestro-php",
+  "version": "4.0.0",
+  "description": "Framework-agnostic PHP: PSR standards, Composer packaging and static analysis.",
+  "author": {
+    "name": "DDTCoreX",
+    "email": "kaido4492@gmail.com"
+  },
+  "homepage": "https://github.com/ddtcorex/maestro-skills",
+  "repository": "https://github.com/ddtcorex/maestro-skills",
+  "license": "MIT"
+}

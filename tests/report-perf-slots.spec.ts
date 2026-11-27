@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-const templatePath = join(__dirname, '..', 'skills', 'magento2-dev-core', 'references', 'report-perf.html.template')
-const renderCli = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
+const templatePath = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-dev-core', 'references', 'report-perf.html.template')
+const renderCli = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
 const fixture = join(__dirname, 'fixtures', 'report', 'perf-audit-data.json')
 
 // Every marker the engine can fill: render.mjs built-ins plus the buildPerf slot keys.
@@ -113,7 +113,7 @@ describe('perf template slot coverage', () => {
     })
 
     it('renders provided slow-query and code-pattern checks instead of the skip text', async () => {
-      const engine = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
+      const engine = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
       const { renderReport } = await import(engine)
       const dir = mkdtempSync(join(tmpdir(), 'report-perf-agent-sections-'))
       try {
@@ -165,7 +165,7 @@ describe('perf template slot coverage', () => {
     })
 
     it('renders the Top Timers card from stored profiler data', async () => {
-      const engine = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
+      const engine = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
       const { renderReport } = await import(engine)
       const dir = mkdtempSync(join(tmpdir(), 'report-perf-timers-'))
       try {

@@ -9,6 +9,8 @@ import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-te
 const assetsDir = join(
   __dirname,
   '..',
+  'plugins',
+  'maestro-magento2',
   'skills',
   'magento2-dev-core',
   'references',
