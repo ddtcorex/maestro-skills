@@ -1,0 +1,1 @@
+Design a step in our pipeline that triages about 2,000 incoming application log lines per hour into actionable or noise using an LLM. Give me the design: how the model is called, what it returns, and how the rest of the pipeline uses the result. Do not run any tools.

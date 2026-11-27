@@ -1,0 +1,13 @@
+{
+  "name": "maestro-craft",
+  "version": "4.0.0",
+  "description": "Working method for agents: search for prior art before building, turn source material into verified skills, derive writing principles from your own artifacts.",
+  "author": {
+    "name": "DDTCoreX",
+    "email": "kaido4492@gmail.com"
+  },
+  "homepage": "https://github.com/ddtcorex/maestro-skills",
+  "repository": "https://github.com/ddtcorex/maestro-skills",
+  "license": "MIT",
+  "skills": "./skills/"
+}
