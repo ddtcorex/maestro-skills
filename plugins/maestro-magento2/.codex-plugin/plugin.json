@@ -1,0 +1,13 @@
+{
+  "name": "maestro-magento2",
+  "version": "4.0.0",
+  "description": "Magento 2 skills: core architecture, backend APIs, Luma and Hyva frontends, linting, code review, performance audit and security scan.",
+  "author": {
+    "name": "DDTCoreX",
+    "email": "kaido4492@gmail.com"
+  },
+  "homepage": "https://github.com/ddtcorex/maestro-skills",
+  "repository": "https://github.com/ddtcorex/maestro-skills",
+  "license": "MIT",
+  "skills": "./skills/"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "maestro-design",
+  "version": "4.0.0",
+  "description": "Design system work and editorial diagrams: Tailwind and shadcn/ui, accessibility, Figma to code, Mermaid with a CLI verifier.",
+  "author": {
+    "name": "DDTCoreX",
+    "email": "kaido4492@gmail.com"
+  },
+  "homepage": "https://github.com/ddtcorex/maestro-skills",
+  "repository": "https://github.com/ddtcorex/maestro-skills",
+  "license": "MIT",
+  "skills": "./skills/"
+}

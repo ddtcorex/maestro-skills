@@ -18,7 +18,7 @@ jobs:
         run: |
           for f in plugins/*/.claude-plugin/plugin.json; do jq empty "$f"; done
           jq empty .claude-plugin/marketplace.json
-          jq empty .codex-plugin/plugin.json
+          for f in plugins/*/.codex-plugin/plugin.json; do jq empty "$f"; done
           jq empty .agents/plugins/marketplace.json
           test -x install.sh
           bash -n install.sh

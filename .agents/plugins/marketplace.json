@@ -5,10 +5,50 @@
   },
   "plugins": [
     {
-      "name": "maestro-skills",
+      "name": "maestro-govard",
       "source": {
         "source": "local",
-        "path": "./"
+        "path": "./plugins/maestro-govard"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "maestro-magento2",
+      "source": {
+        "source": "local",
+        "path": "./plugins/maestro-magento2"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "maestro-php",
+      "source": {
+        "source": "local",
+        "path": "./plugins/maestro-php"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "maestro-design",
+      "source": {
+        "source": "local",
+        "path": "./plugins/maestro-design"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
       },
       "category": "Development"
     }
