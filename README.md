@@ -206,9 +206,10 @@ Step-by-step commands to verify output works properly.
 
 ## Contributing
 
-Changes follow the Superpowers workflow mandated in [AGENTS.md](AGENTS.md):
-brainstorming → writing-plans → executing-plans with strict TDD. Feature
-branches only; never commit to `master` directly.
+Changes follow the three phases mandated in [AGENTS.md](AGENTS.md): design
+first, then a task-by-task plan, then strict TDD. Feature branches only; never
+commit to `master` directly. The process skills that automate those phases are
+not shipped in this repository.
 
 ## Credits & Attribution
 

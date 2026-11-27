@@ -19,15 +19,17 @@ Thank you for contributing to **maestro-skills** (`@ddtcorex/maestro-skills`) �
 
 4. Open the project in your editor. Each skill lives at `plugins/<area>/skills/<name>/SKILL.md`, and `src/areas.ts` maps areas to skills; that is the single source of truth. Do not create duplicate copies or symlinks.
 
-## Superpowers 3-Phase Workflow (AGENTS.md)
+## The 3-Phase Workflow (AGENTS.md)
 
-Every change to this repository **MUST** follow the Superpowers skill workflow defined in `AGENTS.md`, in order:
+Every change to this repository **MUST** follow the workflow defined in `AGENTS.md`, in order:
 
-1. **brainstorming** — explore intent, requirements, and design before writing code. Record the outcome in the PR description.
-2. **writing-plans** — turn the approved design into a task-by-task plan with exact test and implementation sketches. Plans are transient working files — delete them once the batch ships.
-3. **executing-plans** — implement task by task with strict **TDD**: write a failing test first, verify RED, implement, verify GREEN, then commit that task before starting the next. Do not commit while tests are red.
+1. **Design first.** Explore intent, requirements, and design before writing code. Record the outcome in the PR description.
+2. **Plan before code.** Turn the approved design into a task-by-task plan with exact test and implementation sketches. Plans are transient working files, so delete them once the batch ships.
+3. **Execute with strict TDD.** One task at a time: write a failing test first, verify RED, implement, verify GREEN, then commit that task before starting the next. Do not commit while tests are red.
 
-Do not skip ahead to implementation and do not bundle multiple TDD tasks into one commit during `executing-plans`. Describe durable outcomes in the PR body instead of committing dated spec/plan files.
+Do not skip ahead to implementation and do not bundle multiple TDD tasks into one commit. Describe durable outcomes in the PR body instead of committing dated spec/plan files.
+
+The process skills that automate these phases (`brainstorming`, `writing-plans`, `executing-plans`) are **not shipped in this repository** since v5. Install a process-skill library into your own agent if you want them, or follow the phases by hand.
 
 ## Branch Naming
 

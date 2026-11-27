@@ -38,5 +38,5 @@ Fixes #
 
 - [ ] Branch is `feat/...`, `fix/...`, or `docs/...` off `master` (no direct commits to `master`)
 - [ ] Commits follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`) in imperative mood
-- [ ] Followed the Superpowers 3-phase workflow (brainstorming → writing-plans → executing-plans with TDD) where applicable
+- [ ] Followed the 3-phase workflow from `AGENTS.md` (design, then plan, then TDD) where applicable
 - [ ] `pnpm verify` / `pnpm test` / `pnpm build` are green
