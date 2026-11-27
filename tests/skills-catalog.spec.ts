@@ -1,4 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -6,9 +7,8 @@ import { parseFrontmatter } from '../src/frontmatter.ts'
 
 const SKILLS_DIR = fileURLToPath(new URL('../skills', import.meta.url))
 const DOMAIN_PATTERN = /^(dsh|magento2|govard)-/
-// Forked-from-upstream skills must stay verbatim; only domain skills carry
-// fork-local frontmatter additions such as `compatibility`.
-const FORKED = [
+// The obra/superpowers fork left this repo in v5; none of these names may come back.
+const FORMERLY_FORKED = [
   'brainstorming', 'diagnosing-superpowers', 'dispatching-parallel-agents', 'executing-plans',
   'finishing-a-development-branch', 'receiving-code-review', 'requesting-code-review',
   'subagent-driven-development', 'systematic-debugging', 'test-driven-development',
@@ -36,11 +36,19 @@ describe('skills catalog', () => {
     }
   })
 
-  it('forked skills keep upstream frontmatter shape', async () => {
-    for (const skill of FORKED) {
-      const { metadata } = await load(skill)
-      expect(metadata.compatibility, skill).toBeUndefined()
+  it('carries no superpowers fork', async () => {
+    const entries = await readdir(SKILLS_DIR)
+    for (const name of FORMERLY_FORKED) expect(entries, name).not.toContain(name)
+  })
+
+  it('mentions the superpowers fork nowhere outside CHANGELOG', () => {
+    let out = ''
+    try {
+      out = execFileSync('git', ['grep', '-l', '-i', '-E', 'obra/superpowers|sync-superpowers|superpowers (process|fork|library|methodology|workflow\\))', '--', '.', ':!CHANGELOG.md', ':!tests/skills-catalog.spec.ts'], { encoding: 'utf8' }).trim()
+    } catch (e) {
+      if ((e as { status?: number }).status !== 1) throw e // exit 1 means no match
     }
+    expect(out).toBe('')
   })
 
   it('no skill nests govard inside its own container shell', async () => {
@@ -84,8 +92,8 @@ describe('skills catalog', () => {
 
   it('domain skills carry no capability conditionals for removed harness tools', async () => {
     // The harness tool surface for govard (deploy plan/check, lint, query-log stats,
-    // workspace search) was removed; domain skills must name the direct CLI instead of
-    // "a native tool where provided". Forked process skills are excluded (verbatim upstream).
+    // workspace search) was removed; skills must name the direct CLI instead of
+    // "a native tool where provided".
     const REMOVED_TOOL_PROSE = new RegExp([
       'native (?:deploy|lint|query-log|stats|workspace search)[\\w\\s/-]*tool',
       'where provided',
@@ -94,7 +102,7 @@ describe('skills catalog', () => {
       'native stats (?:tool|streaming)',
       '<search tool>',
     ].join('|'), 'i')
-    const entries = (await readdir(SKILLS_DIR)).filter(e => !FORKED.includes(e))
+    const entries = (await readdir(SKILLS_DIR))
     for (const entry of entries) {
       const files = [join(entry, 'SKILL.md')]
       try {
@@ -147,7 +155,7 @@ describe('skills catalog', () => {
   it('README and AGENTS list every shipped skill and its declared dependencies', async () => {
     const readme = await readFile(new URL('../README.md', import.meta.url), 'utf-8')
     const agents = await readFile(new URL('../AGENTS.md', import.meta.url), 'utf-8')
-    const entries = (await readdir(SKILLS_DIR)).filter(e => !FORKED.includes(e))
+    const entries = (await readdir(SKILLS_DIR))
     for (const entry of entries) {
       expect(readme, `README.md must mention ${entry}`).toContain(entry)
       const { raw } = await load(entry)

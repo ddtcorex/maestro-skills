@@ -49,8 +49,7 @@ const SUBAGENT_PRESET_DESCRIPTION =
   'AI Agent preset from maestro-skills with the subagent_codex and subagent_claude_code delegation tools '
   + 'enabled (both @deepseek-ai/dsh-subagent-codex and @deepseek-ai/dsh-subagent-claude-code must be installed '
   + 'in the Profile for the tool rows to register). Bundles the maestro-skills library - Govard environment '
-  + 'orchestration and web frameworks (Magento 2, Laravel, Symfony, WordPress, generic PHP) plus the superpowers '
-  + 'process-skills workflow (brainstorming, TDD, systematic debugging, subagent-driven development). Note: both '
+  + 'orchestration and web frameworks (Magento 2, Laravel, Symfony, WordPress, generic PHP). Note: both '
   + 'providers authenticate via ChatGPT/Claude subscription - child runs fail with quota errors when the '
   + 'subscription session limit is hit.'
 

@@ -39,16 +39,15 @@ outcomes in the PR description as well.
 ## What this repo is
 
 A dual-ecosystem plugin (`maestro-skills`, npm `@ddtcorex/maestro-skills`)
-bundling its skills in two halves: the Magento 2 / Govard domain skills written
-here (`ls skills`, minus the forked names), plus the **superpowers process library forked verbatim from
-[obra/superpowers](https://github.com/obra/superpowers) v7.0.0** (MIT — see
-`THIRD-PARTY-NOTICES.md`). Distributed via self-listing marketplaces for both
+bundling the Magento 2, Govard and web framework domain skills written here
+(`ls skills`). It carries no process-skill library: the forked process skills
+was removed in v5, so contributors install their own process skills. Distributed via self-listing marketplaces for both
 Claude Code and Codex CLI, and as a DeepSeek Harness Cordis plugin. There is no
 application code beyond `src/` (the Cordis plugin); `tests/` is a vitest suite
 that guards the packaged skill catalog and the plugin's own contracts, and
 `pnpm verify` + `pnpm test` are the local gate. The repository *is* the plugin
 (in every ecosystem at once), and its content is Markdown (`SKILL.md`) plus
-four JSON manifests, one install script, and one sync script.
+four JSON manifests and one install script.
 
 ## Architecture
 
@@ -189,32 +188,10 @@ cross-tool-sharing convention along with `compatibility` and `metadata`):
 When editing a dependency's SKILL.md (`magento2-dev-core`, `govard-toolbox`),
 check whether the change invalidates guidance in the skills that depend on it.
 
-### Superpowers fork governance
+### Skill names
 
-The process skills under `skills/` (brainstorming,
-diagnosing-superpowers, dispatching-parallel-
-agents, executing-plans, finishing-a-development-branch, receiving-code-review,
-requesting-code-review, subagent-driven-development, systematic-debugging,
-test-driven-development, using-git-worktrees, using-superpowers,
-verification-before-completion, writing-plans, writing-skills) are **not
-hand-maintained** — they are a verbatim fork of obra/superpowers v7.0.0:
-
-- **Do not edit forked skill bodies.** Upstream is their single source of
-  truth. This is a deliberate exception to the "single source of truth"
-  rule above: the fork *is* the one location for this content, and its
-  authority lives upstream.
-- The fork carries no content additions. The only sanctioned local touch is the
-  fork-provenance/un-namespaced-invocation note in `using-superpowers/SKILL.md`.
-- Refresh via `scripts/sync-superpowers.sh [ref]`; it prints a diff and the
-  `PRESERVE` list is intentionally empty (the fork-provenance note in
-  `using-superpowers/SKILL.md` is re-applied by hand during review). Update the
-  fork version in
-  `THIRD-PARTY-NOTICES.md` after a sync. Attribution is an MIT license
-  requirement — never drop `THIRD-PARTY-NOTICES.md`.
-- Skill **name collisions** would shadow across providers: never name a new
-  domain skill the same as (or after renaming) a superpowers skill.
-- The ~170–220 words-per-lesson budget below applies to the domain
-  skills' reference files only, not to forked upstream content.
+Skill **name collisions** shadow across providers: never name a skill after a
+widely installed process skill (`brainstorming`, `writing-plans` and the like).
 
 ### Adding a lesson to a skill reference file
 
@@ -309,12 +286,6 @@ bash -n install.sh
 bash install.sh --help
 ```
 
-```bash
-# Superpowers fork sync (see "Superpowers fork governance" above)
-scripts/sync-superpowers.sh            # to upstream HEAD
-scripts/sync-superpowers.sh v7.0.0     # or a specific tag; review the diff it prints
-```
-
 ## Release checklist
 
 Pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`, which
@@ -384,10 +355,6 @@ manual release step in the GitHub UI.
   `integrity` check; any other `--checks` value is rejected. QA-trio skills
   must state that boundary instead of implying native security/performance
   gates exist.
-- **Forked superpowers skills stay verbatim.** Never edit their prose or
-  frontmatter locally (not even to add `compatibility`); the fork carries no
-  content additions (`PRESERVE` in `scripts/sync-superpowers.sh` is empty),
-  and the catalog spec asserts forked frontmatter shape stays upstream-clean.
 - **Skill lists are duplicated across README and AGENTS.md.** README prose
   carries no skill counts on purpose (`ls skills` is the truth). When adding or
   removing a skill, update the README tree and compatibility matrix and the

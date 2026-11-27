@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Removed
+
+- **The forked obra/superpowers process skills** (15 skills), `scripts/sync-superpowers.sh` and `THIRD-PARTY-NOTICES.md`. The library now ships only its own domain skills; install a process-skill library separately if you used them. The DSH presets no longer instruct agents to load process skills.
+
 ## [4.0.0] - 2026-11-12
 
 ### Added

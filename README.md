@@ -1,10 +1,8 @@
 # Maestro Skills (`maestro-skills`)
 
-A unified skills library for AI coding agents, packaged as a universal plugin for **DeepSeek Harness (DSH)**, **Claude Code**, **Codex CLI**, **OpenCode**, and **GitHub Copilot** — two halves in one bundle:
+A unified skills library for AI coding agents, packaged as a universal plugin for **DeepSeek Harness (DSH)**, **Claude Code**, **Codex CLI**, **OpenCode**, and **GitHub Copilot**:
 
 - **Domain skills** — **Govard** development-environment orchestration and its supported web frameworks (**Magento 2**, Laravel, Symfony, WordPress, generic PHP): architecture, linting, performance auditing, security scanning, code review, Hyvä/Luma frontend, backend APIs, plus `php-dev-core` and `diagram-studio`.
-- **Process skills** — the complete [**superpowers**](https://github.com/obra/superpowers) methodology forked verbatim from v7.0.0 (MIT, © Jesse Vincent): brainstorming, test-driven development, systematic debugging, writing/executing plans, subagent-driven development, code-review collaboration, session diagnosis, and more. See `THIRD-PARTY-NOTICES.md` for license and sync policy.
-
 Every skill follows the open [Agent Skills standard](https://agentskills.io) (a `SKILL.md` file with `name`/`description` frontmatter), which all major AI Agent tools understand.
 
 > **Works best with [Govard](https://github.com/ddtcorex/govard).** Most command examples in the domain skills assume a Govard-managed dev environment (`govard sh -c "..."`, `govard tool magerun ...`) — without it, you'll need to adapt them to your own container/CLI setup. One-line install: `curl -fsSL https://raw.githubusercontent.com/ddtcorex/govard/master/install.sh | bash`.
@@ -19,9 +17,6 @@ Every skill lives under `skills/<name>/SKILL.md` — this is the single source o
 maestro-skills/
 ├── README.md                        # Global documentation and guide
 ├── package.json                     # NPM package & DSH Cordis Plugin manifest (@ddtcorex/maestro-skills)
-├── THIRD-PARTY-NOTICES.md           # Superpowers fork attribution + MIT license text
-├── scripts/
-│   └── sync-superpowers.sh          # Refresh the superpowers fork from upstream
 ├── tsconfig.json                    # TypeScript compiler configuration
 ├── src/                             # DSH Cordis Plugin source code
 │   ├── index.ts                     # Cordis plugin entrypoint: serves the packaged skills (the agent preset is a declaration row, see Installation)
@@ -34,19 +29,6 @@ maestro-skills/
 ├── .agents/plugins/                 # Codex marketplace manifest
 │
 └── skills/                          # one folder per skill (`ls skills` is the source of truth)
-    ├── 🧠 PROCESS SKILLS (forked from obra/superpowers v7.0.0)
-    │   ├── brainstorming/              # Socratic design refinement with approval gates
-    │   ├── diagnosing-superpowers/     # Diagnose what went wrong in a session
-    │   ├── test-driven-development/    # RED-GREEN-REFACTOR iron law
-    │   ├── systematic-debugging/       # 4-phase root-cause process
-    │   ├── verification-before-completion/  # Evidence before success claims
-    │   ├── writing-plans/ + executing-plans/
-    │   ├── subagent-driven-development/ + dispatching-parallel-agents/
-    │   ├── requesting/receiving-code-review/
-    │   ├── using-git-worktrees/ + finishing-a-development-branch/
-    │   ├── writing-skills/             # How to author new skills
-    │   └── using-superpowers/          # Skill-system introduction
-    │
     ├── 📦 CORE STANDARDS & ARCHITECTURES
     │   └── magento2-dev-core/           # Magento 2 core guidelines (DI, Repositories, Security)
     ├── 🛠️ QUALITY ASSURANCE & AUDITING
@@ -80,7 +62,6 @@ Every skill works identically on every listed tool.
 
 | Group | Skills | Claude Code | Codex CLI | OpenCode | GitHub Copilot | DeepSeek Harness |
 |---|---|---|---|---|---|---|
-| Process (superpowers fork) | brainstorming, diagnosing-superpowers, dispatching-parallel-agents, executing-plans, finishing-a-development-branch, receiving-code-review, requesting-code-review, subagent-driven-development, systematic-debugging, test-driven-development, using-git-worktrees, using-superpowers, verification-before-completion, writing-plans, writing-skills | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Core & Standards | [magento2-dev-core](skills/magento2-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Linting & Auditing | [magento2-linter](skills/magento2-linter/SKILL.md), [magento2-performance-audit](skills/magento2-performance-audit/SKILL.md), [magento2-security-scan](skills/magento2-security-scan/SKILL.md), [magento2-code-review](skills/magento2-code-review/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Frameworks | [magento2-hyva-dev](skills/magento2-hyva-dev/SKILL.md), [magento2-frontend-dev](skills/magento2-frontend-dev/SKILL.md), [magento2-backend-dev](skills/magento2-backend-dev/SKILL.md), [maestro-design](skills/maestro-design/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -195,23 +176,12 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/inst
 
 ---
 
-## 🔄 Superpowers fork maintenance
-
-The process skills are an upstream fork, not hand-maintained copies:
-
-```bash
-scripts/sync-superpowers.sh            # latest upstream HEAD
-scripts/sync-superpowers.sh v7.0.0     # a specific tag
-```
-
-The script prints a diff for review; the fork carries no content additions (its `PRESERVE` list is intentionally empty), and the fork-provenance note in `using-superpowers/SKILL.md` is re-applied by hand during review. Do not edit forked skill bodies by hand — see `THIRD-PARTY-NOTICES.md`.
-
 ## ⚡ Extension Guide: Adding New Domain Skills
 
 You can easily expand this hub with any new framework or toolchain supported by Govard (e.g., Laravel, Symfony, React, Vue, Docker, etc.).
 
 ### Step 1: Create the Skill Folder
-Create `skills/[framework/tool]-[purpose]/` using kebab-case (e.g., `skills/laravel-dev-core/`, `skills/vue-hyva-checkout/`). For *process* skills, don't create them here — contribute upstream to obra/superpowers instead.
+Create `skills/[framework/tool]-[purpose]/` using kebab-case (e.g., `skills/laravel-dev-core/`, `skills/vue-hyva-checkout/`).
 
 ### Step 2: Create a `SKILL.md` File
 Every skill folder **must** contain a `SKILL.md` file at its root with valid YAML frontmatter:
@@ -239,7 +209,7 @@ Step-by-step commands to verify output works properly.
 
 ---
 
-*One bundle, one workflow: Govard domain expertise plus superpowers process discipline.* 🚀
+*Govard domain expertise in one bundle.* 🚀
 
 ## Contributing
 
@@ -249,5 +219,4 @@ branches only; never commit to `master` directly.
 
 ## Credits & Attribution
 
-- **Domain skills**: © DDTCoreX, MIT License (see `LICENSE`).
-- **Process skills**: forked from [obra/superpowers](https://github.com/obra/superpowers) v7.0.0 by Jesse Vincent / Prime Radiant, MIT License — full notice in `THIRD-PARTY-NOTICES.md`. The fork carries no local content additions.
+- **Skills**: © DDTCoreX, MIT License (see `LICENSE`).
