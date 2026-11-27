@@ -8,7 +8,7 @@ const CRAFT = AREAS['maestro-craft'] ?? []
 
 describe('maestro-craft contract', () => {
   it('ships the craft skills', () => {
-    expect([...CRAFT].sort()).toEqual(['prior-art-search'])
+    expect([...CRAFT].sort()).toEqual(['prior-art-search', 'source-to-skill'])
   })
 
   for (const skill of CRAFT) {
