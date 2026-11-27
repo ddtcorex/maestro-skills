@@ -5,19 +5,24 @@ root is a symlink to this file, so Claude Code follows the same rules; Codex CLI
 reads `AGENTS.md` directly. Edit `AGENTS.md` only — never edit `CLAUDE.md`
 directly or replace the symlink with a copy.
 
-## Workflow: Superpowers skills are mandatory
+## Workflow: design first, then a plan, then TDD
 
-Every change to this repository MUST follow the Superpowers skill workflow, in order:
+Every change to this repository MUST follow these three phases, in order:
 
-1. **brainstorming** — explore intent and design before writing anything; record the
-   outcome in the PR description (`YYYY-MM-DD-<topic>-design.md` style).
-2. **writing-plans** — turn the approved spec into a task-by-task plan with exact
-   test and implementation sketches; plans are transient working files, deleted
-   once their batch ships.
-3. **executing-plans** — implement task by task with strict TDD: failing test first,
-   verify RED, implement, verify GREEN, then commit that task before starting the next.
+1. **Design first.** Explore intent and the design before writing anything, and record
+   the outcome in the PR description (`YYYY-MM-DD-<topic>-design.md` style).
+2. **Plan before code.** Turn the approved design into a task-by-task plan with exact
+   test and implementation sketches. Plans are transient working files, deleted once
+   their batch ships.
+3. **Execute with strict TDD.** One task at a time: failing test first, verify RED,
+   implement, verify GREEN, then commit that task before starting the next.
 
 Do not skip ahead to implementation or commit while a task's tests are red.
+
+The process skills that automate these phases (`brainstorming`, `writing-plans`,
+`executing-plans` and the like) are **not shipped here** since v5. Install a
+process-skill library into your own agent if you want them, or follow the phases by
+hand: the phases, not the tooling, are what this repository requires.
 
 Specs and plans: active work lives at the meta root, in
 `maestro-harness/docs/specs/` and `maestro-harness/docs/plans/`, named
@@ -41,7 +46,7 @@ outcomes in the PR description as well.
 A dual-ecosystem plugin (`maestro-skills`, npm `@ddtcorex/maestro-skills`)
 bundling the Magento 2, Govard and web framework domain skills written here,
 split into one plugin per area (`src/areas.ts`). It carries no process-skill library: the forked process skills
-was removed in v5, so contributors install their own process skills. Distributed via self-listing marketplaces for both
+were removed in v5, so contributors install their own process skills. Distributed via self-listing marketplaces for both
 Claude Code and Codex CLI, and as a DeepSeek Harness Cordis plugin. There is no
 application code beyond `src/` (the Cordis plugin); `tests/` is a vitest suite
 that guards the packaged skill catalog and the plugin's own contracts, and
@@ -189,8 +194,11 @@ thresholds, or environment facts (e.g. "Hyvä 1.4.x ships Tailwind v4") must eit
 a deterministic tool call that returns the live value, or carry an explicit *verified-on date +
 source* next to it. Unstamped tables rot silently and gate wrong decisions downstream.
 
-**MUST:** load the `superpowers:writing-skills` skill before writing content, not
-just as a style check afterward — it governs testing and structure, not only length.
+**MUST:** read the skill-authoring rules above (format, `compatibility` and `depends:`
+conventions, name collisions, and the catalog tests that guard them) before writing
+content, not just as a style check afterward; they govern testing and structure, not
+only length. If a `writing-skills` process skill is installed in your agent, load that
+as well, but it is not shipped here and this section stands on its own.
 
 **MUST:** budget ~170–220 words of prose per lesson (a `>` callout or `##` section
 documenting one real finding), excluding code blocks — this hub's own established
