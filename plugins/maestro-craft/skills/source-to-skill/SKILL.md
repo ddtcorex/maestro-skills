@@ -15,6 +15,9 @@ stand behind. Ten verified rules beat a thousand repeated ones.
 - A published subtitle or caption track first (for video sites, `yt-dlp
   --write-subs --sub-langs en --skip-download <url>`, then strip timing). It is
   the speaker's own words, offline, cheap and reproducible.
+- Check the tool first: `command -v yt-dlp`. If it is not installed, say so and
+  ask whether to install it (pinned, from the package manager or a release) rather
+  than switching to a page reader without telling the user.
 - An LLM page reader only when no track exists; note which items came that way.
 - Record per item: link, date, duration, and the route used.
 

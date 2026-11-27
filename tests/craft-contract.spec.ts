@@ -54,4 +54,12 @@ describe('maestro-craft contract', () => {
       })
     })
   }
+
+  it('source-to-skill checks for yt-dlp before relying on it and names the fallback', () => {
+    const raw = readFileSync(skillPath('source-to-skill', 'SKILL.md'), 'utf8')
+    // A host without yt-dlp must not fall back to a page reader silently.
+    expect(raw).toMatch(/command -v yt-dlp/)
+    expect(raw).toMatch(/not installed[^.]*say so/i)
+  })
 })
+

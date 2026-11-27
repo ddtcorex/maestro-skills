@@ -4,6 +4,12 @@
 
 ### Fixed
 
+- **`source-to-skill` checks for `yt-dlp` before relying on it.** On a host without it, the skill now says so and asks before installing, instead of falling back to an LLM page reader unannounced.
+
+## [Unreleased]
+
+### Fixed
+
 - **Docs no longer mandate skills this library stopped shipping.** `AGENTS.md`, `README.md`, `CONTRIBUTING.md` and the PR template still required the process-skill workflow the v5.0.0 release removed, so a contributor with only this repository installed was told to load skills that are not in it. All four now describe the three phases (design, plan, strict TDD) as the requirement and say the automating skills come from your own agent.
 
 ## [5.0.0] - 2026-11-27
