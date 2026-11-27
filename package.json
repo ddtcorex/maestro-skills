@@ -1,6 +1,6 @@
 {
   "name": "@ddtcorex/maestro-skills",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Govard and web framework domain skills, packaged as a Cordis plugin",
   "license": "MIT",
   "repository": {
