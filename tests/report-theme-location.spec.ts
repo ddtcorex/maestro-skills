@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { loadPerfTemplate } from './helpers/report-template'
 
-const skills = join(__dirname, '..', 'skills')
+const skills = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills')
 const devCoreRefs = join(skills, 'magento2-dev-core', 'references')
 const perfRefs = join(skills, 'magento2-performance-audit', 'references')
 

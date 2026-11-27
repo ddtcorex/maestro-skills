@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { perfScripts } from './helpers/perf-harness'
 
-const devCoreLib = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts', 'report', 'lib')
+const devCoreLib = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-dev-core', 'scripts', 'report', 'lib')
 const sentences = () => import(join(devCoreLib, 'sentences.mjs'))
 const renderRun = async (...args: unknown[]) => (await import(join(perfScripts, 'render.mjs'))).renderRun(...args)
 const { validateFindings } = await import(join(devCoreLib, 'validate.mjs'))

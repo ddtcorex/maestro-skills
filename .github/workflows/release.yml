@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate plugin manifests
         run: |
-          jq empty .claude-plugin/plugin.json
+          for f in plugins/*/.claude-plugin/plugin.json; do jq empty "$f"; done
           jq empty .claude-plugin/marketplace.json
           jq empty .codex-plugin/plugin.json
           jq empty .agents/plugins/marketplace.json

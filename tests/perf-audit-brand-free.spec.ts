@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
-const skillDir = join(__dirname, '..', 'skills', 'magento2-performance-audit')
+const skillDir = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit')
 const refsDir = join(skillDir, 'references')
 // Task 1 files: the only references carrying brand defaults.
 const brandFiles = [

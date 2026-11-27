@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-const renderCli = join(__dirname, '..', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
+const renderCli = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-dev-core', 'scripts', 'report', 'render.mjs')
 const fixture = join(__dirname, 'fixtures', 'report', 'perf-audit-data.json')
 const count = (text: string, needle: string) => text.split(needle).length - 1
 const anchors = [

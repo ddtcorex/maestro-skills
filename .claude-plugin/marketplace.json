@@ -5,34 +5,56 @@
     "email": "kaido4492@gmail.com"
   },
   "metadata": {
-    "description": "Maestro Skills Hub & Cordis Plugin for Govard & supported web frameworks",
+    "description": "DDTCoreX skill plugins: Govard, Magento 2, PHP and design, one plugin per area.",
     "version": "4.0.0"
   },
   "plugins": [
     {
-      "name": "maestro-skills",
-      "source": "./",
-      "description": "Maestro Skills Hub & Cordis Plugin for Govard & supported web frameworks (Magento 2, Laravel, etc.)",
+      "name": "maestro-govard",
+      "source": "./plugins/maestro-govard",
+      "description": "Govard dev-environment skills: the toolbox, Magento, Laravel, Symfony and WordPress commands, and Govard in detached review worktrees.",
       "version": "4.0.0",
       "author": {
         "name": "DDTCoreX",
         "email": "kaido4492@gmail.com"
       },
       "homepage": "https://github.com/ddtcorex/maestro-skills",
-      "keywords": [
-        "govard",
-        "magento2",
-        "laravel",
-        "php",
-        "hyva",
-        "knockout",
-        "performance-audit",
-        "security-scan",
-        "linting",
-        "devops",
-        "cordis",
-        "deepseek-harness"
-      ],
+      "category": "development"
+    },
+    {
+      "name": "maestro-magento2",
+      "source": "./plugins/maestro-magento2",
+      "description": "Magento 2 skills: core architecture, backend APIs, Luma and Hyva frontends, linting, code review, performance audit and security scan.",
+      "version": "4.0.0",
+      "author": {
+        "name": "DDTCoreX",
+        "email": "kaido4492@gmail.com"
+      },
+      "homepage": "https://github.com/ddtcorex/maestro-skills",
+      "category": "development"
+    },
+    {
+      "name": "maestro-php",
+      "source": "./plugins/maestro-php",
+      "description": "Framework-agnostic PHP: PSR standards, Composer packaging and static analysis.",
+      "version": "4.0.0",
+      "author": {
+        "name": "DDTCoreX",
+        "email": "kaido4492@gmail.com"
+      },
+      "homepage": "https://github.com/ddtcorex/maestro-skills",
+      "category": "development"
+    },
+    {
+      "name": "maestro-design",
+      "source": "./plugins/maestro-design",
+      "description": "Design system work and editorial diagrams: Tailwind and shadcn/ui, accessibility, Figma to code, Mermaid with a CLI verifier.",
+      "version": "4.0.0",
+      "author": {
+        "name": "DDTCoreX",
+        "email": "kaido4492@gmail.com"
+      },
+      "homepage": "https://github.com/ddtcorex/maestro-skills",
       "category": "development"
     }
   ]

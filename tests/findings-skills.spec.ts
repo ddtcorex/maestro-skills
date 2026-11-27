@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const skills = join(__dirname, '..', 'skills')
+const skills = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills')
 const fixtures = join(__dirname, 'fixtures', 'report')
 const devCoreLib = join(skills, 'magento2-dev-core', 'scripts', 'report', 'lib')
 

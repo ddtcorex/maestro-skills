@@ -12,7 +12,7 @@ export const TEMPLATE_VERSION = 1
 const ATTRIBUTION_MIN = 2
 
 export function skillVersion() {
-  return JSON.parse(readFileSync(join(here, '..', '..', '..', 'package.json'), 'utf-8')).version
+  return JSON.parse(readFileSync(join(here, '..', '..', '..', '.claude-plugin', 'plugin.json'), 'utf-8')).version
 }
 
 function readSummary(captureDir) {

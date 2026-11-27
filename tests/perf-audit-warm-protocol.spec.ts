@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const skill = join(__dirname, '..', 'skills', 'magento2-performance-audit')
+const skill = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit')
 const read = (...parts: string[]) => readFileSync(join(skill, ...parts), 'utf-8')
 /** SKILL.md plus every reference: the house style keeps the body short and puts command detail one file down. */
 const wholeSkill = () =>

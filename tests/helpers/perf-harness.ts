@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 export const shimBin = join(__dirname, '..', 'fixtures', 'perf', 'bin')
-export const perfScripts = join(__dirname, '..', '..', 'skills', 'magento2-performance-audit', 'scripts')
+export const perfScripts = join(__dirname, '..', '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit', 'scripts')
 export const perfCli = join(perfScripts, 'perf-audit.mjs')
 
 export interface FakePage {

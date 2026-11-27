@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { loadPerfTemplate, loadThemeDoc, devCoreRefs } from './helpers/report-template'
 
-const refs = join(__dirname, '..', 'skills', 'magento2-performance-audit', 'references')
+const refs = join(__dirname, '..', 'plugins', 'maestro-magento2', 'skills', 'magento2-performance-audit', 'references')
 const template = () => loadPerfTemplate()
 const theme = () => loadThemeDoc()
 const themeStyle = () => theme().match(/<style>[\s\S]*?<\/style>/)?.[0] ?? ''
