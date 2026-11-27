@@ -7,5 +7,5 @@ export const AREAS: Record<string, readonly string[]> = {
   ],
   'maestro-php': ['php-dev-core'],
   'maestro-design': ['maestro-design', 'diagram-studio'],
-  'maestro-craft': ['prior-art-search'],
+  'maestro-craft': ['prior-art-search', 'source-to-skill'],
 }
