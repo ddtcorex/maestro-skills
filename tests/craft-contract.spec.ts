@@ -29,7 +29,7 @@ describe('maestro-craft contract', () => {
       })
 
       it('carries no em or en dash', () => {
-        expect(raw()).not.toMatch(/[–—]/)
+        expect(raw()).not.toMatch(/[\u2013\u2014]/)
       })
     })
   }

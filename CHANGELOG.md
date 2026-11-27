@@ -20,6 +20,8 @@
 
   Upgrading Claude Code: `/plugin uninstall maestro-skills@ddtcorex`, `/plugin marketplace update ddtcorex`, then install the areas you need.
 
+  Upgrading OpenCode or Copilot installs: use the curl one-liner, or run `install.sh` twice. A v4 `install.sh` run from the cache pulls the new layout but still looks for the old `skills/` folder, so its first run links nothing and leaves the old links dangling; the second run is the new script, which relinks every skill and prunes the dangling links.
+
 ### Removed
 
 - **The forked obra/superpowers process skills** (15 skills), `scripts/sync-superpowers.sh` and `THIRD-PARTY-NOTICES.md`. The library now ships only its own domain skills; install a process-skill library separately if you used them. The DSH presets no longer instruct agents to load process skills.

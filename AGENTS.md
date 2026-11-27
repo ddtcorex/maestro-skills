@@ -294,11 +294,11 @@ manual release step in the GitHub UI.
    change that affects Codex specifically, also run the
    `codex plugin marketplace add .` / `codex plugin add` round-trip from the
    Commands section above. If `src/` (the DSH Cordis plugin) changed, run
-   `npm run build` (`tsc`) — this is the only local DSH-side check available;
+   `npm run build` (`tsc`), this is the only local DSH-side check available;
    there is no local equivalent of the Claude/Codex marketplace-add round-trip
    (`npx cordis` fails locally: the installed `@deepseek-ai/cordis` package
    depends on `@deepseek-ai/cordis-plugin-loader`, which is not a project
-   dependency here). The real DSH validation gate is external and CI-only —
+   dependency here). The real DSH validation gate is external and CI-only,
    the `awesome-dsh-plugin` submission check that reads `dsh.bundle.patch`
    (see the `[1.0.4]` CHANGELOG entry for the manifest shape it expects).
 4. Merge the release-prep PR first (master is never a push target), then tag and push only the tag:
@@ -316,7 +316,7 @@ manual release step in the GitHub UI.
    pushed tag's version (the workflow strips a leading `v` from the tag and
    looks for `[X.Y.Z]` literally). The release workflow's manifest-validation
    step also runs `jq empty` on every area `plugin.json` and
-   `.agents/plugins/marketplace.json` now — a JSON syntax error in either
+   `.agents/plugins/marketplace.json` now, a JSON syntax error in either
    fails the release the same way a bad `.claude-plugin/*.json` always did.
 
 ## Lessons from past incidents
