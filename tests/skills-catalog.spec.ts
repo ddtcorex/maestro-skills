@@ -175,4 +175,12 @@ describe('skills catalog', () => {
     const readme = await readFile(new URL('../README.md', import.meta.url), 'utf-8')
     expect(readme).not.toContain('| Skill | Description |')
   })
+
+  it('CHANGELOG tells install.sh users how to cross the area layout change', async () => {
+    const changelog = await readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf-8')
+    const unreleased = changelog.split('## [Unreleased]')[1]?.split('\n## [')[0] ?? ''
+    // A cached install.sh from v4 pulls the new layout but keeps globbing skills/ and links nothing.
+    expect(unreleased).toMatch(/run `?install\.sh`? twice|curl one-liner/i)
+  })
 })
+

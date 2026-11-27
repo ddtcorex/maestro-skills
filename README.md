@@ -160,6 +160,8 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/inst
 > The installer only serves tools without a plugin loader. On Claude Code,
 > Codex CLI and DSH, install the plugin (sections 1-3 above) instead of
 > linking loose files: a loose copy shadows the plugin with a stale cache.
+> Upgrading from v4 (flat `skills/` layout): use the curl one-liner, or run
+> `install.sh` twice; the first run of a cached v4 script links nothing.
 > Upgrading from an install that used the removed `claude`, `codex` or `dsh`
 > targets: run `install.sh --uninstall` once (it removes every path the
 > installer recorded, old targets included), then rerun the installer for

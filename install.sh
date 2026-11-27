@@ -117,7 +117,8 @@ touch "$manifest"
 
 if [ "$do_uninstall" = "yes" ]; then
   while IFS= read -r path; do
-    [ -n "$path" ] && [ -e "$path" ] && rm -rf "$path" && echo "Removed: $path"
+    # -L as well as -e: a link whose skill was removed upstream is dangling, and -e is false for it.
+    [ -n "$path" ] && { [ -L "$path" ] || [ -e "$path" ]; } && rm -rf "$path" && echo "Removed: $path"
   done < "$manifest"
   : > "$manifest"
   echo "Uninstalled. (Cache left at $CACHE_DIR -- remove it yourself if you want that gone too.)"
@@ -176,6 +177,19 @@ target_dir_for() {
     *) echo "Unknown target: $1" >&2; return 1 ;;
   esac
 }
+
+# Drop recorded links whose skill no longer ships (dangling after an upgrade).
+kept=""
+while IFS= read -r path; do
+  [ -z "$path" ] && continue
+  if [ -L "$path" ] && [ ! -e "$path" ]; then
+    rm -f "$path" && echo "Pruned stale link: $path" >&2
+  else
+    kept="$kept$path
+"
+  fi
+done < "$manifest"
+printf '%s' "$kept" > "$manifest"
 
 installed=0
 skipped=0

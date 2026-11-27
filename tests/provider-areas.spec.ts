@@ -33,3 +33,21 @@ describe('cordis provider areas', () => {
     expect(String(warn.mock.calls[0][0])).toContain('nope')
   })
 })
+
+describe('cordis provider config mistakes', () => {
+  it('a prototype key is not an area', async () => {
+    const { names, warn } = await listWith({ areas: ['toString'] })
+    expect(names).toEqual([])
+    expect(warn).toHaveBeenCalledTimes(1)
+  })
+
+  it('areas written as a single YAML string is read as one area, not a throw', async () => {
+    const { names } = await listWith({ areas: 'maestro-php' as unknown as string[] })
+    expect(names).toEqual(['php-dev-core'])
+  })
+
+  it('the removed skillsDir option is reported instead of silently ignored', async () => {
+    const { warn } = await listWith({ skillsDir: '/old' } as unknown as Config)
+    expect(warn.mock.calls.some(c => String(c[0]).includes('skillsDir'))).toBe(true)
+  })
+})

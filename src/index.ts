@@ -27,9 +27,12 @@ export interface Config {
 
 export function apply(ctx: Context, config: Config = {}) {
   const pluginsDir = config.pluginsDir ? resolve(config.pluginsDir) : DEFAULT_PLUGINS_DIR
-  const unknown = (config.areas ?? []).filter(a => !Object.hasOwn(AREAS, a))
+  // A YAML row may hold one area as a plain string; read it as a list of one.
+  const wanted = config.areas === undefined ? Object.keys(AREAS) : [config.areas].flat()
+  const unknown = wanted.filter(a => !Object.hasOwn(AREAS, a))
   if (unknown.length) ctx.logger.warn(`maestro-skills: unknown area ${unknown.join(', ')}; known: ${Object.keys(AREAS).join(', ')}`)
-  const skillsDirs = (config.areas ?? Object.keys(AREAS)).filter(a => Object.hasOwn(AREAS, a)).map(a => join(pluginsDir, a, 'skills'))
+  if ('skillsDir' in config) ctx.logger.warn('maestro-skills: skillsDir was removed in v5; use pluginsDir and areas')
+  const skillsDirs = wanted.filter(a => Object.hasOwn(AREAS, a)).map(a => join(pluginsDir, a, 'skills'))
   const rank = config.rank ?? 350
 
   const unregister = ctx.skills.registerProvider((_control: SkillProviderControl) => {
