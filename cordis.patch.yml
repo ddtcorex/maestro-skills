@@ -1,6 +1,7 @@
 # DeepSeek Harness (dsh) bundle patch: registers the maestro-skills Cordis
 # plugin (src/index.ts -> lib/index.js), which mounts a ctx.skills provider
-# reading every packaged skills/<name>/SKILL.md in this repository.
+# reading every packaged plugins/<area>/skills/<name>/SKILL.md (config `areas`
+# narrows it to some area plugins).
 # `name` must be the real package name: the loader imports it as a Node
 # specifier from the profile directory, so a bare alias cannot resolve.
 - insert:

@@ -28,7 +28,7 @@
   },
   "files": [
     "lib",
-    "skills",
+    "plugins",
     ".dsh-plugin",
     ".dsh-plugin-creator",
     "cordis.patch.yml"
