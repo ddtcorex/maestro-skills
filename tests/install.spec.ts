@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { appendFileSync, cpSync, existsSync, lstatSync, mkdtempSync, readdirSync, symlinkSync } from 'node:fs'
+import { appendFileSync, lstatSync, mkdtempSync, readdirSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -8,18 +8,13 @@ import { ALL_SKILLS, repoRoot } from './helpers/skills'
 // The installer pulls its cache clone; a clone of this checkout makes that pull local.
 function run(args: string[], home = mkdtempSync(join(tmpdir(), 'maestro-install-'))) {
   const cache = join(home, 'cache')
-  if (!existsSync(cache)) {
-    execFileSync('git', ['clone', '-q', repoRoot, cache])
-    // CI checks out a detached merge ref with no local branch, so the clone is detached too.
-    execFileSync('git', ['-C', cache, 'checkout', '-q', '--detach'])
-    // A user's cache tracks a branch; give the clone one that pulls from itself, so the
-    // installer's `git pull --ff-only` is a no-op wherever the suite runs.
-    execFileSync('git', ['-C', cache, 'checkout', '-q', '-B', 'install-test'])
-    execFileSync('git', ['-C', cache, 'config', 'branch.install-test.remote', '.'])
-    execFileSync('git', ['-C', cache, 'config', 'branch.install-test.merge', 'refs/heads/install-test'])
-  }
-  // Overlay the working tree so uncommitted plugins are tested too.
-  cpSync(join(repoRoot, 'plugins'), join(cache, 'plugins'), { recursive: true })
+  execFileSync('git', ['clone', '-q', repoRoot, cache])
+  // CI checks out a detached merge ref with no local branch, so the clone is detached too;
+  // give it a branch that pulls from itself, so the installer's `git pull --ff-only` is a no-op.
+  execFileSync('git', ['-C', cache, 'checkout', '-q', '--detach'])
+  execFileSync('git', ['-C', cache, 'checkout', '-q', '-B', 'install-test'])
+  execFileSync('git', ['-C', cache, 'config', 'branch.install-test.remote', '.'])
+  execFileSync('git', ['-C', cache, 'config', 'branch.install-test.merge', 'refs/heads/install-test'])
   const res = spawnSync('bash', [join(repoRoot, 'install.sh'), '-y', '--scope', 'personal', '--target', 'opencode', ...args], {
     env: { ...process.env, HOME: home, MAESTRO_SKILLS_HOME: cache },
     encoding: 'utf8',
@@ -55,12 +50,13 @@ describe('install.sh areas', () => {
     const stale = join(first.dir, 'brainstorming')
     symlinkSync(join(first.cache, 'skills', 'brainstorming'), stale)
     appendFileSync(join(first.cache, '.manifest'), `${stale}\n`)
-    run(['--area', 'maestro-php'], first.home)
+    const env = { ...process.env, HOME: first.home, MAESTRO_SKILLS_HOME: first.cache }
+    spawnSync('bash', [join(repoRoot, 'install.sh'), '-y', '--scope', 'personal', '--target', 'opencode', '--area', 'maestro-php'], { env, encoding: 'utf8' })
     expect(() => lstatSync(stale)).toThrow()
     symlinkSync(join(first.cache, 'skills', 'brainstorming'), stale)
     appendFileSync(join(first.cache, '.manifest'), `${stale}\n`)
     const res = spawnSync('bash', [join(repoRoot, 'install.sh'), '--uninstall'], {
-      env: { ...process.env, HOME: first.home, MAESTRO_SKILLS_HOME: first.cache }, encoding: 'utf8',
+      env, encoding: 'utf8',
     })
     expect(res.status).toBe(0)
     expect(() => lstatSync(stale)).toThrow()
