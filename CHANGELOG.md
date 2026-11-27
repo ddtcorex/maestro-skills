@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **One plugin per area.** Skills moved from `skills/<name>/` to `plugins/<area>/skills/<name>/`, in four area plugins: `maestro-govard`, `maestro-magento2`, `maestro-php`, `maestro-design` (`src/areas.ts` holds the map). Claude Code cannot disable a single skill inside a plugin, so a project now enables only the areas it uses.
+
+  | Before | After |
+  |---|---|
+  | `/plugin install maestro-skills@ddtcorex` | `/plugin install <area>@ddtcorex`, once per area |
+  | `codex plugin add maestro-skills@ddtcorex` | `codex plugin add <area>@ddtcorex`, once per area |
+  | Cordis config `skillsDir` | `pluginsDir`, plus optional `areas: [...]` (default: every area) |
+  | `install.sh` installs every skill | same by default; `--area <list>` or `MAESTRO_SKILLS_AREAS` narrows it |
+  | `skills/<name>/...` paths | `plugins/<area>/skills/<name>/...` |
+
+  Upgrading Claude Code: `/plugin uninstall maestro-skills@ddtcorex`, `/plugin marketplace update ddtcorex`, then install the areas you need.
+
 ### Removed
 
 - **The forked obra/superpowers process skills** (15 skills), `scripts/sync-superpowers.sh` and `THIRD-PARTY-NOTICES.md`. The library now ships only its own domain skills; install a process-skill library separately if you used them. The DSH presets no longer instruct agents to load process skills.

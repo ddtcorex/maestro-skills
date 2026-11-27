@@ -39,8 +39,8 @@ outcomes in the PR description as well.
 ## What this repo is
 
 A dual-ecosystem plugin (`maestro-skills`, npm `@ddtcorex/maestro-skills`)
-bundling the Magento 2, Govard and web framework domain skills written here
-(`ls skills`). It carries no process-skill library: the forked process skills
+bundling the Magento 2, Govard and web framework domain skills written here,
+split into one plugin per area (`src/areas.ts`). It carries no process-skill library: the forked process skills
 was removed in v5, so contributors install their own process skills. Distributed via self-listing marketplaces for both
 Claude Code and Codex CLI, and as a DeepSeek Harness Cordis plugin. There is no
 application code beyond `src/` (the Cordis plugin); `tests/` is a vitest suite
@@ -51,47 +51,36 @@ four JSON manifests and one install script.
 
 ## Architecture
 
-### Single source of truth: `skills/<name>/SKILL.md`
+### Single source of truth: `plugins/<area>/skills/<name>/SKILL.md`
 
-Every skill lives under `skills/<name>/SKILL.md` and **nowhere else**. This is
-not a stylistic choice — it's a hard requirement of the Claude Code plugin
-loader, which only auto-discovers `skills/<subdir>/SKILL.md` at the plugin
-root. Earlier iterations of this repo kept skills in a flat top-level layout
-(`magento2-dev-core/SKILL.md`) plus generated copies/symlinks in `skills/` for
-plugin compatibility; that dual-location approach was deliberately abandoned
-in favor of one location. Do not reintroduce a second copy of skill content
-anywhere in the repo (no symlinks, no build-generated duplicates) — if a
-change needs skill content in a different shape, change how it's *consumed*,
-not where it lives.
+Every skill lives under `plugins/<area>/skills/<name>/SKILL.md` and **nowhere
+else**. Each `plugins/<area>/` is a complete plugin root, which satisfies the
+Claude Code loader rule (it only auto-discovers `skills/<subdir>/SKILL.md` at
+the plugin root). `src/areas.ts` maps every area to its skills; the manifest
+tests, the Cordis provider and the catalog tests read it, and
+`tests/plugin-manifests.spec.ts` fails when a skill directory on disk and the
+map disagree. Do not reintroduce a second copy of skill content anywhere (no
+symlinks, no build-generated duplicates). Areas exist because Claude Code
+cannot disable one skill inside a plugin: a project enables only the areas it
+needs.
 
-### The plugin self-lists its own marketplace — for two ecosystems
+### One marketplace, one plugin per area, two ecosystems
 
-This repo ships two independent plugin manifests, one per ecosystem, that
-both point at the *same* `skills/` directory so neither duplicates content:
+- **Claude Code**: `.claude-plugin/marketplace.json` lists every area with
+  `"source": "./plugins/<area>"`; each area has
+  `plugins/<area>/.claude-plugin/plugin.json`. An install copies only that
+  plugin directory, so a skill script must never read a file outside its own
+  plugin (the perf audit reads its version from the area `plugin.json`).
+- **Codex CLI**: `.agents/plugins/marketplace.json` lists the same areas with
+  `{"source": "local", "path": "./plugins/<area>"}`; each area has
+  `plugins/<area>/.codex-plugin/plugin.json` with `"skills": "./skills/"` (the
+  Codex compatibility location; the docs prefer a root `plugin.json`, kept off
+  until it can be verified against a real `codex` binary).
 
-- **Claude Code**: `.claude-plugin/plugin.json` and
-  `.claude-plugin/marketplace.json` live side by side. `marketplace.json` has
-  exactly one entry, with `"source": "./"`, pointing back at the repo root
-  where `plugin.json` itself lives — this repo is simultaneously "a plugin"
-  and "the marketplace that hosts that one plugin."
-- **Codex CLI**: since Codex's plugin marketplace launched (March 2026), it
-  reads the exact same `skills/<name>/SKILL.md` layout through its own
-  `.codex-plugin/plugin.json` (with an explicit `"skills": "./skills/"`
-  pointer, since Codex does not auto-discover a root `skills/` folder the way
-  Claude's plugin loader does) plus a repo-scoped
-  `.agents/plugins/marketplace.json` that self-lists this repo the same way
-  (`"source": {"source": "local", "path": "./"}`). Verified end-to-end
-  against the real `codex` binary: `codex plugin marketplace add .` then
-  `codex plugin add maestro-skills@ddtcorex` resolves every skill under `skills/`
-  with zero copying.
-
-The marketplace top-level `name` is `ddtcorex` and the plugin's `name` is `maestro-skills`,
-so `plugin install maestro-skills@ddtcorex` reads as `<plugin>@<publisher>` on either tool.
-The **version field must be bumped in three places together** —
-`.claude-plugin/plugin.json`'s `version`, `.claude-plugin/marketplace.json`'s
-`plugins[0].version` / `metadata.version`, and `.codex-plugin/plugin.json`'s
-`version` (Codex's `.agents/plugins/marketplace.json` has no version field of
-its own) — nothing enforces they match automatically.
+The marketplace `name` is `ddtcorex`, so installs read `<area>@ddtcorex`.
+The **version must match everywhere**: `package.json`, the Claude
+marketplace (`metadata.version` and every entry), and every area's Claude and
+Codex `plugin.json`. `tests/plugin-manifests.spec.ts` enforces it.
 
 ### One SKILL.md format, four incompatible project-level paths, two plugin loaders
 
@@ -109,7 +98,7 @@ path:
 | Codex CLI | `.agents/skills/` only |
 | GitHub Copilot | `.github/skills/` (also checks `.claude/skills/`, `.agents/skills/`, or `chat.agentSkillsLocations`) |
 
-This repo's own bare `skills/` folder matches **none** of those project-level
+This repo's `plugins/<area>/skills/` folders match **none** of those project-level
 paths — it works for two tools, but for two different reasons:
 
 - **Claude Code**'s *plugin* loader (a separate mechanism from project-level
@@ -256,23 +245,23 @@ files correctly?).
 claude plugin validate . --strict
 
 # Inspect what the plugin loader actually resolves (skills found, token cost)
-claude --plugin-dir . plugin details maestro-skills
+claude --plugin-dir plugins/maestro-magento2 plugin details maestro-magento2
 
 # Full local install/uninstall round-trip against the working tree (not a
 # published release) -- always clean up after testing, this registers real
 # state in the local Claude Code config:
 claude plugin marketplace add .
-claude plugin install maestro-skills@ddtcorex
+claude plugin install maestro-magento2@ddtcorex
 # ... test ...
-claude plugin uninstall maestro-skills@ddtcorex
+claude plugin uninstall maestro-magento2@ddtcorex
 claude plugin marketplace remove ddtcorex
 
 # Codex CLI has no `plugin validate` subcommand -- the only real check is a
 # live round-trip. Use $CODEX_HOME to keep it out of your real Codex config:
 export CODEX_HOME=$(mktemp -d)
 codex plugin marketplace add .
-codex plugin list --available --json   # confirm maestro-skills@ddtcorex is listed
-codex plugin add maestro-skills@ddtcorex
+codex plugin list --available --json   # confirm every <area>@ddtcorex is listed
+codex plugin add maestro-magento2@ddtcorex
 codex plugin list --json               # confirm it installed and every skill resolved
 unset CODEX_HOME                       # the temp dir is disposable -- nothing else to clean up
 
@@ -295,19 +284,13 @@ manual release step in the GitHub UI.
 
 1. Add a new `## [X.Y.Z] - YYYY-MM-DD` section at the top of `CHANGELOG.md`
    (Keep a Changelog format: `### Added` / `### Changed` / `### Fixed` etc.).
-2. Bump `"version"` in `.claude-plugin/plugin.json`.
-3. Bump `"version"` in `.claude-plugin/marketplace.json` — both
-   `plugins[0].version` and top-level `metadata.version` — to the same value.
-4. Bump `"version"` in `.codex-plugin/plugin.json` to the same value
-   (`.agents/plugins/marketplace.json` has no version field to update).
-5. Bump `"version"` in `package.json` to the same value — this is the npm
-   manifest for the DeepSeek Harness/Cordis distribution
-   (`@ddtcorex/maestro-skills`), a separate publish target from the
-   Claude/Codex plugin manifests above. The release workflow does not
-   validate or read it, so nothing enforces this automatically; keep it in
-   sync by hand.
-6. If `skills/` changed, run `claude plugin validate . --strict` and
-   `claude --plugin-dir . plugin details maestro-skills` locally first; for a
+2. Bump `"version"` to the same value in `package.json`,
+   `.claude-plugin/marketplace.json` (`metadata.version` and every entry) and
+   every `plugins/<area>/.claude-plugin/plugin.json` and
+   `plugins/<area>/.codex-plugin/plugin.json`. `pnpm test` fails on any
+   mismatch.
+3. If a skill changed, run `claude plugin validate . --strict` and
+   `claude --plugin-dir plugins/<area> plugin details <area>` locally first; for a
    change that affects Codex specifically, also run the
    `codex plugin marketplace add .` / `codex plugin add` round-trip from the
    Commands section above. If `src/` (the DSH Cordis plugin) changed, run
@@ -318,21 +301,21 @@ manual release step in the GitHub UI.
    dependency here). The real DSH validation gate is external and CI-only —
    the `awesome-dsh-plugin` submission check that reads `dsh.bundle.patch`
    (see the `[1.0.4]` CHANGELOG entry for the manifest shape it expects).
-7. Merge the release-prep PR first (master is never a push target), then tag and push only the tag:
+4. Merge the release-prep PR first (master is never a push target), then tag and push only the tag:
    ```bash
    git tag -a vX.Y.Z -m "vX.Y.Z - <one-line summary>"
    git push origin vX.Y.Z
    ```
-8. Confirm the workflow succeeded and the release published:
+5. Confirm the workflow succeeded and the release published:
    ```bash
    gh run list --repo ddtcorex/maestro-skills --limit 1
    gh release view vX.Y.Z --repo ddtcorex/maestro-skills
    ```
-9. If the workflow fails on the changelog-extraction step, it's almost always
+6. If the workflow fails on the changelog-extraction step, it's almost always
    because the `## [X.Y.Z]` header in `CHANGELOG.md` doesn't exactly match the
    pushed tag's version (the workflow strips a leading `v` from the tag and
    looks for `[X.Y.Z]` literally). The release workflow's manifest-validation
-   step also runs `jq empty` on `.codex-plugin/plugin.json` and
+   step also runs `jq empty` on every area `plugin.json` and
    `.agents/plugins/marketplace.json` now — a JSON syntax error in either
    fails the release the same way a bad `.claude-plugin/*.json` always did.
 
@@ -356,7 +339,7 @@ manual release step in the GitHub UI.
   must state that boundary instead of implying native security/performance
   gates exist.
 - **Skill lists are duplicated across README and AGENTS.md.** README prose
-  carries no skill counts on purpose (`ls skills` is the truth). When adding or
+  carries no skill counts on purpose (`src/areas.ts` is the truth). When adding or
   removing a skill, update the README tree and compatibility matrix and the
   `depends:` chain above in the same change; the catalog spec fails when a
   shipped domain skill is missing from README or a dependent skill is missing

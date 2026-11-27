@@ -11,7 +11,15 @@ Every skill follows the open [Agent Skills standard](https://agentskills.io) (a 
 
 ## 📂 Directory Structure
 
-Every skill lives under `skills/<name>/SKILL.md` — this is the single source of truth across all supported AI tools and platforms:
+Every skill lives under `plugins/<area>/skills/<name>/SKILL.md`, one plugin per area, so you enable only the areas a project needs:
+
+| Area plugin | Skills |
+|---|---|
+| `maestro-govard` | govard-toolbox, govard-magento, govard-laravel, govard-symfony, govard-wordpress, review-in-worktree |
+| `maestro-magento2` | magento2-dev-core, magento2-backend-dev, magento2-frontend-dev, magento2-hyva-dev, magento2-linter, magento2-code-review, magento2-performance-audit, magento2-security-scan |
+| `maestro-php` | php-dev-core |
+| `maestro-design` | maestro-design, diagram-studio |
+
 
 ```
 maestro-skills/
@@ -24,34 +32,14 @@ maestro-skills/
 ├── .dsh-plugin/                     # DeepSeek Harness Agent Preset definition
 │   ├── preset.yml                   # Web GUI preset display metadata ("Maestro Skills")
 │   └── agent.cordis.yml             # DSH Agent preset composition
-├── .claude-plugin/                  # Claude Code plugin manifests
-├── .codex-plugin/                   # Codex CLI plugin manifest
-├── .agents/plugins/                 # Codex marketplace manifest
+├── .claude-plugin/marketplace.json  # Claude Code marketplace: one entry per area plugin
+├── .agents/plugins/marketplace.json # Codex marketplace: one entry per area plugin
+├── src/areas.ts                     # The area to skills map that tests and the provider read
 │
-└── skills/                          # one folder per skill (`ls skills` is the source of truth)
-    ├── 📦 CORE STANDARDS & ARCHITECTURES
-    │   └── magento2-dev-core/           # Magento 2 core guidelines (DI, Repositories, Security)
-    ├── 🛠️ QUALITY ASSURANCE & AUDITING
-    │   ├── magento2-linter/             # PHPCS, PHPStan, PHPMD quality checks
-    │   ├── magento2-performance-audit/  # Web vitals, infrastructure and DB profiling
-    │   ├── magento2-security-scan/      # Static vulnerability code scanning
-    │   └── magento2-code-review/        # PR/module/theme/project review orchestration
-    ├── 🎨 FRONTEND & BACKEND FRAMEWORKS
-    │   ├── magento2-hyva-dev/           # Alpine.js, Tailwind CSS, CSP payment pages
-    │   ├── magento2-frontend-dev/       # Luma Knockout.js, LESS, RequireJS
-    │   ├── magento2-backend-dev/        # REST, GraphQL resolvers, Cron, Queues
-    │   └── maestro-design/              # Tailwind + shadcn/ui design systems, a11y, Figma to code
-    ├── 🐘 PHP FOUNDATION
-    │   └── php-dev-core/                # PSR-12, Composer, PHPStan, framework-agnostic PHP
-    ├── 📐 DIAGRAMS
-    │   └── diagram-studio/              # Mermaid + editorial HTML diagrams, CLI verifier
-    └── 🔧 DEV ENVIRONMENT & CLI TOOLS (Govard Stack)
-        ├── govard-toolbox/              # Base container orchestrator toolbox
-        ├── govard-magento/              # Magento-specific dev env commands
-        ├── govard-laravel/              # Laravel-specific dev env commands
-        ├── govard-symfony/              # Symfony-specific dev env commands
-        ├── govard-wordpress/            # WordPress-specific dev env commands
-        └── review-in-worktree/          # Govard commands in detached review worktrees
+└── plugins/<area>/                  # one plugin per area (see the table above)
+    ├── .claude-plugin/plugin.json
+    ├── .codex-plugin/plugin.json
+    └── skills/<name>/SKILL.md
 ```
 
 ---
@@ -62,12 +50,12 @@ Every skill works identically on every listed tool.
 
 | Group | Skills | Claude Code | Codex CLI | OpenCode | GitHub Copilot | DeepSeek Harness |
 |---|---|---|---|---|---|---|
-| Core & Standards | [magento2-dev-core](skills/magento2-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Linting & Auditing | [magento2-linter](skills/magento2-linter/SKILL.md), [magento2-performance-audit](skills/magento2-performance-audit/SKILL.md), [magento2-security-scan](skills/magento2-security-scan/SKILL.md), [magento2-code-review](skills/magento2-code-review/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Frameworks | [magento2-hyva-dev](skills/magento2-hyva-dev/SKILL.md), [magento2-frontend-dev](skills/magento2-frontend-dev/SKILL.md), [magento2-backend-dev](skills/magento2-backend-dev/SKILL.md), [maestro-design](skills/maestro-design/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Toolchains (Govard) | [govard-toolbox](skills/govard-toolbox/SKILL.md), [govard-magento](skills/govard-magento/SKILL.md), [govard-laravel](skills/govard-laravel/SKILL.md), [govard-symfony](skills/govard-symfony/SKILL.md), [govard-wordpress](skills/govard-wordpress/SKILL.md), [review-in-worktree](skills/review-in-worktree/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| PHP Foundation | [php-dev-core](skills/php-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Diagrams | [diagram-studio](skills/diagram-studio/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Core & Standards | [magento2-dev-core](plugins/maestro-magento2/skills/magento2-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Linting & Auditing | [magento2-linter](plugins/maestro-magento2/skills/magento2-linter/SKILL.md), [magento2-performance-audit](plugins/maestro-magento2/skills/magento2-performance-audit/SKILL.md), [magento2-security-scan](plugins/maestro-magento2/skills/magento2-security-scan/SKILL.md), [magento2-code-review](plugins/maestro-magento2/skills/magento2-code-review/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Frameworks | [magento2-hyva-dev](plugins/maestro-magento2/skills/magento2-hyva-dev/SKILL.md), [magento2-frontend-dev](plugins/maestro-magento2/skills/magento2-frontend-dev/SKILL.md), [magento2-backend-dev](plugins/maestro-magento2/skills/magento2-backend-dev/SKILL.md), [maestro-design](plugins/maestro-design/skills/maestro-design/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Toolchains (Govard) | [govard-toolbox](plugins/maestro-govard/skills/govard-toolbox/SKILL.md), [govard-magento](plugins/maestro-govard/skills/govard-magento/SKILL.md), [govard-laravel](plugins/maestro-govard/skills/govard-laravel/SKILL.md), [govard-symfony](plugins/maestro-govard/skills/govard-symfony/SKILL.md), [govard-wordpress](plugins/maestro-govard/skills/govard-wordpress/SKILL.md), [review-in-worktree](plugins/maestro-govard/skills/review-in-worktree/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| PHP Foundation | [php-dev-core](plugins/maestro-php/skills/php-dev-core/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Diagrams | [diagram-studio](plugins/maestro-design/skills/diagram-studio/SKILL.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -75,7 +63,7 @@ Every skill works identically on every listed tool.
 
 ### 1. DeepSeek Harness (DSH) — as a plugin (recommended)
 
-One command is a complete install — the plugin serves every packaged skill itself:
+One command is a complete install. The plugin serves every area by default; set `areas` in its config row (for example `areas: [maestro-magento2, maestro-govard]`) to serve only some:
 
 ```bash
 dsh plugin --profile web add github:ddtcorex/maestro-skills
@@ -140,7 +128,7 @@ To reference the plugin from a hand-written patch layer instead, the row must na
 ### 2. Claude Code — as a plugin
 ```bash
 /plugin marketplace add ddtcorex/maestro-skills
-/plugin install maestro-skills@ddtcorex
+/plugin install maestro-magento2@ddtcorex   # one line per area you want
 ```
 Updates: `/plugin marketplace update ddtcorex`.
 
@@ -149,7 +137,7 @@ Updates: `/plugin marketplace update ddtcorex`.
 ### 3. Codex CLI — as a plugin
 ```bash
 codex plugin marketplace add ddtcorex/maestro-skills
-codex plugin add maestro-skills@ddtcorex
+codex plugin add maestro-magento2@ddtcorex   # one line per area you want
 ```
 Updates: `codex plugin marketplace upgrade ddtcorex`.
 
@@ -159,6 +147,8 @@ Updates: `codex plugin marketplace upgrade ddtcorex`.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/install.sh | bash
+# or only some areas:
+curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/install.sh | bash -s -- --area maestro-magento2,maestro-govard
 ```
 
 | Tool | Scans (project scope) | Scans (personal scope) |
@@ -181,7 +171,7 @@ curl -fsSL https://raw.githubusercontent.com/ddtcorex/maestro-skills/master/inst
 You can easily expand this hub with any new framework or toolchain supported by Govard (e.g., Laravel, Symfony, React, Vue, Docker, etc.).
 
 ### Step 1: Create the Skill Folder
-Create `skills/[framework/tool]-[purpose]/` using kebab-case (e.g., `skills/laravel-dev-core/`, `skills/vue-hyva-checkout/`).
+Create `plugins/<area>/skills/[framework/tool]-[purpose]/` using kebab-case (e.g., `plugins/maestro-php/skills/laravel-dev-core/`), and add the name to that area in `src/areas.ts`. A new area also needs its two plugin manifests and an entry in both marketplaces.
 
 ### Step 2: Create a `SKILL.md` File
 Every skill folder **must** contain a `SKILL.md` file at its root with valid YAML frontmatter:

@@ -36,6 +36,7 @@ ALL_TOOLS="opencode copilot"
 scope="project"
 targets="all"
 skills="all"
+areas="all"
 mode="symlink"
 non_interactive="no"
 force="no"
@@ -47,6 +48,7 @@ Usage: install.sh [options]
 
   --scope <project|personal>  Where to link skills (default: project; prompted if interactive)
   --target <list|all>         Comma list of: opencode,copilot (default: all)
+  --area <list|all>           Comma list of area plugins, e.g. maestro-magento2,maestro-govard (default: all)
   --skills <list|all>         Comma list of skill names to install (default: all)
   --mode <symlink|copy>       How to place files in the target dirs (default: symlink)
   --force                     Overwrite existing paths not created by this installer
@@ -55,7 +57,7 @@ Usage: install.sh [options]
   -h, --help                  Show this help
 
 Environment variables mirror the flags: MAESTRO_SKILLS_HOME, MAESTRO_SKILLS_SCOPE,
-MAESTRO_SKILLS_TARGET, MAESTRO_SKILLS_SKILLS, MAESTRO_SKILLS_MODE.
+MAESTRO_SKILLS_TARGET, MAESTRO_SKILLS_AREAS, MAESTRO_SKILLS_SKILLS, MAESTRO_SKILLS_MODE.
 (Legacy AGENT_DEV_SKILLS_* variables are still honored when their new counterparts are unset.)
 EOF
 }
@@ -64,6 +66,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --scope) scope="$2"; shift 2 ;;
     --target) targets="$2"; shift 2 ;;
+    --area) areas="$2"; shift 2 ;;
     --skills) skills="$2"; shift 2 ;;
     --mode) mode="$2"; shift 2 ;;
     --force) force="yes"; shift ;;
@@ -76,6 +79,7 @@ done
 scope="${MAESTRO_SKILLS_SCOPE:-${AGENT_DEV_SKILLS_SCOPE:-$scope}}"
 targets="${MAESTRO_SKILLS_TARGET:-${AGENT_DEV_SKILLS_TARGET:-$targets}}"
 skills="${MAESTRO_SKILLS_SKILLS:-${AGENT_DEV_SKILLS_SKILLS:-$skills}}"
+areas="${MAESTRO_SKILLS_AREAS:-$areas}"
 mode="${MAESTRO_SKILLS_MODE:-${AGENT_DEV_SKILLS_MODE:-$mode}}"
 
 # TTY-safe prompt: when piped via `curl | bash`, stdin is the script itself,
@@ -134,11 +138,29 @@ else
   tool_list="$(echo "$targets" | tr ',' ' ')"
 fi
 
+# Skills live at plugins/<area>/skills/<name>/; the area list is read from disk.
+if [ "$areas" = "all" ]; then
+  area_list=""
+  for d in "$CACHE_DIR"/plugins/*/; do area_list="$area_list $(basename "$d")"; done
+else
+  area_list="$(echo "$areas" | tr ',' ' ')"
+  for area in $area_list; do
+    [ -d "$CACHE_DIR/plugins/$area/skills" ] || { echo "unknown area: $area" >&2; exit 1; }
+  done
+fi
+
+skill_src() {
+  for area in $area_list; do
+    [ -f "$CACHE_DIR/plugins/$area/skills/$1/SKILL.md" ] && { echo "$CACHE_DIR/plugins/$area/skills/$1"; return; }
+  done
+}
+
 if [ "$skills" = "all" ]; then
   skill_list=""
-  for d in "$CACHE_DIR"/skills/*/; do
-    name="$(basename "$d")"
-    [ -f "$d/SKILL.md" ] && skill_list="$skill_list $name"
+  for area in $area_list; do
+    for d in "$CACHE_DIR/plugins/$area/skills"/*/; do
+      [ -f "$d/SKILL.md" ] && skill_list="$skill_list $(basename "$d")"
+    done
   done
 else
   skill_list="$(echo "$skills" | tr ',' ' ')"
@@ -148,8 +170,8 @@ target_dir_for() {
   case "$1" in
     opencode) [ "$scope" = personal ] && echo "$HOME/.config/opencode/skills" || echo "$PWD/.opencode/skills" ;;
     copilot)  [ "$scope" = personal ] && echo "$HOME/.copilot/skills"        || echo "$PWD/.github/skills" ;;
-    claude) echo "Target 'claude' was removed: Claude Code supports plugins, so install the plugin instead (/plugin marketplace add ddtcorex/maestro-skills, then /plugin install maestro-skills@ddtcorex). A loose copy linked into .claude/skills shadows the plugin with a stale cache." >&2; return 1 ;;
-    codex) echo "Target 'codex' was removed: Codex CLI supports plugins, so install the plugin instead (codex plugin marketplace add ddtcorex/maestro-skills, then codex plugin add maestro-skills@ddtcorex). A loose copy linked into .agents/skills shadows the plugin with a stale cache." >&2; return 1 ;;
+    claude) echo "Target 'claude' was removed: Claude Code supports plugins, so install the plugin instead (/plugin marketplace add ddtcorex/maestro-skills, then /plugin install <area>@ddtcorex, e.g. maestro-magento2@ddtcorex). A loose copy linked into .claude/skills shadows the plugin with a stale cache." >&2; return 1 ;;
+    codex) echo "Target 'codex' was removed: Codex CLI supports plugins, so install the plugin instead (codex plugin marketplace add ddtcorex/maestro-skills, then codex plugin add <area>@ddtcorex). A loose copy linked into .agents/skills shadows the plugin with a stale cache." >&2; return 1 ;;
     dsh) echo "Target 'dsh' was removed: on DeepSeek Harness install the Cordis plugin instead (dsh plugin --profile web add github:ddtcorex/maestro-skills). A copy linked into ~/.dsh/skills shadows the plugin with a stale cache." >&2; return 1 ;;
     *) echo "Unknown target: $1" >&2; return 1 ;;
   esac
@@ -161,9 +183,9 @@ for tool in $tool_list; do
   dir="$(target_dir_for "$tool")" || continue
   mkdir -p "$dir"
   for skill in $skill_list; do
-    src="$CACHE_DIR/skills/$skill"
+    src="$(skill_src "$skill")"
     dest="$dir/$skill"
-    if [ ! -d "$src" ]; then
+    if [ -z "$src" ]; then
       echo "Skipping unknown skill: $skill" >&2
       continue
     fi
