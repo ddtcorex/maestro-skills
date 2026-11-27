@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`maestro-craft` plugin** with three working-method skills, each proven by a scenario run without and with it (`tests/fixtures/craft/`): `prior-art-search` (search installed skills, the codebase, the public registry with a pinned CLI, package registries and GitHub before building, and record the decision), `source-to-skill` (turn external material into rules only after verifying each claim at its primary source and screening it against the target environment), `principles-from-own-writing` (derive a voice or principles file from the user's own documents, never from a conversation with someone else).
+
 ### Changed
 
 - **One plugin per area.** Skills moved from `skills/<name>/` to `plugins/<area>/skills/<name>/`, in four area plugins: `maestro-govard`, `maestro-magento2`, `maestro-php`, `maestro-design` (`src/areas.ts` holds the map). Claude Code cannot disable a single skill inside a plugin, so a project now enables only the areas it uses.
