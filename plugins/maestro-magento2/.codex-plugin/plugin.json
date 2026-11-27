@@ -1,6 +1,6 @@
 {
   "name": "maestro-magento2",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Magento 2 skills: core architecture, backend APIs, Luma and Hyva frontends, linting, code review, performance audit and security scan.",
   "author": {
     "name": "DDTCoreX",
