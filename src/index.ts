@@ -8,22 +8,28 @@ import type {
   SkillProviderControl,
 } from '@deepseek-ai/dsh-skill'
 import { parseFrontmatter } from './frontmatter.js'
+import { AREAS } from './areas.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const DEFAULT_SKILLS_DIR = resolve(__dirname, '../skills')
+const DEFAULT_PLUGINS_DIR = resolve(__dirname, '../plugins')
 
 export const name = 'maestro-skills'
 export const inject = ['skills']
 
 export interface Config {
-  /** Optional custom directory path holding skills folders. Defaults to `./skills`. */
-  skillsDir?: string
+  /** Directory holding the area plugins (`<area>/skills/<name>/SKILL.md`). Defaults to `./plugins`. */
+  pluginsDir?: string
+  /** Area plugins to serve, e.g. `['maestro-magento2']`. Defaults to every area. */
+  areas?: string[]
   /** Provider precedence rank. Default: 350. */
   rank?: number
 }
 
 export function apply(ctx: Context, config: Config = {}) {
-  const skillsDir = config.skillsDir ? resolve(config.skillsDir) : DEFAULT_SKILLS_DIR
+  const pluginsDir = config.pluginsDir ? resolve(config.pluginsDir) : DEFAULT_PLUGINS_DIR
+  const unknown = (config.areas ?? []).filter(a => !Object.hasOwn(AREAS, a))
+  if (unknown.length) ctx.logger.warn(`maestro-skills: unknown area ${unknown.join(', ')}; known: ${Object.keys(AREAS).join(', ')}`)
+  const skillsDirs = (config.areas ?? Object.keys(AREAS)).filter(a => Object.hasOwn(AREAS, a)).map(a => join(pluginsDir, a, 'skills'))
   const rank = config.rank ?? 350
 
   const unregister = ctx.skills.registerProvider((_control: SkillProviderControl) => {
@@ -31,7 +37,7 @@ export function apply(ctx: Context, config: Config = {}) {
       name: 'maestro-skills',
       async list(_options: SkillLookupOptions) {
         const candidates: SkillCandidate[] = []
-        try {
+        for (const skillsDir of skillsDirs) try {
           const entries = await readdir(skillsDir)
           for (const entry of entries) {
             const skillFolder = join(skillsDir, entry)
