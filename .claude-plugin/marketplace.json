@@ -60,7 +60,7 @@
     {
       "name": "maestro-craft",
       "source": "./plugins/maestro-craft",
-      "description": "Working method for agents: search for prior art before building, turn source material into verified skills, derive writing principles from your own artifacts.",
+      "description": "Working method for agents: search for prior art before building, turn source material into verified skills, derive writing principles from your own artifacts, and admit and measure a decision model before wiring it in.",
       "version": "5.0.1",
       "author": {
         "name": "DDTCoreX",
