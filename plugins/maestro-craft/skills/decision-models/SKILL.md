@@ -75,8 +75,15 @@ A decision model cannot know what its state does not say.
 
 ## 4. Endpoint is configuration
 
-Treat the endpoint and key as configuration, never as code. On the OpenCode Go
-plan the decision path is the Go prefix plus `/systemone`
-(`https://opencode.ai/zen/go/v1/systemone`); the path printed in the vendor
-console bills prepaid credit and answers HTTP 402 on that plan. The TypeSafe
-direct API was not verified by these measurements.
+Treat the endpoint, key and model id as configuration, never as code, and
+read them from the provider at run time: model names and paths change faster
+than a skill. A gateway that lists models usually marks the decision models
+and their base URL; on OpenCode Go that is the `api.systemone` block of each
+entry in `GET https://opencode.ai/zen/go/v1/models`, which needs no key.
+Select by that block, not by a model name: a name filter hides the other
+decision-model families on the same plan.
+
+Observed on 2026-11-28, as a symptom to recognise, not a value to copy: on the
+OpenCode Go plan the path printed in the vendor console billed prepaid credit
+and answered HTTP 402, while the path advertised in the model list answered.
+The TypeSafe direct API was not verified by these measurements.
