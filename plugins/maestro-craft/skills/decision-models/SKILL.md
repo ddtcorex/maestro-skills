@@ -12,7 +12,10 @@ makes it tempting to put in front of every step; speed is not accuracy, and
 the only way to know is to measure on your own data.
 
 This skill does not teach the API. For state design, question wording and
-request shape, install the vendor skill: `npx skills@1.9.0 add typesafe-ai/skills`.
+request shape, install the vendor skill: in Claude Code as a plugin
+(`claude plugin marketplace add typesafe-ai/skills`, then
+`claude plugin install typesafe@typesafe-ai`), elsewhere with
+`npx skills@1.9.0 add typesafe-ai/skills`.
 
 ## 1. Admission: refuse these outright
 
