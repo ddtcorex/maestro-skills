@@ -1,15 +1,20 @@
 # Changelog
 
+## [5.1.0] - 2026-11-28
+
+### Added
+
+- **`decision-models` skill in `maestro-craft`.** Decides whether a decision model (a classifier-style API such as TypeSafe Jev) belongs in a step at all, then measures it before wiring: labelled set from real history, majority-class baseline, balanced accuracy, the incumbent on the same rows, three runs for spread, a threshold on the probability read in code (confidence is not a gate), and a pass condition fixed in advance. Carries two dated measurements that both came back negative: agent tool-call tiers (65-74% against a 61% constant answer and a ruleset that scores 100%) and review-finding triage (55-56% balanced against 50% and 66.7% for a chat model). API craft is left to `typesafe-ai/skills`, and the endpoint and model are read from the provider at run time.
+
+### Fixed
+
+- **Changelog:** the docs fix listed under `[Unreleased]` shipped in 5.0.1 and now sits there.
+
 ## [5.0.1] - 2026-11-27
 
 ### Fixed
 
 - **`source-to-skill` checks for `yt-dlp` before relying on it.** On a host without it, the skill now says so and asks before installing, instead of falling back to an LLM page reader unannounced.
-
-## [Unreleased]
-
-### Fixed
-
 - **Docs no longer mandate skills this library stopped shipping.** `AGENTS.md`, `README.md`, `CONTRIBUTING.md` and the PR template still required the process-skill workflow the v5.0.0 release removed, so a contributor with only this repository installed was told to load skills that are not in it. All four now describe the three phases (design, plan, strict TDD) as the requirement and say the automating skills come from your own agent.
 
 ## [5.0.0] - 2026-11-27

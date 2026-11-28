@@ -1,6 +1,6 @@
 {
   "name": "maestro-php",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "description": "Framework-agnostic PHP: PSR standards, Composer packaging and static analysis.",
   "author": {
     "name": "DDTCoreX",
