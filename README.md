@@ -19,7 +19,7 @@ Every skill lives under `plugins/<area>/skills/<name>/SKILL.md`, one plugin per 
 | `maestro-magento2` | magento2-dev-core, magento2-backend-dev, magento2-frontend-dev, magento2-hyva-dev, magento2-linter, magento2-code-review, magento2-performance-audit, magento2-security-scan |
 | `maestro-php` | php-dev-core |
 | `maestro-design` | maestro-design, diagram-studio |
-| `maestro-craft` | prior-art-search, source-to-skill, principles-from-own-writing |
+| `maestro-craft` | prior-art-search, source-to-skill, principles-from-own-writing, decision-models |
 
 
 ```

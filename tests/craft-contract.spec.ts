@@ -18,7 +18,7 @@ function markdownUnder(dir: string): string[] {
 
 describe('maestro-craft contract', () => {
   it('ships the craft skills', () => {
-    expect([...CRAFT].sort()).toEqual(['principles-from-own-writing', 'prior-art-search', 'source-to-skill'])
+    expect([...CRAFT].sort()).toEqual(['decision-models', 'principles-from-own-writing', 'prior-art-search', 'source-to-skill'])
   })
 
   it('the unpinned pattern catches every runner form and passes a pinned one', () => {
@@ -54,6 +54,15 @@ describe('maestro-craft contract', () => {
       })
     })
   }
+
+  it('decision-models gates on a measured baseline and points at the vendor skill instead of restating the API', () => {
+    const raw = readFileSync(skillPath('decision-models', 'SKILL.md'), 'utf8')
+    // A model score means nothing without the constant-answer score next to it.
+    expect(raw).toMatch(/majority[- ]class baseline/i)
+    expect(raw).toMatch(/typesafe-ai\/skills/)
+    // Confidence is a concentration measure, not a correctness gate.
+    expect(raw).toMatch(/confidence is not a gate/i)
+  })
 
   it('source-to-skill checks for yt-dlp before relying on it and names the fallback', () => {
     const raw = readFileSync(skillPath('source-to-skill', 'SKILL.md'), 'utf8')
